@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Desktop layouts: readable controls and local scrolling on smaller monitors. */
+html { width: 100%; }
+body { margin: 0; }
+main, main section, main article, main .grid > *, main .flex > * { min-width: 0; }
+main { overflow-wrap: anywhere; }
+button, input, select, textarea { font: inherit; }
+button { white-space: normal; }
+input, select, textarea { max-width: 100%; }
+nav { flex-wrap: wrap; }
+nav button { min-height: 40px; }
+main button { min-height: 36px; }
+main [class~="text-[10px]"], main [class~="text-[11px]"] { font-size: 0.75rem; line-height: 1.45; }
+main table { min-width: 680px; }
+main div:has(> table) { max-width: 100%; overflow-x: auto; }
+[role="dialog"] { max-height: 90dvh; overflow-y: auto; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 3px;
+}
+@media (max-width: 1199px) {
+  header.sticky { position: relative; }
+  main { padding: 20px !important; }
+}

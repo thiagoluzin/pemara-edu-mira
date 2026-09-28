@@ -1,0 +1,6 @@
+{
+  "name": "Pemara Aula - Motor Gerador de Aulas Visuais",
+  "description": "Plataforma de criação e renderização de aulas visuais e interativas com simulações físicas, motor astronômico e suporte aos 4 modos de geração.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,12 @@
+import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import {execFileSync} from 'node:child_process';
+const key=execFileSync('pwsh',['-NoProfile','-NonInteractive','-Command',"$s=Get-Content -LiteralPath $env:PEMARA_TYPESAFE_SECRET -Raw | ConvertTo-SecureString; $p=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($s); try {[Console]::Write([Runtime.InteropServices.Marshal]::PtrToStringBSTR($p))} finally {[Runtime.InteropServices.Marshal]::ZeroFreeBSTR($p)}"],{env:{...process.env,PEMARA_TYPESAFE_SECRET:path.join(os.homedir(),'.codex/secrets/typesafe-api-key.dpapi')},encoding:'utf8',windowsHide:true}).trim();
+const state={lesson:JSON.parse(fs.readFileSync('docs/evidencias/teste-ia-generico/aula-original.json','utf8')),serverGeneration:fs.readFileSync('server.ts','utf8').split('\n').slice(83,176).join('\n'),visualSelector:fs.readFileSync('src/engine/learningVisual.ts','utf8')};
+const questions={
+ prompt_restricts:{type:'noul',instructions:'Does the supplied server prompt strongly steer generation toward exactly an opening, a text page, and a quiz, without describing other supported scene schemas or requiring a complete varied 45 minute lesson?'},
+ same_globe:{type:'noul',instructions:'Does the supplied visual selector route this saved lesson text page to its generic concepts diagram with the geography globe, rather than a topic-specific representation of global production chains?'},
+ evidence_of_response:{type:'noul',instructions:'Do the saved logs and shown success path support that this lesson came from the DeepSeek API response rather than a silent deterministic fallback? Judge only the supplied records, not external provider billing proof.'},
+ quality_mismatch:{type:'noul',instructions:'Does the supplied saved lesson fall short of the requested varied visual 45-minute class, considering it has only three scenes, a dense text page and a NEEDS_REVIEW flag?'}
+};
+const response=await fetch('https://api.typesafe.ai/v1/systemone',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model:'jev-1.13.0',state,questions}),signal:AbortSignal.timeout(60000)});
+if(!response.ok)throw Error('TypeSafe HTTP '+response.status);
+const result=await response.json();fs.writeFileSync('docs/evidencias/teste-ia-generico/revisao-jev.json',JSON.stringify(result,null,2));console.log(JSON.stringify({model:result.model,answers:result.answers},null,2));

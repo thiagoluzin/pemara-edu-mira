@@ -1,0 +1,1 @@
+import fs from 'node:fs';const p=JSON.parse(fs.readFileSync('docs/evidencias/teste-ia-generico/resposta-visual-v2.txt','utf8'));console.log(JSON.stringify(p.scenes[4],null,2));console.log(JSON.stringify(p.scenes.map((s:any)=>({id:s.id,type:s.type,title:s.title,layout:s.visual?.layout})),null,2));
