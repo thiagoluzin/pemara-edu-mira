@@ -1,6 +1,6 @@
 !macro customWelcomePage
   !define MUI_WELCOMEPAGE_TITLE "Bem-vindo ao PEMARA EDU"
-  !define MUI_WELCOMEPAGE_TEXT "Crie e organize suas aulas com IA, Atlas, projetos e conversas em uma única janela.$\r$\n$\r$\nAs ferramentas estão incluídas. Nenhum terminal ou download de dependências é necessário durante a instalação.$\r$\n$\r$\nA geração usa o modelo configurado no OpenCode e requer acesso ao provedor. O modelo gratuito foi recusado no teste; escolha um modelo disponível para gerar. Aulas salvas, Atlas e HTML funcionam offline.$\r$\n$\r$\nClique em Avançar para continuar."
+  !define MUI_WELCOMEPAGE_TEXT "Crie e organize suas aulas com IA, Atlas, projetos e conversas em uma única janela.$\r$\n$\r$\nAs ferramentas estão incluídas. Nenhum terminal ou download de dependências é necessário durante a instalação.$\r$\n$\r$\nO programa consulta modelos gratuitos na nuvem do OpenCode e tenta o próximo em caso de falha. Gerar exige internet e disponibilidade do serviço. Não exige IA local no notebook. Aulas salvas, Atlas e HTML funcionam offline.$\r$\n$\r$\nClique em Avançar para continuar."
   !insertmacro MUI_PAGE_WELCOME
 !macroend
 

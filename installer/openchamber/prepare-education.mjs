@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(here, '../..');
-const stage = path.join(repo, 'build/openchamber/2.4.0-pemara.5');
+const stage = path.join(repo, 'build/openchamber/2.4.0-pemara.6');
 const target = path.join(stage, 'education');
 if (!process.argv.includes('--bundle-only')) {
 fs.mkdirSync(target, { recursive: true });

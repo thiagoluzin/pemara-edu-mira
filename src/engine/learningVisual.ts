@@ -35,6 +35,8 @@ export function createLearningPlan(scene:TextScene|SummaryScene,meta?:Partial<Le
   const mode=scene.type==='summary'?'summary':/^atividade\b/i.test(scene.title)?'activity':/^exemplo\b/i.test(scene.title)?'example':'concept';
   let kind:LearningKind='concepts',variants:string[]=[],caption='Quadro de estudo: cada cartão abre uma ideia do conteúdo. A disposição não representa relações de causa e efeito.';
   let denominator=8,initialVariant=3;
+  let atlasSelected=false;
+  const explicitAtlas=typeof scene.atlas_model==='string'&&isAtlasKind(scene.atlas_model);
   if(['science','biology'].includes(subject)&&/celul|citoplasma|membrana|tecido/.test(scope)) {
     if(/(?:tecidos?.*orgaos?|organiza[cç]ao|celula ao organismo|sistemas.*organismo)/.test(local)){
       kind='organization';variants=['Célula','Tecido','Órgão','Sistema','Organismo'];initialVariant=0;
@@ -68,9 +70,9 @@ export function createLearningPlan(scene:TextScene|SummaryScene,meta?:Partial<Le
   }else if(subject==='physical_education'){
     kind='movement';variants=['Braços','Caminhada','Equilíbrio'];initialVariant=0;caption='Figura articulada para observar posições e coordenação. Esquema exploratório, sem prescrição de exercício ou avaliação corporal.';
   }
-  if(!scene.visual && scene.atlas_model!=='none'){
+  if((!scene.visual||explicitAtlas) && scene.atlas_model!=='none'){
     const selected=chooseAnimation(subject,scene.title,unique.join(' '),meta?.bncc_skill||'',scene.atlas_model);
-    if(selected){kind=selected.id;variants=selected.variants;initialVariant=0;caption=selected.caption;
+    if(selected){atlasSelected=true;kind=selected.id;variants=selected.variants;initialVariant=0;caption=selected.caption;
       if(kind==='separation'){
         const title=norm(scene.title);
         if(/^filtracao\b/.test(title))initialVariant=1;
@@ -85,8 +87,8 @@ export function createLearningPlan(scene:TextScene|SummaryScene,meta?:Partial<Le
     kind='concepts';variants=[];initialVariant=0;caption='Compare os exemplos do texto: uma mudança de estado conserva a substância; uma reação química forma outras substâncias. Os cartões não simulam uma reação.';
   }
   if(scene.atlas_model==='none'){kind='concepts';variants=[];initialVariant=0;}
-  if(scene.visual){kind='concepts';variants=[];caption=scene.visual.caption;}
-  return {visual:scene.visual,title:scene.title,subject,kind,mode,steps,labels:steps.map((s,i)=>`${i+1}. ${s.length>66?s.slice(0,63)+'…':s}`),variants,initialVariant,denominator,caption,source:unique,years};
+  if(scene.visual&&!atlasSelected){kind='concepts';variants=[];caption=scene.visual.caption;}
+  return {visual:atlasSelected?undefined:scene.visual,title:scene.title,subject,kind,mode,steps,labels:steps.map((s,i)=>`${i+1}. ${s.length>66?s.slice(0,63)+'…':s}`),variants,initialVariant,denominator,caption,source:unique,years};
 }
 
 export const LEARNING_CSS=ATLAS_MOTION_CSS+`

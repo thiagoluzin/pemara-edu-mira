@@ -16,11 +16,11 @@ The PEMARA web runtime uses the root `package-lock.json` (`npm ci`). Tool archiv
 4. `node installer/openchamber/prepare-education.mjs` stages the education runtime and its installed dependencies.
 5. `bun installer/openchamber/build-lesson-adapter.mjs` bundles the existing official OpenCode SDK into the native adapter.
 6. `node installer/openchamber/build-icon.mjs` packages the supplied PNG into Windows icon sizes.
-7. `node node_modules/vite/bin/vite.js build --outDir build/openchamber/2.4.0-pemara.5/education/dist`
+7. `node node_modules/vite/bin/vite.js build --outDir build/openchamber/2.4.0-pemara.6/education/dist`
 8. `node installer/openchamber/build.mjs --education --dir`
-9. After testing: `node installer/openchamber/build.mjs --education --prepackaged build/openchamber/2.4.0-pemara.5/dist/win-unpacked`
+9. After testing: `node installer/openchamber/build.mjs --education --prepackaged build/openchamber/2.4.0-pemara.6/dist/win-unpacked`
 
-Output: `build/openchamber/2.4.0-pemara.5/dist/PEMARA-EDU-2.4.0-pemara.5-Windows-x64-Instalar.exe`.
+Output: `build/openchamber/2.4.0-pemara.6/dist/PEMARA-EDU-2.4.0-pemara.6-Windows-x64-Instalar.exe`.
 
 The app ID and profile directory remain stable to retain previous teacher data. Product name, executable, shortcut and Windows icon use PEMARA EDU. Windows 10 is a target; actual validation was on Windows 11 x64. A signed release and a Windows 10 machine test remain separate deployment work.
 

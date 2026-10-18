@@ -9,19 +9,19 @@ OpenCode, biblioteca pessoal e Atlas na mesma janela. O professor usa o
 instalador Windows e o atalho **PEMARA EDU**, sem terminal.
 
 Em **Criar aula**, descreva o tema e selecione materiais opcionais. O pedido
-é guardado, enviado ao modelo configurado no OpenCode e transformado em uma
+é guardado, enviado a um modelo gratuito na nuvem do OpenCode e transformado em uma
 aula editável após a validação da estrutura. Falhas mantêm o pedido e a conversa
 para retomada explícita; não há troca silenciosa para geração sem IA.
 
-A disponibilidade de IA depende do modelo e do acesso do professor ao provedor.
-O modelo gratuito usado no teste de 18/10/2026 respondeu HTTP 403; isso está
-registrado, e não constitui validação de uma geração real bem-sucedida.
+O programa consulta o catálogo atual, aceita somente preços explicitamente
+zerados e tenta outro modelo quando houver falha. Não exige IA local, download
+de pesos ou GPU no notebook. Gerar exige internet e disponibilidade do provedor.
 A biblioteca, as animações e os HTMLs exportados podem ser usados sem internet.
 
 - [Guia do professor](installer/openchamber/AULAS-PROFESSORES.txt)
 - [Arquitetura da integração](installer/openchamber/INTEGRACAO-IA.md)
 - [Compilação do desktop](installer/openchamber/BUILD-PEMARA-EDU.md)
-- [Resultado dos testes e limitações](installer/openchamber/RELATORIO-PEMARA-EDU.md)
+- [Resultado dos testes e limitações](installer/openchamber/RELATORIO-PEMARA-EDU-6.md)
 - [Referências e licenças](THIRD_PARTY_NOTICES.md)
 
 O backup neste repositório inclui fontes e alterações locais. Instaladores,

@@ -7,6 +7,7 @@ import {validateLessonSpec} from '../src/schemas/lessonValidator';
 import {visualLessonIssues,buildVisualLessonPrompt} from '../server/ai/visualLesson';
 import {TEMPLATE_GREECE_6EF} from '../src/templates/deterministicTemplates';
 import type {TextScene} from '../src/types/lesson';
+import {ATLAS} from '../src/animations/atlas';
 const scene:TextScene={id:'chain',type:'text',title:'A cadeia produtiva',content:['A indústria transforma materiais.','Os transportes conectam etapas.','O trabalho é realizado por pessoas.'],visual:{layout:'flow',caption:'Etapas do exemplo; não representa participação de países.',nodes:[{id:'f',label:'Fábrica',icon:'factory',step:0},{id:'t',label:'Transportes',icon:'ship',step:1},{id:'p',label:'Trabalhadores',icon:'people',step:2}],links:[{from:'f',to:'t',label:'distribuição'}]}};
 test('Visual explícito acompanha o conteúdo, é seguro e destaca cada etapa no app e no exportado',()=>{
  const lesson=structuredClone(TEMPLATE_GREECE_6EF);lesson.scenes=[scene];lesson.lesson.subject='geography';
@@ -25,6 +26,11 @@ test('Contrato rejeita referências inventadas e a aula pobre original não pass
 test('Legado não ganha relações falsas nem globo decorativo e título global não impõe célula a toda aula',()=>{
  const plan=createLearningPlan({...scene,visual:undefined},{subject:'geography',title:'Globalização'});const svg=learningDiagram(plan,0,0);assert.ok(!svg.includes('<ellipse'));assert.ok(svg.includes('Quadro de ideias'));
  const generic=createLearningPlan({id:'reading',type:'text',title:'Como pesquisar',content:['Compare os argumentos e registre suas observações.']},{subject:'science',title:'Células e organismos'});assert.equal(generic.kind,'concepts');
+});
+
+test('Every explicit Atlas model remains interactive beside AI visual metadata, without losing explanations',()=>{
+ for(const model of ATLAS){const plan=createLearningPlan({...scene,atlas_model:model.id},{subject:model.subjects[0]});assert.equal(plan.kind,model.id);assert.equal(plan.visual,undefined);assert.deepEqual(plan.steps,scene.content);assert.deepEqual(plan.variants,[...model.variants]);}
+ const incompatible=createLearningPlan({...scene,atlas_model:'separation'},{subject:'history'});assert.equal(incompatible.visual,scene.visual);
 });
 
 test('DeepSeek recebe formato JSON e orçamento para a aula completa; timeout tem diagnóstico próprio',async()=>{

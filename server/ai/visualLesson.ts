@@ -54,6 +54,9 @@ export function normalizeGeneratedVisuals(raw:any):any {
  if(!raw||!Array.isArray(raw.scenes))return raw;
  const result=structuredClone(raw);
  for(const scene of result.scenes){
+  // Some providers wrap an otherwise exact Atlas ID in {id}. Unwrap only
+  // that lossless shape; unknown IDs and additional fields still fail validation.
+  if(scene?.atlas_model&&typeof scene.atlas_model==='object'&&!Array.isArray(scene.atlas_model)&&Object.keys(scene.atlas_model).length===1&&typeof scene.atlas_model.id==='string')scene.atlas_model=scene.atlas_model.id;
   if(!scene||!['text','summary'].includes(scene.type)||!scene.visual)continue;
   const nodes=scene.visual.nodes;
   if(!Array.isArray(nodes)||nodes.some((n:any)=>typeof n?.explanation!=='string'||!n.explanation.trim()))throw new Error(`${scene.id}: cada elemento visual deve trazer sua explanation, diretamente ligada ao label.`);

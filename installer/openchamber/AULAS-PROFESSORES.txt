@@ -6,15 +6,15 @@ CRIAR AULA COM IA
 1. Clique em Criar aula, na faixa esquerda.
 2. Descreva o tema, o ano, a duração e o que a turma precisa aprender.
 3. Se quiser, adicione seus materiais, selecione os trechos e confirme a revisão.
-4. Clique em Criar aula com IA. O pedido vai para o modelo configurado no OpenCode.
+4. Clique em Criar aula com IA. O programa escolhe um modelo gratuito disponível na nuvem do OpenCode.
 5. Quando a estrutura estiver validada, a aula é salva na biblioteca e aberta no editor.
 
 O modelo escreve explicações, atividades, perguntas e notas do professor. Pode escolher animações existentes do Atlas compatíveis com a disciplina. Revise o conteúdo antes de apresentar. A validação de estrutura não garante a correção pedagógica.
 
-Se houver falha, o pedido e a conversa ficam guardados. Clique em Retomar para tentar novamente. Se o provedor recusar acesso, escolha um modelo disponível em Conversas e projetos. Não há troca automática para geração sem IA. A disponibilidade de modelos gratuitos depende do provedor.
+Se um modelo falhar, o programa tenta outro gratuito automaticamente. Abra Modelos tentados para conferir os motivos. Se nenhum concluir, o pedido e a conversa ficam guardados; use Retomar mais tarde. Não é necessário escolher modelos nem usar terminal. A disponibilidade e os limites gratuitos dependem do provedor. Não são usados modelos pagos automaticamente.
 
 CONVERSAS E PROJETOS
-As aulas geradas têm uma conversa com título iniciado por Aula. O OpenCode continua disponível para trabalhar nos projetos e arquivos. A conversa estruturada usada pelo gerador não executa comandos: o PEMARA valida e salva o resultado.
+As aulas geradas têm uma conversa com título iniciado por Aula. O OpenCode continua disponível para trabalhar nos projetos e arquivos. O gerador usa o agente de planejamento do OpenCode; o PEMARA valida a estrutura e salva a aula. Seus outros projetos e suas conversas continuam disponíveis.
 
 ATLAS E BIBLIOTECA
 Atlas de animações permite experimentar os modelos e criar uma aula inicial para editar. Minhas aulas mantém as aulas e versões depois de fechar o programa. Aulas anteriores continuam disponíveis.
@@ -22,4 +22,4 @@ Atlas de animações permite experimentar os modelos e criar uma aula inicial pa
 EXPORTAR
 No editor, clique em EXPORTAR e escolha Apresentação para abrir sem internet. Aguarde a confirmação. O HTML fica em Documentos / PEMARA Aulas / Minhas aulas / Exportadas. Use Abrir exportações para encontrá-lo e copie para um pendrive, se desejar.
 
-A IA na nuvem usa internet. Depois de salva, a aula e seu HTML funcionam offline. Os dados ficam fora da pasta do aplicativo e são preservados nas atualizações. O programa aguarda notas e rascunhos pendentes ao fechar.
+A IA na nuvem usa internet. Não se exige modelo local, placa de vídeo especial ou download de pesos de IA no notebook do professor. Depois de salva, a aula e seu HTML funcionam offline. Os dados ficam fora da pasta do aplicativo e são preservados nas atualizações. O programa aguarda notas e rascunhos pendentes ao fechar.

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MaterialPicker } from './MaterialPicker';
 import type { MaterialSelection } from '../types/material';
-type Job = { id: string; status: 'running'|'failed'|'interrupted'|'completed'; message: string; topic: string; model: string; lessonId?: string };
+type Job = { id: string; status: 'running'|'failed'|'interrupted'|'completed'; message: string; topic: string; model: string; lessonId?: string; attempts?:{model:string;status:string;message:string}[] };
 const key = 'pemara-opencode-brief';
 const defaults = { topic: '', subject: 'science', grade: '6EF', duration_minutes: 45, material_text: '' };
 function savedBrief() { try { return { ...defaults, ...JSON.parse(localStorage.getItem(key)||'{}') }; } catch { return defaults; } }
@@ -41,7 +41,8 @@ export function OpenCodeLessonCreator({model,onOpenLesson}:{model:string;onOpenL
         <label>Duração (minutos)<input aria-label="Duração (minutos)" type="number" min={10} max={240} required className={field} value={brief.duration_minutes} onChange={e=>setBrief({...brief,duration_minutes:Number(e.target.value)})}/></label>
       </div>
       <details className="rounded-xl border border-slate-700 p-4"><summary className="cursor-pointer font-semibold">Adicionar materiais e orientações (opcional)</summary><div className="mt-4 space-y-4"><MaterialPicker value={materials} onChange={setMaterials} onBusy={setBusy}/><label className="block">Texto complementar<textarea aria-label="Texto complementar" rows={4} maxLength={120000} className={field} value={brief.material_text} onChange={e=>setBrief({...brief,material_text:e.target.value})}/></label>{(materials.length>0||brief.material_text.trim())&&<label className="block"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> Conferi os trechos que serão enviados à IA.</label>}</div></details>
-      <p className="text-sm text-slate-400">Modelo do OpenCode: {selectedModel||'selecione um modelo em Conversas e projetos'}. O tema e os trechos selecionados serão enviados a esse modelo. A geração usa internet; depois de salva, a aula e o HTML abrem offline.</p>
+      <p className="text-sm text-slate-400">IA gratuita na nuvem · seleção automática. O programa consulta os modelos disponíveis e tenta o próximo gratuito se houver falha. O tema e os trechos selecionados serão enviados ao serviço OpenCode. A geração usa internet; depois de salva, a aula e o HTML abrem offline.</p>
+      {!selectedModel&&<p role="alert" className="text-amber-300">O catálogo gratuito está indisponível. Sua descrição continua guardada. <button type="button" className="underline" onClick={()=>{void fetch('/api/ai/providers').then(r=>r.json()).then(data=>setSelectedModel(data.model||''));}}>Verificar novamente</button></p>}
       <button type="submit" disabled={!selectedModel||busy||submitting||job?.status==='running'} className="w-full sm:w-auto rounded-xl bg-indigo-600 hover:bg-indigo-500 px-6 py-4 font-bold disabled:opacity-50">{submitting?'Guardando pedido…':'Criar aula com IA'}</button>
     </form>
     {error&&<p role="alert" className="text-amber-300">{error}</p>}
@@ -49,6 +50,6 @@ export function OpenCodeLessonCreator({model,onOpenLesson}:{model:string;onOpenL
       {job.status==='running'&&<button onClick={()=>{void request('/'+job.id+'/stop',{}).catch(e=>setError(e.message));}} className="border rounded-lg px-4 py-2">Parar e guardar pedido</button>}
       {(job.status==='failed'||job.status==='interrupted')&&<button disabled={submitting} onClick={async()=>{setSubmitting(true);try{setJob(await request('/'+job.id+'/resume',{}));setError('');}catch(e){setError(e instanceof Error?e.message:'Falha ao retomar.');}finally{setSubmitting(false);}}} className="bg-indigo-600 rounded-lg px-4 py-2">Retomar</button>}
       {job.lessonId&&<button onClick={()=>{void onOpenLesson(job.lessonId!).catch(e=>setError(e.message));}} className="bg-emerald-700 rounded-lg px-4 py-2">Abrir aula</button>}
-    </div><p className="text-xs text-slate-400">A conversa desta aula fica em Conversas e projetos. Revise o conteúdo antes de apresentar.</p></div>}
+    </div>{!!job.attempts?.length&&<details><summary className="cursor-pointer text-sm">Modelos tentados ({job.attempts.length})</summary><ol className="text-sm text-slate-300 space-y-2 mt-2">{job.attempts.map((attempt,index)=><li key={index}><strong>{attempt.model}</strong> — {attempt.status==='completed'?'Aula salva':attempt.status==='failed'?'Não concluiu':attempt.status==='interrupted'?'Interrompido':'Em andamento'}<p>{attempt.message}</p></li>)}</ol></details>}<p className="text-xs text-slate-400">A conversa desta aula fica em Conversas e projetos. Revise o conteúdo antes de apresentar.</p></div>}
   </section>;
 }

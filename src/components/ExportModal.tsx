@@ -1,4 +1,5 @@
 import {prepareMap,mapSvg,mapHtml} from '../engine/mapModel';
+import {lessonExportFilename} from '../engine/exportFilename';
 import {comparisonValue} from '../engine/comparisonModel';
 import { label, gradeLabel } from '../ui/labels';
 /**
@@ -1639,7 +1640,7 @@ export const ExportModal: React.FC<Props> = ({ lesson, isOpen, onClose }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `pemara-aula-${lesson.lesson.topic.toLowerCase().replace(/\s+/g, '-')}-v${lesson.lesson_version}.json`;
+    a.download = lessonExportFilename(lesson.lesson.title,'json',lesson.lesson_version);
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -1657,7 +1658,7 @@ export const ExportModal: React.FC<Props> = ({ lesson, isOpen, onClose }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `pemara-apresentacao-${lesson.lesson.topic.toLowerCase().replace(/\s+/g, '-')}.html`;
+    a.download = lessonExportFilename(lesson.lesson.title,'html');
     a.click();
     URL.revokeObjectURL(url);
   };

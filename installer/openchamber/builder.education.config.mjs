@@ -2,16 +2,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import previous from './builder.recovery.config.mjs';
-const stage = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../build/openchamber/2.4.0-pemara.5');
+const stage = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../build/openchamber/2.4.0-pemara.6');
 export default {
   ...previous,
   productName: 'PEMARA EDU',
   directories: { ...previous.directories, output: path.join(stage, 'dist') },
-  extraMetadata: { ...previous.extraMetadata, version: '2.4.0-pemara.5' },
+  extraMetadata: { ...previous.extraMetadata, version: '2.4.0-pemara.6' },
   files: previous.files.map(file => typeof file === 'object' && file.to === 'dist-bundle' ? { from: path.join(stage, 'bundle'), to: 'dist-bundle', filter: ['*.mjs','*.cjs','*.js','*.html'] } : file),
   extraResources: [...previous.extraResources, { from: path.join(stage, 'education'), to: 'education' }, { from: path.resolve('installer/openchamber/brand'), to: 'pemara/brand' }, { from: path.resolve('installer/openchamber/AULAS-PROFESSORES.txt'), to: 'pemara/LEIA-ME-PROFESSORES.txt' }, { from: path.resolve('THIRD_PARTY_NOTICES.md'), to: 'pemara/REFERENCIAS.md' }],
   nsis: { ...previous.nsis, shortcutName: 'PEMARA EDU' },
-  win: { ...previous.win, executableName: 'PEMARA EDU', icon: path.resolve('installer/openchamber/brand/pemara-edu.ico'), artifactName: 'PEMARA-EDU-2.4.0-pemara.5-Windows-x64-Instalar.${ext}' },
+  win: { ...previous.win, executableName: 'PEMARA EDU', icon: path.resolve('installer/openchamber/brand/pemara-edu.ico'), artifactName: 'PEMARA-EDU-2.4.0-pemara.6-Windows-x64-Instalar.${ext}' },
   afterPack: async context => {
     const resources = path.join(context.appOutDir, 'resources');
     // electron-builder excludes node_modules from extraResources. Stage the exact
