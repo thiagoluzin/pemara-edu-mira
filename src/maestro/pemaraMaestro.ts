@@ -13,6 +13,8 @@ import { LessonSpec, GenerationMode, Subject, Scene, AgentLogEntry } from '../ty
 import { getTemplateByTopicOrSubject, TEMPLATES_LIBRARY } from '../templates/deterministicTemplates';
 import { validateLessonSpec } from '../schemas/lessonValidator';
 import { LessonComposer } from '../composer/lessonComposer';
+import {mergeSelectedMaterials,manualSelections} from '../composer/materialScenes';
+import type {MaterialSelection,MaterialSceneOptions} from '../types/material';
 import { VisualValidator } from '../validator/visualValidator';
 import { matchPilotCatalog } from '../catalog/pilotCatalog';
 
@@ -24,6 +26,8 @@ export interface GenerationInput {
   duration_minutes: number;
   didactic_style: 'visual' | 'summary' | 'review' | 'exercises' | 'complete';
   material_text?: string;
+  materials?: MaterialSelection[];
+  material_options?: MaterialSceneOptions;
   generation_mode: GenerationMode;
   pack_slug?: string;
 }
@@ -129,6 +133,12 @@ export class PemaraMaestro {
       }
     }
 
+    const selections=[...(input.materials||[]),...manualSelections(input.material_text||'')];
+    if(selections.length){
+      const material=mergeSelectedMaterials(lessonSpec,selections,input.material_options);
+      lessonSpec=material.lesson;
+      logs.push({agent:'Maestro',action:'Material selecionado pelo professor',timestamp:timestamp(),status:'warning',details:`${material.included} cenas incluídas. ${material.warnings.join(' ')}`});
+    }
     // 1. Validação estrita do Schema v1.0 ANTES da auditoria visual
     const validation = validateLessonSpec(lessonSpec);
     if (!validation.isValid) {
@@ -257,7 +267,7 @@ export class PemaraMaestro {
     const response = await fetch('/api/ai/generate-lesson', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input)
+      body: JSON.stringify({...input,materials:undefined,material_text:undefined,material_options:undefined})
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Falha na geração por IA. Você pode usar o modo determinístico.');

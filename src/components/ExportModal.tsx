@@ -16,6 +16,8 @@ import { LessonSpec, Scene, QuizScene } from '../types/lesson';
 import { BIOLOGY_CSS, BIOLOGY_STEPS, biologySvg } from '../engine/biologyModel';
 import { createLearningPlan, learningDiagram, isLearningScene, LEARNING_CSS } from '../engine/learningVisual';
 import { LEARNING_OFFLINE_RUNTIME } from '../engine/learningOffline';
+import { FUNCTION_OFFLINE_RUNTIME } from '../engine/functionOffline';
+import { PLANETS_DATA } from '../engine/astronomyEngine';
 import { Download, Code, Globe, Printer, X, Check, Copy } from 'lucide-react';
 
 interface Props {
@@ -387,6 +389,7 @@ export const renderAllScenesForPrint = (lesson: LessonSpec, forceIncludeNotes = 
           <span style="font-size:11px; color:#64748b; font-weight:600;">${typeName}</span>
         </div>
         ${bodyHtml}
+          ${scene.source_citation ? `<p>Fonte: ${escapeHtml(scene.source_citation)}</p>` : ''}
         ${scene.teacher_notes ? `
           <div class="print-teacher-notes ${forceIncludeNotes ? 'include-notes' : ''}">
             <strong>Nota Pedagógica do Professor:</strong> ${escapeHtml(scene.teacher_notes)}
@@ -493,7 +496,7 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${safeTitle} — PEMARA AULA</title>
+  <title>${safeTitle} — PEMARA EDU</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -603,7 +606,15 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
     button.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .slide-counter { font-size: 13px; color: #94a3b8; font-family: monospace; font-weight: 600; }
     .teacher-notes-panel {
-      margin-top: 20px;
+      position: fixed;
+      top: 80px;
+      right: 16px;
+      z-index: 100;
+      width: min(440px, calc(100vw - 32px));
+      max-height: calc(100dvh - 112px);
+      overflow-y: auto;
+      box-sizing: border-box;
+      box-shadow: 0 18px 55px #0009;
       padding: 14px 18px;
       background: #1e1b4b;
       border: 1px solid #4338ca;
@@ -613,6 +624,9 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
       line-height: 1.5;
     }
     .teacher-notes-panel.hidden { display: none; }
+    .notes-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .notes-heading button { color:#fff; background:#37306b; border:1px solid #818cf8; border-radius:8px; padding:8px 12px; cursor:pointer; }
+    #teacher-notes-text { white-space:pre-wrap; }
 
     /* Estilos das Cenas Interativas */
     .scene-box { width: 100%; }
@@ -848,7 +862,7 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
         <h1>${safeTitle}</h1>
       </div>
       <div class="header-actions">
-        <button id="btn-notes-toggle" class="btn-toggle-notes" onclick="toggleTeacherNotes()">
+        <button id="btn-notes-toggle" class="btn-toggle-notes" aria-controls="teacher-notes-container" aria-expanded="false" onclick="toggleTeacherNotes()">
           Notas do Professor
         </button>
         <span style="font-size: 11px; color: #64748b; font-weight: 600;">PEMARA OFFLINE</span>
@@ -857,7 +871,10 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
 
     <div id="slide-content" class="scene-box"></div>
 
-    <div id="teacher-notes-container" class="teacher-notes-panel hidden"></div>
+    <aside id="teacher-notes-container" class="teacher-notes-panel hidden" aria-labelledby="teacher-notes-title">
+      <div class="notes-heading"><strong id="teacher-notes-title">Notas do Professor</strong><button aria-label="Fechar notas do professor" onclick="toggleTeacherNotes()">Fechar</button></div>
+      <div id="teacher-notes-text"></div>
+    </aside>
 
     <div class="controls">
       <button id="btn-prev" class="nav-btn" onclick="prevSlide()">Anterior</button>
@@ -894,6 +911,7 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
     let activeAnimFrame = null;
     let activeInterval = null;
     let currentStep=0,activeStepMove=null;
+    let cleanupModelMotion=()=>{};
     function pageStepCount(index){const scene=scenes[index];return learningPlans[scene.id]?.plan.steps.length || biologyFrames[scene.id]?.[0].length || 1;}
     function updateNavigation(){
       document.getElementById("btn-prev").disabled=currentIdx===0&&currentStep===0;
@@ -902,6 +920,8 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
     }
 
     function cleanupActiveAnimations() {
+      cleanupModelMotion();cleanupModelMotion=()=>{};
+      cleanupLearningMotion();
       if (activeAnimFrame) {
         cancelAnimationFrame(activeAnimFrame);
         activeAnimFrame = null;
@@ -916,6 +936,7 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
       showNotes = !showNotes;
       const notesBtn = document.getElementById('btn-notes-toggle');
       const notesPanel = document.getElementById('teacher-notes-container');
+      notesBtn.setAttribute('aria-expanded', String(showNotes));
       if (showNotes) {
         notesBtn.classList.add('active');
         notesPanel.classList.remove('hidden');
@@ -1210,6 +1231,7 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
         if (!sim) return;
         if (sim.t >= sim.flightTime) sim.t = 0;
         sim.isPlaying = !sim.isPlaying;
+        if(activeAnimFrame){cancelAnimationFrame(activeAnimFrame);activeAnimFrame=null;}
         sim.lastTime = 0;
         const playBtn = document.getElementById('proj-btn-play');
         if (playBtn) playBtn.innerText = sim.isPlaying ? 'Pausar' : 'Iniciar Simulação';
@@ -1222,6 +1244,7 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
         const sim = window.projectileSim;
         if (!sim) return;
         sim.isPlaying = false;
+        if(activeAnimFrame){cancelAnimationFrame(activeAnimFrame);activeAnimFrame=null;}
         sim.t = 0;
         sim.lastTime = 0;
         const playBtn = document.getElementById('proj-btn-play');
@@ -1262,16 +1285,7 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
       const showDataCards = p.show_data_cards !== false;
       const scaleMode = p.scale_mode || 'didactic';
 
-      const planets = [
-        { id: 'Mercury', name: 'Mercúrio', r: 45, size: 4, period: 88, color: '#a3a3a3', dist: '0.39 UA', temp: '167°C', cur: 'Ano dura 88 dias terrestres' },
-        { id: 'Venus', name: 'Vênus', r: 70, size: 6, period: 225, color: '#eab308', dist: '0.72 UA', temp: '464°C', cur: 'Planeta mais quente do Sistema Solar' },
-        { id: 'Earth', name: 'Terra', r: 100, size: 7, period: 365, color: '#38bdf8', dist: '1.00 UA', temp: '15°C', cur: 'Inclinação de 23.5° gera as 4 estações' },
-        { id: 'Mars', name: 'Marte', r: 130, size: 5, period: 687, color: '#f87171', dist: '1.52 UA', temp: '-65°C', cur: 'Possui o Monte Olimpo com 22 km de altura' },
-        { id: 'Jupiter', name: 'Júpiter', r: 175, size: 14, period: 4333, color: '#fb923c', dist: '5.20 UA', temp: '-110°C', cur: 'Maior planeta; cabem 1.300 Terras' },
-        { id: 'Saturn', name: 'Saturno', r: 220, size: 12, period: 10759, color: '#fef08a', dist: '9.58 UA', temp: '-140°C', cur: 'Magnífico sistema de anéis de gelo e rocha' },
-        { id: 'Uranus', name: 'Urano', r: 265, size: 9, period: 30687, color: '#67e8f9', dist: '19.2 UA', temp: '-195°C', cur: 'Gira deitado com eixo inclinado a 98°' },
-        { id: 'Neptune', name: 'Netuno', r: 305, size: 9, period: 60190, color: '#60a5fa', dist: '30.0 UA', temp: '-200°C', cur: 'Ventos supersônicos de até 2.000 km/h' }
-      ];
+      const planets = ${JSON.stringify(Object.values(PLANETS_DATA).map(p=>({id:p.id,name:p.name,r:p.orbitalRadiusDidactic*.8,size:p.relativeSize*.8,period:p.orbitalPeriodDays,color:p.color,dist:p.realDistanceAU+' UA',moons:p.moons,cur:p.curiosity}))).replace(/</g,'\\u003c')};
 
       let initialIdx = planets.findIndex(pl => pl.id.toLowerCase() === (focusedPlanet || '').toLowerCase());
       if (initialIdx < 0) initialIdx = 2; // Default to Earth
@@ -1281,21 +1295,21 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
 
       // Nota didática explícita sobre a escala
       h += '<div style="background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #fde68a; margin-bottom: 12px;">';
-      h += '<strong>Nota didática sobre escala:</strong> Representação visual com distâncias e tamanhos adaptados para visualização didática em tela (modo ' + (scaleMode === 'proportional' ? 'proporcional' : 'didático') + '). As distâncias reais do Sol (em Unidades Astronômicas - UA) e períodos orbitais exatos constam nos dados de cada planeta.';
+      h += '<strong>Nota didática sobre escala:</strong> Distâncias e tamanhos são adaptados para visualização; este desenho não está em escala proporcional. As fichas apresentam valores de referência de distância e período orbital.';
       h += '</div>';
 
       h += '<div class="sim-wrap" style="position: relative;">';
 
       // Barra de telemetria e parâmetros da cena
       h += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; font-size:12px; color:#94a3b8;">';
-      h += '<span>Foco inicial: <strong style="color:#38bdf8;">' + escapeHtml(planets[initialIdx].name) + '</strong> | Velocidade: <strong style="color:#f59e0b;">' + speedMult + 'x</strong> | Órbitas: <strong>' + (showOrbits ? 'Visíveis' : 'Ocultas') + '</strong></span>';
+      h += '<span>Foco inicial: <strong style="color:#38bdf8;">' + escapeHtml(planets[initialIdx].name) + '</strong> | Velocidade: <strong id="solar-speed-value" style="color:#f59e0b;">' + speedMult + 'x</strong></span>';
       h += '<div style="display:flex; gap:6px;">';
-      h += '<button id="btn-solar-pause" class="sim-btn" onclick="toggleSolarPlay()" style="padding:4px 10px; font-size:11px;">Pausar</button>';
+      h += '<button id="btn-solar-pause" class="sim-btn" onclick="toggleSolarPlay()" style="padding:4px 10px; font-size:11px;">'+(matchMedia('(prefers-reduced-motion: reduce)').matches?'Retomar':'Pausar')+'</button>';
       h += '<button class="sim-btn" onclick="resetSolarTime()" style="padding:4px 10px; font-size:11px;">Reiniciar Órbitas</button>';
       h += '</div>';
       h += '</div>';
 
-      if (showLabels) {
+      {
         h += '<div class="planet-pills">';
         planets.forEach((p, idx) => {
           h += '<button id="solar-pill-' + idx + '" class="planet-pill ' + (idx === initialIdx ? 'active' : '') + '" onclick="selectSolarPlanet(' + idx + ')">';
@@ -1313,31 +1327,40 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
       // Órbitas e planetas
       planets.forEach((p, idx) => {
         const isFoc = idx === initialIdx;
-        if (showOrbits) {
-          h += '<circle class="orbit-path" cx="350" cy="350" r="' + p.r + '" fill="none" stroke="' + (isFoc ? '#38bdf8' : '#1e293b') + '" stroke-width="' + (isFoc ? '1.5' : '1') + '" stroke-dasharray="' + (isFoc ? 'none' : '3 3') + '" />';
+        {
+          h += '<circle class="orbit-path" style="display:'+(showOrbits?'':'none')+'" cx="350" cy="350" r="' + p.r + '" fill="none" stroke="' + (isFoc ? '#38bdf8' : '#1e293b') + '" stroke-width="' + (isFoc ? '1.5' : '1') + '" stroke-dasharray="' + (isFoc ? 'none' : '3 3') + '" />';
         }
         h += '<circle id="solar-planet-' + idx + '" cx="' + (350 + p.r) + '" cy="350" r="' + p.size + '" fill="' + p.color + '" style="cursor:pointer;" onclick="selectSolarPlanet(' + idx + ')" />';
-        if (showLabels) {
-          h += '<text id="solar-label-' + idx + '" x="' + (350 + p.r) + '" y="' + (350 + p.size + 10) + '" fill="' + (isFoc ? '#38bdf8' : '#64748b') + '" font-size="9" text-anchor="middle" font-weight="' + (isFoc ? 'bold' : 'normal') + '">' + p.name + '</text>';
+        {
+          h += '<text style="display:'+(showLabels?'':'none')+'" id="solar-label-' + idx + '" x="' + (350 + p.r) + '" y="' + (350 + p.size + 10) + '" fill="' + (isFoc ? '#38bdf8' : '#64748b') + '" font-size="9" text-anchor="middle" font-weight="' + (isFoc ? 'bold' : 'normal') + '">' + p.name + '</text>';
         }
       });
       h += '</svg>';
 
       // Detalhe do planeta
       const activePlanet = planets[initialIdx];
-      if (showDataCards) {
-        h += '<div id="solar-card" class="map-detail-card planet-data-card" style="margin-top: 10px;">';
+      {
+        h += '<div id="solar-card" class="map-detail-card planet-data-card" style="margin-top: 10px;display:'+(showDataCards?'':'none')+'">';
         h += '<h4 id="solar-name" style="font-size: 16px; font-weight: 800; color: ' + activePlanet.color + ';">' + activePlanet.name + '</h4>';
-        h += '<p id="solar-info" style="margin: 4px 0; font-size: 13px; color: #cbd5e1;">Distância: ' + activePlanet.dist + ' | Período: ' + activePlanet.period + ' dias | Temp: ' + activePlanet.temp + '</p>';
+        h += '<p id="solar-info" style="margin: 4px 0; font-size: 13px; color: #cbd5e1;">Distância: ' + activePlanet.dist + ' | Período: ' + activePlanet.period + ' dias | Luas: ' + activePlanet.moons + ' (ref. NASA, out/2026)</p>';
         h += '<p id="solar-curiosity" style="margin: 4px 0; font-size: 12px; color: #fde68a;"><strong>Curiosidade:</strong> ' + activePlanet.cur + '</p>';
         h += '</div>';
       }
-      h += '</div>';
+      h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center">Velocidade: ';
+      [0.5,1,2,5].forEach(speed=>{h+='<button class="sim-btn" data-solar-speed="'+speed+'" aria-pressed="'+(speed===speedMult)+'" onclick="setSolarSpeed('+speed+')">'+speed+'x</button>';});
+      [['orbits','Mostrar Órbitas',showOrbits],['labels','Mostrar Rótulos',showLabels],['cards','Mostrar Ficha',showDataCards]].forEach(item=>{h+='<label><input id="solar-toggle-'+item[0]+'" type="checkbox" '+(item[2]?'checked':'')+' onchange="toggleSolarVisibility(this)"> '+item[1]+'</label>';});
+      h += '</div></div>';
 
+      window.setSolarSpeed=function(speed){window.solarSpeedMultiplier=speed;document.getElementById('solar-speed-value').textContent=speed+'x';document.querySelectorAll('[data-solar-speed]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.solarSpeed)===speed)));};
+      window.toggleSolarVisibility=function(input){const selector=input.id.endsWith('orbits')?'#solar-svg .orbit-path':input.id.endsWith('labels')?'[id^="solar-label-"]':'#solar-card';document.querySelectorAll(selector).forEach(el=>{el.style.display=input.checked?'':'none';});};
       window.solarPlanetsData = planets;
       window.solarElapsedDays = 0;
       window.solarSpeedMultiplier = speedMult;
-      window.solarIsPlaying = true;
+      window.solarIsPlaying = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let lastSolarTick=performance.now();
+      const solarPreference=matchMedia('(prefers-reduced-motion: reduce)');
+      const solarChanged=()=>{if(solarPreference.matches){window.solarIsPlaying=false;const btn=document.getElementById('btn-solar-pause');if(btn)btn.innerText='Retomar';}};
+      solarPreference.addEventListener('change',solarChanged);cleanupModelMotion=()=>solarPreference.removeEventListener('change',solarChanged);
 
       window.selectSolarPlanet = function(idx) {
         const ps = window.solarPlanetsData || [];
@@ -1356,25 +1379,29 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
           const iEl = document.getElementById('solar-info');
           const cEl = document.getElementById('solar-curiosity');
           if (nEl) { nEl.innerText = p.name; nEl.style.color = p.color; }
-          if (iEl) iEl.innerText = 'Distância: ' + p.dist + ' | Período Orbital: ' + p.period + ' dias | Temperatura Média: ' + p.temp;
+          if (iEl) iEl.innerText = 'Distância: ' + p.dist + ' | Período Orbital: ' + p.period + ' dias | Luas: ' + p.moons + ' (ref. NASA, out/2026)';
           if (cEl) cEl.innerHTML = '<strong>Curiosidade:</strong> ' + escapeHtml(p.cur);
         }
       };
 
       window.toggleSolarPlay = function() {
+        lastSolarTick=performance.now();
         window.solarIsPlaying = !window.solarIsPlaying;
         const btn = document.getElementById('btn-solar-pause');
         if (btn) btn.innerText = window.solarIsPlaying ? 'Pausar' : 'Retomar';
       };
 
       window.resetSolarTime = function() {
+        window.solarIsPlaying=false;
+        const btn=document.getElementById('btn-solar-pause');if(btn)btn.innerText='Retomar';
         window.solarElapsedDays = 0;
         updateSolarOrbits();
       };
 
       function updateSolarOrbits() {
+        const now=performance.now(),dt=Math.min(100,now-lastSolarTick)/1000;lastSolarTick=now;
         if (window.solarIsPlaying) {
-          window.solarElapsedDays += 2 * window.solarSpeedMultiplier;
+          window.solarElapsedDays += dt * 15 * window.solarSpeedMultiplier;
         }
         const ps = window.solarPlanetsData || [];
         ps.forEach((p, idx) => {
@@ -1397,146 +1424,7 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
       return h;
     }
 
-    function renderMathFunctionScene(scene) {
-      const p = scene.params || {};
-      const a = typeof p.a === 'number' ? p.a : 1;
-      const b = typeof p.b === 'number' ? p.b : -2;
-      const c = typeof p.c === 'number' ? p.c : -3;
-
-      let h = '<h2>' + escapeHtml(scene.title) + '</h2>';
-      h += '<div class="sim-wrap">';
-      h += '<div class="grid-2col">';
-
-      // Gráfico cartesiano SVG
-      h += '<div>';
-      h += '<svg id="math-svg" viewBox="0 0 460 340" style="width: 100%; height: auto; display: block; background: #020617; border-radius: 10px; border: 1px solid #1e293b;">';
-      // Grid
-      h += '<g stroke="#1e293b" stroke-width="1">';
-      for (let x = -10; x <= 10; x++) {
-        const sx = 230 + x * 20;
-        h += '<line x1="' + sx + '" y1="0" x2="' + sx + '" y2="340" />';
-      }
-      for (let y = -8; y <= 8; y++) {
-        const sy = 170 - y * 20;
-        h += '<line x1="0" y1="' + sy + '" x2="460" y2="' + sy + '" />';
-      }
-      h += '</g>';
-      // Eixos principais
-      h += '<line x1="0" y1="170" x2="460" y2="170" stroke="#64748b" stroke-width="2" />';
-      h += '<line x1="230" y1="0" x2="230" y2="340" stroke="#64748b" stroke-width="2" />';
-      h += '<text x="445" y="165" fill="#94a3b8" font-size="12" font-weight="bold">X</text>';
-      h += '<text x="236" y="16" fill="#94a3b8" font-size="12" font-weight="bold">Y</text>';
-
-      // Curva da Parábola e Vértice
-      h += '<path id="math-parabola" d="" fill="none" stroke="#10b981" stroke-width="3" />';
-      h += '<circle id="math-vertex" cx="230" cy="170" r="5" fill="#f59e0b" stroke="#fff" stroke-width="1.5" />';
-      h += '<circle id="math-root1" cx="230" cy="170" r="4" fill="#38bdf8" stroke="#fff" stroke-width="1" opacity="0" />';
-      h += '<circle id="math-root2" cx="230" cy="170" r="4" fill="#38bdf8" stroke="#fff" stroke-width="1" opacity="0" />';
-      h += '</svg>';
-      h += '</div>';
-
-      // Painel de coeficientes e cálculo
-      h += '<div class="math-controls">';
-      h += '<div style="padding: 10px 14px; background: #0f172a; border-radius: 8px; border: 1px solid #1e293b; font-family: monospace; font-size: 16px; font-weight: 700; color: #10b981;">';
-      h += '<span id="math-equation-text">f(x) = x² - 2x - 3</span>';
-      h += '</div>';
-
-      h += '<div class="slider-row"><label>a:</label><input type="range" id="slider-a" min="-4" max="4" step="0.5" value="' + a + '" oninput="recalcMathFunction()"><span id="val-a">' + a + '</span></div>';
-      h += '<div class="slider-row"><label>b:</label><input type="range" id="slider-b" min="-8" max="8" step="1" value="' + b + '" oninput="recalcMathFunction()"><span id="val-b">' + b + '</span></div>';
-      h += '<div class="slider-row"><label>c:</label><input type="range" id="slider-c" min="-8" max="8" step="1" value="' + c + '" oninput="recalcMathFunction()"><span id="val-c">' + c + '</span></div>';
-
-      h += '<div class="map-detail-card" style="margin-top: 6px;">';
-      h += '<div id="math-delta" style="font-size: 13px; color: #cbd5e1; font-weight: 600;">Discriminante Δ = b² - 4ac: Carregando...</div>';
-      h += '<div id="math-vertex-info" style="font-size: 13px; color: #f59e0b; margin-top: 4px;">Vértice: Carregando...</div>';
-      h += '<div id="math-roots-info" style="font-size: 13px; color: #38bdf8; margin-top: 4px;">Raízes reais: Carregando...</div>';
-      h += '</div>';
-
-      h += '</div>'; // fim math-controls
-      h += '</div>'; // fim grid-2col
-      h += '</div>'; // fim sim-wrap
-
-      window.recalcMathFunction = function() {
-        const inA = document.getElementById('slider-a');
-        const inB = document.getElementById('slider-b');
-        const inC = document.getElementById('slider-c');
-        if (!inA || !inB || !inC) return;
-        const curA = parseFloat(inA.value);
-        const curB = parseFloat(inB.value);
-        const curC = parseFloat(inC.value);
-
-        const lblA = document.getElementById('val-a');
-        const lblB = document.getElementById('val-b');
-        const lblC = document.getElementById('val-c');
-        if (lblA) lblA.innerText = curA;
-        if (lblB) lblB.innerText = curB;
-        if (lblC) lblC.innerText = curC;
-
-        const eqEl = document.getElementById('math-equation-text');
-        if (eqEl) {
-          let eq = 'f(x) = ';
-          if (curA !== 0) eq += (curA === 1 ? '' : curA === -1 ? '-' : curA) + 'x² ';
-          if (curB > 0) eq += '+ ' + (curB === 1 ? '' : curB) + 'x ';
-          else if (curB < 0) eq += '- ' + (Math.abs(curB) === 1 ? '' : Math.abs(curB)) + 'x ';
-          if (curC > 0) eq += '+ ' + curC;
-          else if (curC < 0) eq += '- ' + Math.abs(curC);
-          eqEl.innerText = eq;
-        }
-
-        // Curva
-        let d = '';
-        for (let x = -11; x <= 11; x += 0.2) {
-          const y = curA * x * x + curB * x + curC;
-          const sx = 230 + x * 20;
-          const sy = 170 - y * 20;
-          d += (d === '' ? 'M ' : ' L ') + sx.toFixed(1) + ' ' + sy.toFixed(1);
-        }
-        const curve = document.getElementById('math-parabola');
-        if (curve) curve.setAttribute('d', d);
-
-        // Vértice
-        const deltaVal = curB * curB - 4 * curA * curC;
-        const xv = curA !== 0 ? -curB / (2 * curA) : 0;
-        const yv = curA !== 0 ? -deltaVal / (4 * curA) : curC;
-
-        const vMarker = document.getElementById('math-vertex');
-        if (vMarker) {
-          vMarker.setAttribute('cx', (230 + xv * 20).toFixed(1));
-          vMarker.setAttribute('cy', (170 - yv * 20).toFixed(1));
-        }
-
-        const deltaEl = document.getElementById('math-delta');
-        const vInfoEl = document.getElementById('math-vertex-info');
-        const rInfoEl = document.getElementById('math-roots-info');
-        const r1Marker = document.getElementById('math-root1');
-        const r2Marker = document.getElementById('math-root2');
-
-        if (deltaEl) deltaEl.innerText = 'Δ = ' + deltaVal.toFixed(1) + ' (' + (deltaVal > 0 ? 'duas raízes reais distintas' : deltaVal === 0 ? 'raiz real única' : 'sem raízes reais') + ')';
-        if (vInfoEl) vInfoEl.innerText = 'Vértice: (' + xv.toFixed(2) + ', ' + yv.toFixed(2) + ') — Ponto de ' + (curA > 0 ? 'Mínimo' : 'Máximo');
-
-        if (deltaVal >= 0 && curA !== 0) {
-          const r1 = (-curB - Math.sqrt(deltaVal)) / (2 * curA);
-          const r2 = (-curB + Math.sqrt(deltaVal)) / (2 * curA);
-          if (rInfoEl) rInfoEl.innerText = 'Raízes reais: x1 = ' + r1.toFixed(2) + ' | x2 = ' + r2.toFixed(2);
-          if (r1Marker) {
-            r1Marker.setAttribute('cx', (230 + r1 * 20).toFixed(1));
-            r1Marker.setAttribute('cy', '170');
-            r1Marker.setAttribute('opacity', '1');
-          }
-          if (r2Marker) {
-            r2Marker.setAttribute('cx', (230 + r2 * 20).toFixed(1));
-            r2Marker.setAttribute('cy', '170');
-            r2Marker.setAttribute('opacity', '1');
-          }
-        } else {
-          if (rInfoEl) rInfoEl.innerText = 'Raízes reais: Não intercepta o eixo X (Δ < 0)';
-          if (r1Marker) r1Marker.setAttribute('opacity', '0');
-          if (r2Marker) r2Marker.setAttribute('opacity', '0');
-        }
-      };
-
-      setTimeout(() => { if (window.recalcMathFunction) window.recalcMathFunction(); }, 10);
-      return h;
-    }
+    ${FUNCTION_OFFLINE_RUNTIME}
 
     function renderQuizScene(scene) {
       let h = '<h2>' + escapeHtml(scene.title) + '</h2>';
@@ -1614,21 +1502,26 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
 
     function renderBiologyScene(scene, el) {
       let step=currentStep,plant=scene.params.cell_type==='plant',playing=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let allowed=false;
       el.innerHTML='<style>'+biologyStyles+'</style><section class="bio-model"><h2>'+escapeHtml(scene.title)+'</h2><div class="bio-controls"><button data-action="play"></button><button data-action="next">Próxima etapa</button><button data-action="reset">Recomeçar</button>'+(scene.params.model==='cell_structure'?'<button data-action="animal">Célula animal</button><button data-action="plant">Célula vegetal</button>':'')+'</div><div data-frame></div><div class="bio-steps"></div><p class="bio-note">Modelo didático simplificado, sem escala real. Os níveis de organização não representam transformação de uma célula em um organismo.</p></section>';
       const root=el.querySelector('.bio-model');
       const steps=biologyFrames[scene.id][0];
       steps.forEach(function(item,i){const button=document.createElement('button');button.textContent=(i+1)+'. '+item.label;button.onclick=function(){step=i;draw();};root.querySelector('.bio-steps').appendChild(button);});
       function draw(){
         currentStep=step;updateNavigation();
-        root.dataset.bioRunning=String(playing);
+        updatePlayback();
         root.querySelector('[data-frame]').innerHTML=biologyFrames[scene.id][plant?1:0][step].html;
         root.querySelector('[data-action=play]').textContent=playing?'Pausar animação':'Iniciar animação';
         root.querySelectorAll('.bio-steps button').forEach(function(button,i){button.setAttribute('aria-pressed',String(i===step));});
         ['animal','plant'].forEach(function(kind){const button=root.querySelector('[data-action='+kind+']');if(button)button.setAttribute('aria-pressed',String(plant===(kind==='plant')));});
       }
-      root.querySelector('[data-action=play]').onclick=function(){playing=!playing;draw();};
+      function updatePlayback(){root.dataset.bioRunning=String(playing);root.dataset.motionAllowed=String(allowed);root.querySelector('[data-action=play]').textContent=playing?'Pausar animação':'Iniciar animação';}
+      root.querySelector('[data-action=play]').onclick=function(){allowed=true;playing=!playing;updatePlayback();};
+      const bioPreference=matchMedia('(prefers-reduced-motion: reduce)');
+      const bioChanged=()=>{if(bioPreference.matches){playing=false;allowed=false;updatePlayback();}};
+      bioPreference.addEventListener('change',bioChanged);cleanupModelMotion=()=>bioPreference.removeEventListener('change',bioChanged);
       root.querySelector('[data-action=next]').onclick=function(){step=(step+1)%steps.length;draw();};
-      root.querySelector('[data-action=reset]').onclick=function(){step=0;draw();};
+      root.querySelector('[data-action=reset]').onclick=function(){playing=false;step=0;draw();};
       ['animal','plant'].forEach(function(kind){const button=root.querySelector('[data-action='+kind+']');if(button)button.onclick=function(){plant=kind==='plant';draw();};});
       activeStepMove=direction=>{const next=step+direction;if(next<0||next>=steps.length)return false;step=next;draw();return true;};
       draw();
@@ -1686,6 +1579,8 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
       const notesBtn = document.getElementById('btn-notes-toggle');
       const notesPanel = document.getElementById('teacher-notes-container');
       if (notesBtn && notesPanel) {
+        notesBtn.setAttribute('aria-expanded', String(showNotes));
+        document.getElementById('teacher-notes-title').textContent = 'Notas do Professor · Página ' + (currentIdx + 1);
         if (showNotes) {
           notesBtn.classList.add('active');
           notesPanel.classList.remove('hidden');
@@ -1694,9 +1589,9 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
           notesPanel.classList.add('hidden');
         }
         if (scene.teacher_notes) {
-          notesPanel.innerHTML = '<strong>Nota Pedagógica do Professor:</strong> ' + escapeHtml(scene.teacher_notes);
+          document.getElementById('teacher-notes-text').textContent = scene.teacher_notes;
         } else {
-          notesPanel.innerHTML = '<span style="color: #94a3b8;">Nenhuma nota do professor para esta cena.</span>';
+          document.getElementById('teacher-notes-text').textContent = 'Nenhuma nota do professor para esta página.';
         }
       }
     }

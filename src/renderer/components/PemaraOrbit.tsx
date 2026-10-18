@@ -24,19 +24,21 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
       : PLANETS_DATA.Earth
   );
 
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [isPlaying, setIsPlaying] = useState<boolean>(()=>!matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [speedMultiplier, setSpeedMultiplier] = useState<number>(params.speed_multiplier || 1);
   const [earthDaysElapsed, setEarthDaysElapsed] = useState<number>(0);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   const requestRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
+  useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)');const change=()=>{if(media.matches)setIsPlaying(false);};media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
 
   useEffect(() => {
     setParams(scene.params);
+    setSpeedMultiplier(scene.params.speed_multiplier || 1);
     if (scene.params.focused_planet && scene.params.focused_planet !== 'all') {
       setSelectedPlanet(PLANETS_DATA[scene.params.focused_planet] || null);
-    }
+    } else setSelectedPlanet(PLANETS_DATA.Earth);
   }, [scene.params]);
 
   const updateParam = (key: keyof SolarSystemParams, value: any) => {
@@ -48,7 +50,7 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
   // Loop de Animação das Órbitas
   const animateOrbits = (time: number) => {
     if (lastTimeRef.current !== null) {
-      const dtSeconds = (time - lastTimeRef.current) / 1000;
+      const dtSeconds = Math.min(100,time - lastTimeRef.current) / 1000;
       // 1 segundo real = 15 dias terrestres na simulação padrão
       const simDaysDelta = dtSeconds * 15 * speedMultiplier;
       setEarthDaysElapsed((prev) => prev + simDaysDelta);
@@ -131,7 +133,7 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
 
         {/* SVG DO SISTEMA SOLAR */}
         <svg
-          viewBox={`0 0 ${svgSize} ${svgSize}`}
+          viewBox={`-40 -40 ${svgSize+80} ${svgSize+80}`}
           className="w-full h-auto max-h-[360px] md:max-h-[440px] xl:max-h-[520px] select-none"
           style={{ transform: `scale(${zoomLevel})`, transition: 'transform 0.3s ease-out' }}
         >
@@ -167,7 +169,7 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
           {/* O SOL NO CENTRO */}
           <g transform={`translate(${svgCenter}, ${svgCenter})`} className="cursor-pointer">
             {/* Corona solar pulsante */}
-            <circle cx="0" cy="0" r="42" fill="url(#sun-glow)" className="animate-pulse" />
+            <circle cx="0" cy="0" r="42" fill="url(#sun-glow)" />
             {/* Núcleo do Sol */}
             <circle cx="0" cy="0" r="22" fill="#fbbf24" stroke="#fef08a" strokeWidth="2" />
             <text
@@ -194,6 +196,7 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
             return (
               <g
                 key={planet.id}
+                data-planet={planet.id}
                 transform={`translate(${px}, ${py})`}
                 onClick={() => {
                   setSelectedPlanet(planet);
@@ -211,7 +214,6 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
                     stroke="#38bdf8"
                     strokeWidth="2"
                     strokeDasharray="2 2"
-                    className="animate-spin"
                   />
                 )}
 
@@ -242,7 +244,7 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
                 )}
 
                 {/* Rótulo com o Nome */}
-                {(params.show_labels || isSelected) && (
+                {params.show_labels !== false && (
                   <text
                     x="0"
                     y={planet.relativeSize + 14}
@@ -301,7 +303,7 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
               </div>
               <div>
                 <span className="text-slate-400 block">Satélites Naturais:</span>
-                <span className="font-semibold text-cyan-300">{selectedPlanet.moons} luas</span>
+                <span className="font-semibold text-cyan-300" title="Luas reconhecidas; referência NASA consultada em 17/10/2026">{selectedPlanet.moons} luas</span>
               </div>
             </div>
 
@@ -330,7 +332,7 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
           </button>
 
           <button
-            onClick={() => setEarthDaysElapsed(0)}
+            onClick={() => {setIsPlaying(false);setEarthDaysElapsed(0);}}
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300"
             title="Resetar Posição Inicial"
           >
@@ -395,7 +397,7 @@ export const PemaraOrbit: React.FC<Props> = ({ scene, onParamsChange }) => {
       {/* AVISO DIDÁTICO EXPLÍCITO DE ESCALA SIMPLIFICADA (P1 / CRITÉRIO PEDAGÓGICO) */}
       <div className="flex items-center justify-between text-[11px] text-slate-400 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-800">
         <span>
-          <strong className="text-amber-400">Escala didática simplificada:</strong> Distâncias e raios planetários ajustados pedagogicamente para visualização em sala de aula (modo {params.scale_mode || 'didático'}).
+          <strong className="text-amber-400">Escala didática simplificada:</strong> Distâncias e raios planetários ajustados para visualização em sala de aula; o desenho não está em escala proporcional.
         </span>
         <span className="font-mono text-slate-500">PEMARA ASTRONOMIA DETERMINÍSTICA</span>
       </div>

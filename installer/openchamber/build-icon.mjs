@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
+const root='installer/openchamber/brand';
+const image=await loadImage(root+'/pemara-edu.png');
+const sizes=[16,24,32,48,64,128,256];
+const images=sizes.map(size=>{const canvas=createCanvas(size,size);canvas.getContext('2d').drawImage(image,0,0,size,size);return canvas.toBuffer('image/png');});
+const header=Buffer.alloc(6+16*sizes.length);header.writeUInt16LE(1,2);header.writeUInt16LE(sizes.length,4);
+let offset=header.length;
+sizes.forEach((size,i)=>{const start=6+16*i;header[start]=size===256?0:size;header[start+1]=header[start];header.writeUInt16LE(1,start+4);header.writeUInt16LE(32,start+6);header.writeUInt32LE(images[i].length,start+8);header.writeUInt32LE(offset,start+12);offset+=images[i].length;});
+fs.writeFileSync(root+'/pemara-edu.ico',Buffer.concat([header,...images]));
+console.log('ICO: '+sizes.join(', ')+' px');

@@ -1,0 +1,31 @@
+PEMARA OpenChamber 2.4.0-pemara.3
+
+Se a conexão cair
+
+1. Aguarde a internet voltar.
+2. Abra a mesma conversa na lista da esquerda.
+3. Se aparecer que a resposta foi interrompida, escreva uma nova mensagem,
+   por exemplo: "Continue a aula de onde parou. Confira os arquivos que já
+   foram salvos antes de escrever novamente."
+
+O aplicativo mantém as mensagens e os arquivos salvos. Uma resposta parcial
+continua no histórico. A reconexão não reenvia pedidos automaticamente.
+Uma nova resposta pode continuar usando internet; os HTMLs autossuficientes
+que já foram salvos podem ser usados offline.
+
+O que está incluído para criar aulas
+
+OpenChamber permite pedir aulas à IA pelo chat, criar e revisar arquivos HTML
+e abri-los no programa ou em um navegador. Há uma aula de exemplo incluída.
+O gerador visual de aulas e o Atlas do PEMARA EDU ainda não estão integrados
+neste instalador. Eles continuam no projeto PEMARA EDU separado.
+
+Preservação e atualização
+
+Instale esta versão por cima da edição anterior na mesma pasta. O perfil
+fica em %LOCALAPPDATA%\PEMARAOpenChamber\perfil, e as aulas ficam em
+Documentos\PEMARA Aulas ou nas pastas que você escolheu.
+Para backup, feche o aplicativo e copie essas pastas.
+
+Esta edição continua sendo um piloto Windows x64 sem assinatura digital.
+Consulte o relatório de validação que acompanha o instalador.

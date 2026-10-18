@@ -1,0 +1,10 @@
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+const here = path.dirname(fileURLToPath(import.meta.url));
+const appDir = path.resolve(here, '../../pilotos/openchamber/source/packages/electron');
+const require = createRequire(path.join(appDir, 'package.json'));
+const { build, Platform, Arch } = require('electron-builder');
+process.env.CSC_IDENTITY_AUTO_DISCOVERY = 'false';
+const prepackagedIndex = process.argv.indexOf('--prepackaged');
+await build({ projectDir: appDir, config: path.join(here, process.argv.includes('--education') ? 'builder.education.config.mjs' : process.argv.includes('--recovery') ? 'builder.recovery.config.mjs' : 'builder.config.mjs'), ...(prepackagedIndex >= 0 ? { prepackaged: path.resolve(process.argv[prepackagedIndex + 1]) } : {}), targets: Platform.WINDOWS.createTarget(process.argv.includes('--dir') ? ['dir'] : ['nsis'], Arch.x64), publish: 'never' });

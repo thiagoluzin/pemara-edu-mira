@@ -212,8 +212,8 @@ export const PresentationMode: React.FC<Props> = ({
       />
 
       {/* BARRA SUPERIOR DE CONTROLE (Auto-discreta) */}
-      <header className="relative z-30 flex items-center justify-between px-6 py-3 bg-slate-900/90 border-b border-slate-800 backdrop-blur-md">
-        <div className="flex items-center gap-4">
+      <header className="relative z-30 flex flex-wrap shrink-0 items-center justify-between gap-2 px-4 py-3 bg-slate-900/90 border-b border-slate-800 backdrop-blur-md">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <button
             onClick={onClose}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
@@ -222,13 +222,13 @@ export const PresentationMode: React.FC<Props> = ({
             <span>Sair do Modo Apresentação</span>
           </button>
 
-          <span className="text-xs text-slate-400 font-mono">
+          <span className="min-w-0 break-words text-xs text-slate-400 font-mono">
             {lesson.lesson.title} • {label(lesson.lesson.subject.toUpperCase())}
           </span>
         </div>
 
         {/* Timer de Aula & Ferramentas Interativas */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           {/* Cronômetro */}
           <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono">
             <Clock className="w-3.5 h-3.5 text-indigo-400" />
@@ -310,8 +310,8 @@ export const PresentationMode: React.FC<Props> = ({
       </header>
 
       {/* ÁREA CENTRAL DO SLIDE ATUAL */}
-        <main className="relative flex-1 p-6 md:p-10 overflow-y-auto flex items-start justify-center">
-          <div className="w-full max-w-6xl mx-auto my-auto">
+        <main className="relative flex-1 min-h-0 min-w-0 p-6 md:p-10 overflow-y-auto flex items-start justify-center">
+          <div className="w-full min-w-0 max-w-6xl mx-auto my-auto">
           <PemaraRenderer
               lesson={lesson.lesson}
             scene={currentScene}
@@ -323,24 +323,24 @@ export const PresentationMode: React.FC<Props> = ({
 
       {/* PAINEL FLUTUANTE DE NOTAS DO PROFESSOR */}
       {showNotes && (
-        <aside className="absolute right-6 bottom-20 z-40 w-96 p-5 rounded-2xl bg-slate-900/95 border border-amber-500/40 shadow-2xl backdrop-blur-xl text-xs space-y-2">
+        <aside aria-label="Notas do professor" className="absolute right-4 bottom-20 z-40 w-96 max-w-[calc(100%-2rem)] max-h-[calc(100dvh-10rem)] overflow-y-auto p-5 rounded-2xl bg-slate-900/95 border border-amber-500/40 shadow-2xl backdrop-blur-xl text-sm space-y-2">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <span className="font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
               <BookOpen className="w-3.5 h-3.5" />
               Notas do Professor (Cena {currentIdx + 1})
             </span>
-            <button onClick={() => setShowNotes(false)} className="text-slate-400 hover:text-white">
+            <button aria-label="Fechar notas do professor" onClick={() => setShowNotes(false)} className="text-slate-400 hover:text-white">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="text-slate-300 leading-relaxed font-normal">
+          <p className="text-slate-300 leading-relaxed font-normal whitespace-pre-wrap">
             {currentScene.teacher_notes || 'Nenhuma nota cadastrada especificamente para esta cena.'}
           </p>
         </aside>
       )}
 
       {/* BARRA INFERIOR DE NAVEGAÇÃO ENTRE CENAS */}
-      <footer className="relative z-30 flex items-center justify-between px-6 py-3 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md">
+      <footer className="relative z-30 flex flex-wrap shrink-0 items-center justify-between gap-2 px-4 py-3 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <button
             disabled={currentIdx === 0 && cursor.step === 0}

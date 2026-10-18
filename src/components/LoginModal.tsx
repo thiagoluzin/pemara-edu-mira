@@ -58,13 +58,7 @@ export const LoginModal: React.FC<Props> = ({ isOpen, onSuccess, onClose }) => {
           </p>
         </div>
 
-        {/* Aviso de primeiro acesso institucional */}
-        <div className="mb-5 p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/20 text-indigo-200 text-[11px] flex items-start gap-2.5">
-          <ShieldCheck className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold text-indigo-300">Primeiro Acesso:</span> Use o usuário <code className="bg-indigo-900/60 px-1 py-0.5 rounded text-indigo-200">admin</code> e senha <code className="bg-indigo-900/60 px-1 py-0.5 rounded text-indigo-200">admin</code>. Altere sua senha antes do uso escolar.
-          </div>
-        </div>
+        <p className="mb-5 text-sm text-slate-300">Use a conta fornecida pelo responsável por esta instalação compartilhada.</p>
 
         {errorMessage && (
           <div className="mb-4 p-3 rounded-xl bg-red-950/60 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
@@ -81,6 +75,7 @@ export const LoginModal: React.FC<Props> = ({ isOpen, onSuccess, onClose }) => {
             <div className="relative">
               <input
                 type="text"
+                aria-label="Usuário"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="Ex: admin ou prof.helena"
@@ -99,6 +94,8 @@ export const LoginModal: React.FC<Props> = ({ isOpen, onSuccess, onClose }) => {
             <div className="relative">
               <input
                 type="password"
+                aria-label="Senha"
+                maxLength={128}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

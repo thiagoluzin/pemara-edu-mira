@@ -1,0 +1,25 @@
+PEMARA EDU — guia do professor
+
+Abra pelo atalho PEMARA EDU. Não é preciso usar terminal nem criar uma conta local.
+
+CRIAR AULA COM IA
+1. Clique em Criar aula, na faixa esquerda.
+2. Descreva o tema, o ano, a duração e o que a turma precisa aprender.
+3. Se quiser, adicione seus materiais, selecione os trechos e confirme a revisão.
+4. Clique em Criar aula com IA. O pedido vai para o modelo configurado no OpenCode.
+5. Quando a estrutura estiver validada, a aula é salva na biblioteca e aberta no editor.
+
+O modelo escreve explicações, atividades, perguntas e notas do professor. Pode escolher animações existentes do Atlas compatíveis com a disciplina. Revise o conteúdo antes de apresentar. A validação de estrutura não garante a correção pedagógica.
+
+Se houver falha, o pedido e a conversa ficam guardados. Clique em Retomar para tentar novamente. Se o provedor recusar acesso, escolha um modelo disponível em Conversas e projetos. Não há troca automática para geração sem IA. A disponibilidade de modelos gratuitos depende do provedor.
+
+CONVERSAS E PROJETOS
+As aulas geradas têm uma conversa com título iniciado por Aula. O OpenCode continua disponível para trabalhar nos projetos e arquivos. A conversa estruturada usada pelo gerador não executa comandos: o PEMARA valida e salva o resultado.
+
+ATLAS E BIBLIOTECA
+Atlas de animações permite experimentar os modelos e criar uma aula inicial para editar. Minhas aulas mantém as aulas e versões depois de fechar o programa. Aulas anteriores continuam disponíveis.
+
+EXPORTAR
+No editor, clique em EXPORTAR e escolha Apresentação para abrir sem internet. Aguarde a confirmação. O HTML fica em Documentos / PEMARA Aulas / Minhas aulas / Exportadas. Use Abrir exportações para encontrá-lo e copie para um pendrive, se desejar.
+
+A IA na nuvem usa internet. Depois de salva, a aula e seu HTML funcionam offline. Os dados ficam fora da pasta do aplicativo e são preservados nas atualizações. O programa aguarda notas e rascunhos pendentes ao fechar.

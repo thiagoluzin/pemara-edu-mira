@@ -43,7 +43,7 @@ export const PemaraTitle: React.FC<Props> = ({ scene }) => {
       <div className="relative z-10 mt-12 flex items-center gap-6 text-xs text-slate-400">
         <span className="inline-flex items-center gap-1.5">
           <BookOpen className="w-4 h-4 text-indigo-400" />
-          PEMARA AULA
+          PEMARA EDU
         </span>
         <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/50" />
         <span className="inline-flex items-center gap-1.5">

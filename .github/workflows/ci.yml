@@ -8,7 +8,8 @@ on:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    # O piloto distribuído usa Windows e o harness real usa Chrome/PG nativos.
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository

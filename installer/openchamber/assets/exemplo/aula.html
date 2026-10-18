@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evaporação da Água — 5º ano</title>
+<style>
+:root{--azul:#0b6ea8;--azul2:#7fc4e8;--tinta:#12303f}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#eaf7fe,#cfe9f8);font:22px/1.5 Verdana,Geneva,sans-serif;color:var(--tinta)}
+.wrap{max-width:940px;margin:0 auto;padding:14px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+h1{font-size:29px;margin:0}h2{color:var(--azul);font-size:26px;margin:0 0 12px}
+p{margin:10px 0}ul{margin:8px 0;padding-left:24px}li{margin:6px 0}
+.pill{background:#fff;border-radius:999px;padding:6px 16px;font-size:19px;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.slide{display:none;background:#fff;border-radius:18px;padding:22px;margin-top:14px;box-shadow:0 4px 14px rgba(11,110,168,.15)}
+.slide.ativo{display:block}.box{background:#eaf7fe;border-left:8px solid var(--azul2);border-radius:10px;padding:12px 16px;margin:12px 0}
+.notas-btn{margin-top:14px;background:#f0f6fa;border:2px dashed #9cc7e0;color:#0b5f8f;border-radius:10px;padding:8px 14px;font-size:19px;cursor:pointer}
+.notas{display:none;margin-top:8px;background:#fffbe9;border-left:8px solid #f0c948;border-radius:10px;padding:12px 16px;font-size:20px}
+.notas.aberto{display:block}
+nav{display:flex;justify-content:space-between;gap:10px;margin:16px 0}
+button.big{font-size:22px;padding:12px 22px;border:0;border-radius:12px;background:var(--azul);color:#fff;cursor:pointer}
+button.big:disabled{background:#b9cfdc;cursor:default}
+canvas{width:100%;height:300px;border-radius:12px;display:block;background:#eef8ff}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.ctrl button{font-size:19px;padding:9px 14px;border:2px solid var(--azul);background:#fff;color:var(--azul);border-radius:10px;cursor:pointer}
+.ctrl button.on{background:var(--azul);color:#fff}
+.leg{font-size:17px;color:#3d6b82;margin-top:8px}
+.q{background:#f4fafd;border-radius:12px;padding:12px 16px;margin:12px 0}.q .op{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.q button{font-size:19px;padding:9px 14px;border:2px solid #9cc7e0;background:#fff;border-radius:10px;cursor:pointer;text-align:left}
+.fb{font-size:19px;margin-top:8px}.certo{color:#1a7f37}.errado{color:#b3261e}
+@media print{nav,.notas-btn{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>💧 Evaporação da Água — 5º ano</h1>
+  <span class="pill" id="contador">Etapa 1 de 6</span>
+</header>
+
+<section class="slide ativo">
+  <h2>1. Para onde vai a água?</h2>
+  <p>Depois da chuva, formam-se poças no pátio. No dia seguinte, muitas vezes elas já não estão lá.</p>
+  <div class="box"><strong>Pergunta para pensar:</strong> para onde foi a água da poça? Ela sumiu ou foi para algum lugar?</div>
+  <ul>
+    <li>Hoje vamos investigar a <strong>evaporação da água</strong>.</li>
+    <li>Vamos usar água em <strong>temperatura ambiente</strong> — sem nada quente para tocar.</li>
+  </ul>
+  <button class="notas-btn" aria-expanded="false">Notas do professor</button>
+  <div class="notas"><strong>Notas:</strong> 5 min (Etapa 1). Ouça as hipóteses sem corrigir. Se alguém disser que a água "desaparece", anote a fala para retomar no final e mostrar que ela passou para o ar como vapor de água (invisível). Não use vapor de chaleira nem fumaça: podem confundir vapor com fumaça.</div>
+</section>
+
+<section class="slide">
+  <h2>2. Experiência segura: duas manchas de água</h2>
+  <div class="box">Começamos a experiência <strong>agora</strong>, no início da aula: <strong>duas manchas pequenas e iguais</strong> de água em superfícies que não absorvem, uma ao lado da outra.</div>
+  <ul>
+    <li>Uma mancha vamos <strong>abanar de leve</strong>.</li>
+    <li>A outra fica <strong>parada</strong>.</li>
+    <li>Vamos observar e comparar <strong>ao longo de toda a aula</strong>, até o fim.</li>
+  </ul>
+  <p>Água sempre em <strong>temperatura ambiente</strong>. A umidade do ar influencia muito: <strong>não</strong> prometemos que seca em 10 minutos.</p>
+  <button class="notas-btn" aria-expanded="false">Notas do professor</button>
+  <div class="notas"><strong>Notas:</strong> 10 min (Etapa 2). Montamos as manchas aqui, logo no começo, para observar até o fim da aula. Use duas superfícies não absorventes iguais (plástico liso, prato de vidro) e manchas de tamanho parecido. Não aqueça a água. Anote no quadro a hora do início e, se possível, desenhe o tamanho de cada mancha para comparar depois. Peça previsões: "Qual seca primeiro? Por quê?"</div>
+</section>
+
+<section class="slide">
+  <h2>3. A evaporação acontece na superfície</h2>
+  <p>Na água, as partículas estão sempre se movimentando. Na <strong>superfície</strong>, algumas conseguem escapar para o ar.</p>
+  <canvas id="sim" width="640" height="300"></canvas>
+  <div class="ctrl">
+    <button id="btnPausa" type="button">Pausar</button>
+    <button id="btnReiniciar" type="button">Reiniciar</button>
+    <span>Temperatura:</span><button id="tAmb" class="on" type="button">Ambiente</button>
+    <button id="tMor" type="button">Morna</button>
+    <span>Ventilação:</span><button id="vFra" class="on" type="button">Fraca</button>
+    <button id="vFor" type="button">Forte</button>
+  </div>
+  <p class="leg" id="legenda">Os pontos representam <strong>partículas de água</strong>: elas se movimentam dentro do líquido e algumas escapam pela superfície. Atenção: os pontos <strong>não</strong> são o vapor — o <strong>vapor de água real é invisível</strong>. Representação simplificada, não é medição.</p>
+  <p class="leg" id="status">Ajuste atual: temperatura ambiente, ventilação fraca.</p>
+  <button class="notas-btn" aria-expanded="false">Notas do professor</button>
+  <div class="notas"><strong>Notas:</strong> 7 min (Etapa 3). Mostre que o escape sempre parte da <strong>superfície</strong>. Repare que <strong>não</strong> há bolhas subindo do fundo: isso não explica a evaporação. Peça para compararem "Ambiente" e "Morna", "Fraca" e "Forte", e dizerem o que muda no número de partículas que sai. Reforce sempre: os pontos são partículas e o vapor real é invisível; é qualitativo, não é medição. A animação fica suspensa quando este slide não está visível e volta sozinha, a menos que você tenha pausado no botão.</div>
+</section>
+
+<section class="slide">
+  <h2>4. Pode acontecer abaixo da ebulição</h2>
+  <p>A evaporação acontece mesmo com a água <strong>em temperatura ambiente</strong>, sem ferver.</p>
+  <div class="box"><p><strong>Evaporação:</strong> ocorre na <strong>superfície</strong>, em qualquer temperatura do dia a dia.</p>
+    <p><strong>Ebulição (fervura):</strong> é outro fenômeno, acontece em temperatura alta e envolve todo o líquido.</p></div>
+  <p>A evaporação <strong>não</strong> exige fervura nem aquecimento externo: ela usa a energia que já está disponível na própria água e no ambiente.</p>
+  <button class="notas-btn" aria-expanded="false">Notas do professor</button>
+  <div class="notas"><strong>Notas:</strong> 8 min (Etapa 4). Pergunte: "A água precisa ferver para evaporar?" Não diga que o calor é obrigatório. A energia existe na água e no ambiente; com mais energia disponível, a evaporação tende a ser mais intensa. Evite falar em "sumir": a água passa para o ar como vapor de água (invisível).</div>
+</section>
+
+<section class="slide">
+  <h2>5. Vapor invisível e nuvem de gotículas</h2>
+  <ul>
+    <li>O <strong>vapor de água</strong> é <strong>invisível</strong>: não conseguimos vê-lo no ar.</li>
+    <li>A <strong>nuvem</strong> que vemos é formada por <strong>gotículas de água</strong> (líquido), não pelo vapor invisível.</li>
+  </ul>
+  <p>É por isso que o "branquinho" saindo da chaleira não é vapor: são gotículas que voltaram a se juntar.</p>
+  <button class="notas-btn" aria-expanded="false">Notas do professor</button>
+  <div class="notas"><strong>Notas:</strong> 6 min (Etapa 5). Peça exemplos: névoa, nuvem, "fumacinha" da panela. Reforce: vapor = invisível; nuvem = gotículas visíveis. Não diga que vapor e nuvem são a mesma coisa. Se possível, volte rapidamente ao slide da simulação e lembre: os pontos são partículas, o vapor real é invisível.</div>
+</section>
+
+<section class="slide">
+  <h2>6. Quiz e fechamento</h2>
+  <div class="q" data-exp="A evaporação começa na superfície, onde algumas partículas escapam para o ar.">
+    <strong>1) Onde a evaporação da água acontece primeiro?</strong>
+    <div class="op">
+      <button type="button">No fundo do recipiente</button>
+      <button type="button" data-ok="1">Na superfície da água</button>
+      <button type="button">Somente ao ferver</button>
+    </div><div class="fb"></div></div>
+  <div class="q" data-exp="O vapor de água é invisível; não conseguimos vê-lo.">
+    <strong>2) O vapor de água que vai para o ar é...</strong>
+    <div class="op">
+      <button type="button">Visível e branco</button>
+      <button type="button" data-ok="1">Invisível</button>
+      <button type="button">Igual à nuvem</button>
+    </div><div class="fb"></div></div>
+  <div class="q" data-exp="A nuvem é feita de gotículas de água, por isso é visível.">
+    <strong>3) As nuvens que vemos no céu são formadas por...</strong>
+    <div class="op">
+      <button type="button">Vapor de água invisível</button>
+      <button type="button" data-ok="1">Gotículas de água</button>
+      <button type="button">Fumaça</button>
+    </div><div class="fb"></div></div>
+  <div class="box">Quando a água evapora, ela <strong>não desaparece</strong>: passa para o ar na forma de vapor de água (invisível). Agora respondam à folha de atividades.</div>
+  <button class="notas-btn" aria-expanded="false">Notas do professor</button>
+  <div class="notas"><strong>Notas:</strong> 14 min (Etapa 6). Leia cada questão em voz alta e discuta antes de clicar. Depois entregue a folha de atividades (5 questões) e circule pela sala. Volte às hipóteses iniciais, comparem as duas manchas de água do começo da aula e retome: a água não desaparece, passa para o ar como vapor de água (invisível).</div>
+</section>
+<nav><button class="big" id="prev" type="button">◀ Anterior</button><button class="big" id="next" type="button">Próxima ▶</button></nav>
+</div>
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide')),idx=0,n=slides.length;
+  var cont=document.getElementById('contador'),prev=document.getElementById('prev'),next=document.getElementById('next');
+  function mostrar(i){
+    idx=Math.max(0,Math.min(n-1,i));
+    slides.forEach(function(s,k){s.classList.toggle('ativo',k===idx);});
+    cont.textContent='Etapa '+(idx+1)+' de '+n;
+    prev.disabled=(idx===0);next.disabled=(idx===n-1);
+    if(visivel()){medir();desenhar();if(!pausadoManual&&!raf)rodar();}
+    else if(raf){cancelAnimationFrame(raf);raf=null;rodando=false;}   /* suspende fora do slide da simulação */
+  }
+  prev.onclick=function(){mostrar(idx-1);};
+  next.onclick=function(){mostrar(idx+1);};
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight')mostrar(idx+1);
+    if(e.key==='ArrowLeft')mostrar(idx-1);
+  });
+  [].slice.call(document.querySelectorAll('.notas-btn')).forEach(function(b){
+    b.onclick=function(){
+      var aberto=b.nextElementSibling.classList.toggle('aberto');
+      b.setAttribute('aria-expanded',aberto?'true':'false');
+      b.textContent=aberto?'Fechar notas do professor':'Notas do professor';
+    };
+  });
+  [].slice.call(document.querySelectorAll('.q')).forEach(function(q){
+    [].slice.call(q.querySelectorAll('.op button')).forEach(function(b){
+      b.onclick=function(){
+        var fb=q.querySelector('.fb'),ok=b.getAttribute('data-ok')==='1';
+        fb.className='fb '+(ok?'certo':'errado');
+        fb.textContent=ok?('✅ Muito bem! '+q.getAttribute('data-exp')):'❌ Ainda não. Tente outra alternativa.';
+      };
+    });
+  });
+  /* ===== Simulação de partículas ===== */
+  var cv=document.getElementById('sim'),ctx=cv.getContext('2d'),leg=document.getElementById('legenda'),st=document.getElementById('status');
+  var W=0,H=0,sup=0,parts=[],raf=null,rodando=false,pausadoManual=false,temp=1,vento=1,pp=document.getElementById('btnPausa');
+  function visivel(){return slides[idx].contains(cv);}
+  function medir(){
+    var w=cv.clientWidth||(cv.parentElement&&cv.parentElement.clientWidth)||640;
+    W=cv.width=Math.max(300,w|0);H=cv.height=300;sup=H*0.55;
+  }
+  function nascer(){
+    return{x:10+Math.random()*(W-20),y:sup+6+Math.random()*(H-sup-14),
+      vx:(Math.random()-0.5)*0.7,vy:(Math.random()-0.5)*0.7,fora:false};
+  }
+  function desenhar(){
+    if(!W)medir();
+    var g=ctx.createLinearGradient(0,0,0,sup);
+    g.addColorStop(0,'#f6fbff');g.addColorStop(1,'#e3f2fb');ctx.fillStyle=g;ctx.fillRect(0,0,W,sup);
+    var gl=ctx.createLinearGradient(0,sup,0,H);
+    gl.addColorStop(0,'#bfe3f5');gl.addColorStop(1,'#8fcbe8');ctx.fillStyle=gl;ctx.fillRect(0,sup,W,H-sup);
+    ctx.strokeStyle='#39a3d4';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,sup);ctx.lineTo(W,sup);ctx.stroke();
+    ctx.font='16px Verdana';ctx.fillStyle='#5b7f93';ctx.fillText('AR',10,26);
+    ctx.fillStyle='#0b5f8f';ctx.fillText('ÁGUA (líquido)',10,H-12);
+    parts.forEach(function(p){
+      ctx.beginPath();ctx.arc(p.x,p.y,p.fora?2.2:3.2,0,6.283);
+      ctx.fillStyle=p.fora?'#a9c4d4':'#0b6ea8';ctx.fill();
+    });
+  }
+  function atualizar(){
+    var vel=0.6+temp*0.8;
+    for(var i=0;i<parts.length;i++){
+      var p=parts[i];
+      if(!p.fora){
+        p.x+=p.vx*vel;p.y+=p.vy*vel;
+        if(p.x<8){p.x=8;p.vx=Math.abs(p.vx);}
+        if(p.x>W-8){p.x=W-8;p.vx=-Math.abs(p.vx);}
+        if(p.y>H-8){p.y=H-8;p.vy=-Math.abs(p.vy);}
+        if(p.y<sup+4){p.y=sup+4;p.vy=Math.abs(p.vy);}
+        if(p.y<sup+10&&Math.random()<0.0055*temp*(0.5+vento*0.7)){
+          p.fora=true;p.vy=-(0.6+Math.random())*temp;p.vx=(Math.random()-0.5)*0.6+vento*0.5;
+        }
+      }else{
+        p.x+=p.vx+vento*0.6;p.y+=p.vy;
+        if(p.y<-12||p.x>W+14){var q=nascer();p.x=q.x;p.y=q.y;p.vx=q.vx;p.vy=q.vy;p.fora=false;}
+      }
+    }
+  }
+  function rodar(){
+    if(raf)return;                      /* trava: nunca mais de um loop ativo */
+    if(!visivel())return;               /* suspenso enquanto o slide da simulação não está visível */
+    rodando=true;pp.textContent='Pausar';
+    (function passo(){atualizar();desenhar();raf=requestAnimationFrame(passo);})();
+  }
+  function parar(){
+    if(raf){cancelAnimationFrame(raf);raf=null;}
+    rodando=false;
+  }
+  function pausar(){
+    parar();pausadoManual=true;pp.textContent='Continuar';desenhar();
+  }
+  function reiniciar(){
+    parar();                            /* cancela o loop antes de recriar: nunca duplica */
+    medir();parts=[];
+    for(var i=0;i<90;i++)parts.push(nascer());
+    desenhar();
+    if(visivel()&&!pausadoManual)rodar();
+  }
+  function alternar(par,on){par.forEach(function(b){b.classList.toggle('on',b===on);});}
+  function atualizarStatus(){
+    st.textContent='Ajuste atual: temperatura '+(temp===1?'ambiente':'morna')+', ventilação '+(vento===1?'fraca':'forte')+'. Os pontos continuam representando partículas de água; o vapor de água real é invisível.';
+  }
+  var bT=[document.getElementById('tAmb'),document.getElementById('tMor')];
+  var bV=[document.getElementById('vFra'),document.getElementById('vFor')];
+  bT[0].onclick=function(){temp=1;alternar(bT,bT[0]);atualizarStatus();};
+  bT[1].onclick=function(){temp=1.9;alternar(bT,bT[1]);atualizarStatus();};
+  bV[0].onclick=function(){vento=1;alternar(bV,bV[0]);atualizarStatus();};
+  bV[1].onclick=function(){vento=2.2;alternar(bV,bV[1]);atualizarStatus();};
+  pp.onclick=function(){if(pausadoManual){pausadoManual=false;rodar();}else{pausar();}};
+  document.getElementById('btnReiniciar').onclick=function(){reiniciar();};
+  window.addEventListener('resize',function(){medir();desenhar();});
+  atualizarStatus();
+  mostrar(0);
+  reiniciar();
+})();
+</script>
+</body>
+</html>

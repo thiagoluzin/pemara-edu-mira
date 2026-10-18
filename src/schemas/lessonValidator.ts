@@ -1,4 +1,5 @@
 import {validateTeachingVisual} from '../engine/teachingVisual';
+import {ATLAS,isAtlasKind} from '../animations/atlas';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -119,6 +120,14 @@ export function validateLessonSpec(spec: any): ValidationResult {
         const p=scene.learning_progress;
         if (!p || !Array.isArray(p.completed) || p.completed.some((n:any)=>!Number.isInteger(n)||n<0)
           || typeof p.notes !== 'string' || p.notes.length>20000) errors.push(`${prefix}: Registro da atividade inválido.`);
+      }
+      if(scene.atlas_model!==undefined){
+        if(!['text','summary'].includes(scene.type)||!(scene.atlas_model==='none'||isAtlasKind(scene.atlas_model)))errors.push(`${prefix}: Modelo Atlas inválido.`);
+        if(isAtlasKind(scene.atlas_model)&&!(ATLAS.find(p=>p.id===scene.atlas_model)!.subjects as readonly string[]).includes(spec.lesson?.subject))errors.push(`${prefix}: Modelo Atlas incompatível com a disciplina.`);
+      }
+      if(scene.material_source!==undefined){
+        const m=scene.material_source;
+        if(!m||typeof m.materialId!=='string'||typeof m.filename!=='string'||typeof m.sourceUnit!=='string'||!Number.isInteger(m.sourceIndex)||m.sourceIndex<1||(m.sha256!==undefined&&!/^[a-f0-9]{64}$/.test(m.sha256)))errors.push(`${prefix}: Origem de material inválida.`);
       }
       if(scene.visual!==undefined){
         if(!['text','summary'].includes(scene.type))errors.push(`${prefix}: visual só é permitido em texto e síntese.`);
@@ -257,8 +266,8 @@ export function validateLessonSpec(spec: any): ValidationResult {
             if (typeof params.c !== 'number' || !Number.isFinite(params.c)) {
               errors.push(`${prefix}: Coeficiente "c" é obrigatório e deve ser um número finito.`);
             }
-            if (params.function_type && params.function_type !== 'parabola' && params.function_type !== 'linear') {
-              errors.push(`${prefix}: Tipo de função "${params.function_type}" ainda não suportado no piloto (requer "parabola").`);
+            if (params.function_type && !['parabola','linear','sine'].includes(params.function_type)) {
+              errors.push(`${prefix}: Tipo de função "${params.function_type}" não suportado; use parabola, linear ou sine.`);
             }
           }
           break;

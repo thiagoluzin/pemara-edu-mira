@@ -36,7 +36,7 @@ export const BIOLOGY_CSS = `
 @keyframes bio-exchange{0%{transform:translateX(0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateX(115px);opacity:0}}
 @keyframes bio-beat{0%,100%{transform:scale(1)}25%{transform:scale(1.06)}45%{transform:scale(1)}}
 @media(max-width:850px){.bio-body{grid-template-columns:1fr}.bio-drawing{max-height:300px}.bio-detail{padding:10px;font-size:15px}.bio-detail h3{font-size:18px}}
-@media(prefers-reduced-motion:reduce){.bio-molecule,.bio-heart{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.bio-model:not([data-motion-allowed=true]) .bio-molecule,.bio-model:not([data-motion-allowed=true]) .bio-heart,.learning-canvas:not([data-motion-allowed=true]) .bio-molecule,.learning-canvas:not([data-motion-allowed=true]) .bio-heart{animation:none!important}}
 @media print{.bio-controls,.bio-steps{display:none}.bio-model{break-inside:avoid}.bio-body{grid-template-columns:2fr 1fr}.bio-molecule,.bio-heart{animation:none!important}}
 `;
 

@@ -8,6 +8,7 @@
  */
 
 export interface AuthUser {
+  local?: boolean;
   id: string;
   username: string;
   name: string;
@@ -67,13 +68,12 @@ export const authApi = {
   async getMe(): Promise<AuthUser | null> {
     try {
       const res = await fetch('/api/auth/me');
-      if (!res.ok) {
-        return null;
-      }
+      if (res.status === 401) return null;
+      if (!res.ok) throw new Error('Não foi possível abrir o acervo. Verifique se o PEMARA está em execução.');
       const data = await res.json();
       return data.user || null;
     } catch {
-      return null;
+      throw new Error('Não foi possível abrir o acervo. Verifique se o PEMARA está em execução.');
     }
   },
 

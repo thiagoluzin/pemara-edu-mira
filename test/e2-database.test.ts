@@ -30,7 +30,7 @@ test('E2 (emulador pg-mem): Migrar banco vazio aplica todas as tabelas canônica
 
   // Verifica tabela de controle de migração
   const migRes = await pool.query('SELECT * FROM schema_migrations ORDER BY version ASC;');
-  assert.equal(migRes.rows.length, 6);
+  assert.equal(migRes.rows.length, 7);
   assert.equal(migRes.rows[0].version, '001');
   assert.equal(migRes.rows[1].version, '002');
   assert.equal(migRes.rows[2].version, '003');
@@ -69,7 +69,7 @@ test('E2 (emulador pg-mem): Reaplicar migrações é idempotente e não duplica 
 
   // Primeira execução
   const res1 = await runMigrations(pool);
-  assert.equal(res1.appliedCount, 6);
+  assert.equal(res1.appliedCount, 7);
 
   // Inserir um dado de teste
   const userRepo = new UserRepository(pool);
@@ -84,7 +84,7 @@ test('E2 (emulador pg-mem): Reaplicar migrações é idempotente e não duplica 
   // Segunda execução
   const res2 = await runMigrations(pool);
   assert.equal(res2.appliedCount, 0, 'Segunda execução não deve reaplicar migrações');
-  assert.equal(res2.alreadyAppliedCount, 6, 'Deve identificar que as 6 migrações já foram aplicadas');
+  assert.equal(res2.alreadyAppliedCount, 7, 'Deve identificar que as 7 migrações já foram aplicadas');
 
   // Dados anteriores permanecem intactos
   const fetched = await userRepo.findById(teacher.id);

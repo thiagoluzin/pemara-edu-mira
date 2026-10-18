@@ -1,9 +1,10 @@
+import { AtlasLibrary } from './components/AtlasLibrary';
 import {AISettings} from './components/admin/AISettings';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * 
- * PEMARA AULA — APLICAÇÃO PRINCIPAL (APP.TSX)
+ * PEMARA EDU — APLICAÇÃO PRINCIPAL (APP.TSX)
  * Arquitetura completa do motor gerador de aulas visuais:
  * - Núcleo determinístico sem IA (acervo de conteúdos + Conjuntos de conteúdos)
  * - Provas obrigatórias: Grécia Antiga (6EF), Sistema Solar (6EF), Lançamento Oblíquo (Física)
@@ -45,9 +46,10 @@ import { resolvePackSlugForInput } from './catalog/curriculumCatalog';
 import { MigrationModal } from './components/MigrationModal';
 import { ShieldAlert, Download, CheckCircle2, UploadCloud } from 'lucide-react';
 
-function getTabFromPath(): 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' {
+function getTabFromPath(): 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas' {
   if (typeof window === 'undefined') return 'editor';
   const path = window.location.pathname.replace(/^\//, '');
+  if (path === 'atlas') return 'atlas';
   if (path === 'admin') return 'admin';
   if (path === 'settings') return 'settings';
   if (path === 'library') return 'library';
@@ -98,13 +100,15 @@ export default function App() {
 
   // Autenticação e Sessão Individual do Usuário (E3)
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isOpeningWorkspace, setIsOpeningWorkspace] = useState(true);
+  const [workspaceError, setWorkspaceError] = useState('');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState<boolean>(false);
 
   // Navegação de Abas e Roteamento URL SPA (B2.2)
-  const [activeTab, setActiveTabState] = useState<'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings'>(getTabFromPath);
+  const [activeTab, setActiveTabState] = useState<'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas'>(getTabFromPath);
 
-  const setActiveTab = (tab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings') => {
+  const setActiveTab = (tab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas') => {
     setActiveTabState(tab);
     if (typeof window !== 'undefined') {
       const targetPath = tab === 'editor' ? '/' : `/${tab}`;
@@ -137,6 +141,10 @@ export default function App() {
   const [hasUnsyncedLocalLessons, setHasUnsyncedLocalLessons] = useState<boolean>(false);
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'unsaved' | 'saving' | 'saved' | 'error' | 'conflict'>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    document.documentElement.dataset.pemaraSaveState = autosaveStatus;
+    return () => { delete document.documentElement.dataset.pemaraSaveState; };
+  }, [autosaveStatus]);
   const [conflictData, setConflictData] = useState<any>(null);
 
   const autosaveTimeoutRef = useRef(new Map<string,ReturnType<typeof setTimeout>>());
@@ -213,7 +221,8 @@ export default function App() {
 
         setSavedLessons(fullLessons);
         if (fullLessons.length > 0) {
-          setCurrentLesson(fullLessons[0]);
+          const lastOpened = window.localStorage.getItem('pemara-last-opened-lesson');
+          setCurrentLesson(fullLessons.find(lesson => lesson.lesson.id === lastOpened) || fullLessons[0]);
         }
       } else {
         // Professor sem aulas salvas no banco de dados (Empty State honesto, sem auto-criação)
@@ -239,10 +248,13 @@ export default function App() {
 
   useEffect(() => {
     const initAuth = async () => {
+      try {
       const user = await authApi.getMe();
       if (user) {
         setCurrentUser(user);
       }
+      setIsOpeningWorkspace(false);
+      } catch { setWorkspaceError('Não foi possível abrir suas aulas. Inicie o PEMARA e tente novamente.'); }
     };
     initAuth();
   }, []);
@@ -347,7 +359,18 @@ export default function App() {
   };
 
   // Atualizar a aula atual com autosave debounced no banco de dados (B2.3)
+  useEffect(() => {
+    if (currentUser && !isLibraryLoading && savedLessons.some(lesson => lesson.lesson.id === currentLesson.lesson.id)) {
+      try { window.localStorage.setItem('pemara-last-opened-lesson', currentLesson.lesson.id); } catch { /* The database remains authoritative. */ }
+    }
+  }, [currentUser, isLibraryLoading, savedLessons, currentLesson.lesson.id]);
+
   const handleUpdateCurrentLesson = (updatedLesson: LessonSpec) => {
+    // A edição é um rascunho. Só o servidor incrementa a versão publicada;
+    // incrementar aqui fazia a primeira troca de modelo gerar conflito 409.
+    if(currentUser&&updatedLesson.lesson.id===currentLesson.lesson.id){
+      updatedLesson={...updatedLesson,lesson_version:currentLesson.lesson_version};
+    }
     setCurrentLesson(updatedLesson);
     setSavedLessons((prev) =>
       prev.map((item) => (item.lesson.id === updatedLesson.lesson.id ? updatedLesson : item))
@@ -693,6 +716,9 @@ export default function App() {
     setIsPresentationOpen(true);
   };
 
+  if (workspaceError) return <div role="alert" className="min-h-screen bg-slate-950 text-slate-100 p-8"><p>{workspaceError}</p><button className="mt-4 rounded bg-indigo-600 px-4 py-2" onClick={()=>window.location.reload()}>Tentar novamente</button></div>;
+  if (isOpeningWorkspace) return <div role="status" className="min-h-screen bg-slate-950 text-slate-100 p-8">Abrindo suas aulas…</div>;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
       {/* NAVBAR SUPERIOR */}
@@ -791,11 +817,18 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'atlas' && <AtlasLibrary onSave={async spec => {
+          if (!currentUser) throw new Error('Aguarde a abertura do acervo local.');
+          const result = await lessonsApi.createLesson({ title: spec.lesson.title, subjectCode: spec.lesson.subject, gradeLevel: spec.lesson.grade, topic: spec.lesson.topic, spec });
+          const saved = { ...spec, lesson_version: result.lesson.current_version, lesson: { ...spec.lesson, id: result.lesson.id } };
+          setSavedLessons(previous => [saved, ...previous]); setCurrentLesson(saved); setAutosaveStatus('saved'); setActiveTab('editor');
+        }} />}
         {activeTab === 'create' && (
           <LessonCreator
             onCreateLesson={handleCreateLesson}
             isGenerating={isGenerating}
             errorMessage={generationError}
+            onOpenSavedLesson={async id=>{const result=await lessonsApi.getLesson(id);setCurrentLesson(result.currentSpec);setSavedLessons(previous=>[result.currentSpec,...previous.filter(l=>l.lesson.id!==id)]);setAutosaveStatus('saved');setActiveTab('editor');}}
           />
         )}
 
@@ -805,7 +838,7 @@ export default function App() {
               <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-indigo-200 shadow-lg">
                 <div className="flex items-center gap-2.5">
                   <UploadCloud className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-                  <span>Você possui aulas salvas localmente no navegador desta máquina. Deseja migrá-las para sua conta no servidor da escola?</span>
+                  <span>{currentUser.local ? 'Há aulas guardadas neste navegador. Você pode copiá-las para o acervo deste computador.' : 'Você possui aulas salvas localmente no navegador desta máquina. Deseja migrá-las para sua conta no servidor da escola?'}</span>
                 </div>
                 <button
                   onClick={() => setIsMigrationModalOpen(true)}

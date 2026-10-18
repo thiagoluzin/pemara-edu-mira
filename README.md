@@ -2,6 +2,51 @@
 
 Código aberto sob a [licença MIT](LICENSE).
 
+### Aplicativo para o professor — PEMARA EDU
+
+A edição desktop reúne conversas e projetos, criação de aulas com a IA do
+OpenCode, biblioteca pessoal e Atlas na mesma janela. O professor usa o
+instalador Windows e o atalho **PEMARA EDU**, sem terminal.
+
+Em **Criar aula**, descreva o tema e selecione materiais opcionais. O pedido
+é guardado, enviado ao modelo configurado no OpenCode e transformado em uma
+aula editável após a validação da estrutura. Falhas mantêm o pedido e a conversa
+para retomada explícita; não há troca silenciosa para geração sem IA.
+
+A disponibilidade de IA depende do modelo e do acesso do professor ao provedor.
+O modelo gratuito usado no teste de 18/10/2026 respondeu HTTP 403; isso está
+registrado, e não constitui validação de uma geração real bem-sucedida.
+A biblioteca, as animações e os HTMLs exportados podem ser usados sem internet.
+
+- [Guia do professor](installer/openchamber/AULAS-PROFESSORES.txt)
+- [Arquitetura da integração](installer/openchamber/INTEGRACAO-IA.md)
+- [Compilação do desktop](installer/openchamber/BUILD-PEMARA-EDU.md)
+- [Resultado dos testes e limitações](installer/openchamber/RELATORIO-PEMARA-EDU.md)
+- [Referências e licenças](THIRD_PARTY_NOTICES.md)
+
+O backup neste repositório inclui fontes e alterações locais. Instaladores,
+conversas, bancos, credenciais e materiais pessoais ficam fora do Git.
+
+### Edição web local preservada
+
+A edição web anterior permanece disponível com os comandos abaixo e seu
+modo de composição sem IA. Ela não é o fluxo principal do novo desktop.
+
+### Um computador por professor — edição offline
+
+Neste computador, abra **INICIAR PEMARA OFFLINE.bat** e comece a trabalhar.
+Não há cadastro, login ou senha. A instalação usa banco próprio, preserva o
+acervo existente e não requer chave de IA.
+
+O importador guarda os originais e permite revisar trechos de PDF (incluindo OCR
+local em português/inglês), DOCX, PPTX, TXT e Markdown. O Atlas oferece 26 modelos
+com seleção automática por assunto ou escolha do professor; fontes e modelos
+acompanham a aula salva e sua exportação HTML/PDF.
+
+Use **PARAR PEMARA OFFLINE.bat** para encerrar com backup. Em outro computador,
+prepare as dependências uma vez com **PREPARAR PEMARA OFFLINE.bat** e internet;
+depois o uso é local. Leia o [guia de uso e recuperação](COMO%20USAR%20OFFLINE.md).
+
 ### Demonstração local no Windows
 
 Instale Node.js 24, execute `npm ci` e abra `INICIAR DEMONSTRACAO.bat`.

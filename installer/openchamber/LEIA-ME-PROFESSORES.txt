@@ -1,0 +1,43 @@
+PEMARA OpenChamber — Windows 10 e 11 (64 bits, Intel/AMD)
+
+1. Abra o arquivo PEMARA-OpenChamber-...-Instalar.exe.
+2. Clique em Avançar, escolha a pasta se desejar e clique em Instalar.
+3. Conclua e abra PEMARA OpenChamber pelo atalho da Área de Trabalho.
+4. Em Escolher projeto, selecione Minhas aulas. Escreva o que deseja criar.
+
+Exemplo de pedido:
+Crie uma aula de Ciências para o 5º ano, com 50 minutos, sobre evaporação.
+Salve um HTML completo nesta pasta, com notas do professor e atividades.
+O HTML precisa funcionar sem internet, sem imagens ou bibliotecas externas.
+
+O professor não precisa usar terminal. Node.js, Python, Git, OpenCode e o
+aplicativo já acompanham o instalador, sem alterar o PATH do Windows.
+
+A IA gratuita DeepSeek V4.1 Flash Free vem selecionada. Ela precisa de
+internet para responder, e sua disponibilidade depende do provedor.
+Não há assinatura, conta do autor ou chave de API compartilhada no pacote.
+Revisar conteúdo e atividades antes de apresentar aos alunos.
+
+Aulas: Documentos\PEMARA Aulas
+Conversas/configurações: %LOCALAPPDATA%\PEMARAOpenChamber\perfil
+Se cadastrar outra pasta, os arquivos continuam no local escolhido.
+Fechar, reinstalar ou desinstalar o aplicativo não apaga essas pastas.
+Para backup, feche o aplicativo e copie as duas pastas para outra unidade.
+
+Abra Aula de exemplo para conhecer a aula de evaporação já incluída.
+O arquivo aula.html pode ser aberto diretamente no navegador sem internet.
+
+Atualizações desta edição são feitas por um novo instalador PEMARA.
+Esta distribuição de teste ainda não tem assinatura digital de editor.
+Windows ARM e Windows de 32 bits não estão incluídos nesta edição.
+
+Software livre utilizado: OpenChamber (MIT), OpenCode, Electron, Node.js,
+CPython, Git for Windows e ripgrep. Licenças acompanham seus componentes.
+Fontes e licenças dos componentes:
+https://github.com/openchamber/openchamber/tree/v2.4.0
+https://opencode.ai/v2/
+https://github.com/electron/electron/releases/tag/v43.7.0
+https://nodejs.org/dist/v24.22.0/
+https://www.python.org/downloads/release/python-31316/
+https://github.com/git-for-windows/git/releases/tag/v2.56.0.windows.2
+https://github.com/microsoft/ripgrep-prebuilt

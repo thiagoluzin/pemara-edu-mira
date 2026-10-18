@@ -1,0 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {createRequire} from 'node:module';
+import {OpenCode} from '../../pilotos/openchamber/source/node_modules/@opencode/client/dist/promise/index.js';
+const require=createRequire('C:/Users/admin_remoto/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/package.json');
+const {_electron}=require('playwright');
+const app=await _electron.launch({executablePath:path.resolve('build/openchamber/2.4.0-pemara.5/dist/win-unpacked/PEMARA EDU.exe'),timeout:90000});
+try{let page;for(let i=0;i<120;i++){page=app.context().pages().find(p=>p.url().startsWith('openchamber-ui://app/index'));if(page)break;await new Promise(r=>setTimeout(r,500));}await page.getByRole('button',{name:'Abrir menu do OpenChamber',exact:true}).waitFor({timeout:60000});const connection=await page.evaluate(()=>({baseUrl:window.__OPENCHAMBER_API_BASE_URL__,headers:window.__OPENCHAMBER_RUNTIME_HEADERS__}));const client=OpenCode.make({...connection,headers:{...connection.headers,'x-opencode-directory':encodeURIComponent('C:/Users/admin_remoto/Documents/PEMARA Aulas/Minhas aulas')}});const models=await client.model.list();const list=Array.isArray(models)?models:models.models||models.data;const safe=list?.filter(m=>m.enabled&&m.providerID==='opencode').map(m=>({id:m.id,name:m.name,cost:m.cost}));fs.writeFileSync('build/openchamber/2.4.0-pemara.5/evidencias/modelos-disponiveis.json',JSON.stringify(safe||{fields:Object.keys(models)},null,2));console.log(JSON.stringify(safe||{fields:Object.keys(models)},null,2));}finally{const closed=app.waitForEvent('close',{timeout:120000});await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].close());await closed;}

@@ -34,6 +34,7 @@ export const TABLES_IN_DEPENDENCY_ORDER = [
   'licenses',
   'curriculum_skills',
   'users',
+  'teacher_materials',
   'sessions',
   'auth_events',
   'login_rate_limits',
@@ -57,6 +58,7 @@ export const TABLES_IN_DEPENDENCY_ORDER = [
 
 // Whitelist canônica de colunas para prevenção de injeção e adulteração de schema
 export const CANONICAL_TABLE_COLUMNS: Record<string, string[]> = {
+  teacher_materials: ['id','owner_id','filename','sha256','byte_length','original_base64','extraction_json','created_at'],
   schema_migrations: ['version', 'name', 'applied_at', 'checksum'],
   sources: ['id', 'provider', 'title', 'url', 'author', 'language', 'source_type', 'retrieved_at', 'status'],
   licenses: ['id', 'name', 'code', 'url', 'commercial_use', 'derivatives_allowed', 'attribution_required', 'redistribution_allowed', 'verified', 'notes'],
@@ -190,6 +192,10 @@ export async function importDatabase(
   if (!backup.data.login_rate_limits) {
     backup.data.login_rate_limits = [];
     backup.table_counts.login_rate_limits = 0;
+  }
+  if (!backup.data.teacher_materials) {
+    backup.data.teacher_materials=[];
+    backup.table_counts.teacher_materials=0;
   }
 
   for (const table of TABLES_IN_DEPENDENCY_ORDER) {

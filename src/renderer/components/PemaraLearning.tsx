@@ -1,8 +1,11 @@
+import {mountAtlasLab} from '../../animations/atlasLab';
+import {ATLAS,type AtlasKind} from '../../animations/atlas';
 import type {PresentationStep} from '../../engine/presentationNavigation';
-import React,{useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useState,useRef} from 'react';
 import type {LessonMeta,Scene,TextScene,SummaryScene} from '../../types/lesson';
 import {BIOLOGY_CSS} from '../../engine/biologyModel';
 import {createLearningPlan,learningDiagram,LEARNING_CSS} from '../../engine/learningVisual';
+import {hasLearningMotion} from '../../engine/learningMotion';
 
 export function PemaraLearning({scene,lesson,onChange,presentationStep}:{presentationStep?:PresentationStep;scene:TextScene|SummaryScene;lesson?:LessonMeta;onChange?:(scene:Scene)=>void}) {
   const plan=useMemo(()=>createLearningPlan(scene,lesson),[scene,lesson]);
@@ -10,10 +13,31 @@ export function PemaraLearning({scene,lesson,onChange,presentationStep}:{present
   const step=presentationStep?.value??localStep;
   const setStep=(value:number)=>{if(presentationStep)presentationStep.onChange(value);else setLocalStep(value);};
   const [variant,setVariant]=useState(plan.initialVariant);
+  useEffect(()=>setVariant(plan.initialVariant),[plan.kind,plan.initialVariant]);
   const [playing,setPlaying]=useState(()=>typeof window!=='undefined'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [motionAllowed,setMotionAllowed]=useState(false);
+  const [replay,setReplay]=useState(0);
   const [completed,setCompleted]=useState<number[]>(scene.learning_progress?.completed||[]);
   const [notes,setNotes]=useState(scene.learning_progress?.notes||'');
   const current=Math.min(step,plan.steps.length-1);
+  const diagram=useMemo(()=>learningDiagram(plan,current,variant),[plan,current,variant]);
+  const animated=hasLearningMotion(diagram);
+  const artRef=useRef<HTMLDivElement>(null);
+  const labParams=useRef(scene.atlas_parameters||{});
+  const changeRef=useRef(onChange);changeRef.current=presentationStep?undefined:onChange;
+  const sceneRef=useRef(scene);sceneRef.current=scene;
+  useEffect(()=>{if(!artRef.current)return;
+    // Two variants can intentionally share SVG markup. React then retains the
+    // controller's mutated DOM; rebuild from the source before remounting it.
+    artRef.current.innerHTML=diagram;
+    return mountAtlasLab(artRef.current,plan.kind,variant,labParams.current,next=>{labParams.current=next;changeRef.current?.({...sceneRef.current,atlas_parameters:next});},()=>setPlaying(false));},[plan.kind,variant,replay,diagram]);
+  const [reducedMotion,setReducedMotion]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(()=>{if(reducedMotion){setPlaying(false);setMotionAllowed(false);}},[diagram,reducedMotion]);
+  useEffect(()=>{
+    const media=window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update=()=>{setReducedMotion(media.matches);if(media.matches){setPlaying(false);setMotionAllowed(false);}};
+    media.addEventListener('change',update);return()=>media.removeEventListener('change',update);
+  },[]);
   const choose=(s:number)=>{setStep(s);};
   const updateProgress=(next:number[],text:string)=>{
     setCompleted(next);setNotes(text);
@@ -27,27 +51,34 @@ export function PemaraLearning({scene,lesson,onChange,presentationStep}:{present
     if(node.hasAttribute('data-learning-step'))setStep(Number(node.getAttribute('data-learning-step')));
     if(node.hasAttribute('data-learning-variant'))setVariant(Number(node.getAttribute('data-learning-variant')));
   };
-  return <section className="learning-canvas" data-running={playing} data-learning-kind={plan.kind}
+  return <section className="learning-canvas" data-running={playing&&animated&&(!reducedMotion||motionAllowed)} data-motion-allowed={motionAllowed} data-learning-kind={plan.kind}
     aria-label="Exploração visual da página">
     <style>{BIOLOGY_CSS+LEARNING_CSS}</style>
     <div className="learning-eyebrow">{({concept:'Explore e explique',example:'Exemplo em ação',activity:'Oficina da turma',summary:'Mapa de aprendizagem'})[plan.mode]}</div>
     <h2>{scene.title}</h2>
+    <div className="learning-actions learning-playback">
+      {animated?<><button className="learning-primary" onClick={()=>{setMotionAllowed(true);setPlaying(p=>!p);}}>{playing?'Pausar animação':'Reproduzir animação'}</button>{reducedMotion&&!motionAllowed&&<span className="learning-caption">Movimento reduzido neste dispositivo. Reproduzir ativa somente este desenho.</span>}</>:<span className="learning-caption">Desenho estático — explore pelos modelos e pelas etapas.</span>}
+    </div>
     <div className="learning-stage">
-      <div className="learning-art" onClick={e=>activateGraphic(e.target)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activateGraphic(e.target);}}} dangerouslySetInnerHTML={{__html:learningDiagram(plan,current,variant)}}/>
+      <div ref={artRef} key={replay} className="learning-art" onClick={e=>activateGraphic(e.target)} onKeyDown={e=>{if((e.key==='Enter'||e.key===' ')&&(e.target as Element).closest('[data-learning-step],[data-learning-variant]')){e.preventDefault();activateGraphic(e.target);}}} dangerouslySetInnerHTML={{__html:diagram}}/>
       <div className="learning-reading"><h3>{plan.mode==='activity'?'Desafio da turma':plan.mode==='example'?'Observe o exemplo':plan.mode==='summary'?'Conecte o que aprendeu':'Explore a ideia'} • {current+1}/{plan.steps.length}</h3>
         <p>{plan.steps[current]}</p>
       </div>
     </div>
-    {plan.variants.length>0&&<div className="learning-variants" aria-label="Manipular o modelo">
+    {plan.variants.length>0&&<><p className="learning-caption">Comparar modelos — escolha o desenho. As setas abaixo percorrem o texto.</p><div className="learning-variants" aria-label="Manipular o modelo">
       {plan.kind==='fractions'?<><label htmlFor={`parts-${scene.id}`}>Partes destacadas: {variant}/{plan.denominator}</label><input id={`parts-${scene.id}`} type="range" min="0" max={plan.denominator} value={variant} onChange={e=>{setVariant(Number(e.target.value));}}/></>
       :plan.variants.map((name,i)=><button key={name} aria-pressed={variant===i} onClick={()=>{setVariant(i);}}>{name}</button>)}
-    </div>}
-    <p className="learning-caption">{plan.caption} Use ← e → para percorrer as ideias; depois da última, avance para a próxima página.</p>
+    </div></>}
+    <p className="learning-caption">{plan.kind==='statistics'?'Amostra ilustrativa: ajuste os valores e compare os resultados calculados.':plan.caption} Use ← e → para percorrer as ideias; depois da última, avance para a próxima página.</p>
+    {scene.source_citation&&<p className="learning-caption">Fonte: {scene.source_citation}</p>}
+    {onChange&&!presentationStep&&!scene.visual&&<label>Modelo visual<select aria-label="Modelo visual" value={scene.atlas_model||'auto'} onChange={e=>onChange({...scene,atlas_model:e.target.value==='auto'?undefined:e.target.value as AtlasKind|'none'})}>
+      <option value="auto">Escolha automática pelo tema</option><option value="none">Quadro de texto</option>
+      {ATLAS.filter(p=>(p.subjects as readonly string[]).includes(plan.subject)).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+    </select></label>}
     <div className="learning-actions">
-      <button className="learning-primary" onClick={()=>setPlaying(p=>!p)}>{playing?'Pausar animação':'Reproduzir animação'}</button>
       <button disabled={current===0} onClick={()=>choose(current-1)}>Etapa anterior</button>
       <button disabled={current===plan.steps.length-1} onClick={()=>choose(current+1)}>Próxima etapa</button>
-      <button onClick={()=>{choose(0);setVariant(plan.initialVariant);}}>Recomeçar exploração</button>
+      <button onClick={()=>{setPlaying(false);setReplay(n=>n+1);choose(0);setVariant(plan.initialVariant);}}>Recomeçar exploração</button>
     </div>
     <nav className="learning-progress" aria-label="Ideias da página">{plan.steps.map((_,i)=><button key={i} aria-label={`Explorar ideia ${i+1}`} aria-pressed={current===i} onClick={()=>choose(i)}>{completed.includes(i)?'✓ ':''}{i+1}</button>)}</nav>
     {plan.mode==='activity'&&<div className="learning-workshop">

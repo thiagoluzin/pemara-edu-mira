@@ -46,6 +46,7 @@ export async function fetchWikidataEntity(
   qid: string,
   options?: { timeoutMs?: number; fetchFn?: typeof fetch }
 ): Promise<WikidataParsedEntity> {
+  if(process.env.PEMARA_OFFLINE==='true')throw new Error('Consultas externas desativadas nesta instalação offline. Use o acervo local.');
   const cleanQid = qid.trim();
   if (!validateQid(cleanQid)) {
     throw new Error(`Identificador QID inválido: "${qid}". Deve seguir o padrão Q seguido de dígitos (ex: Q83494).`);

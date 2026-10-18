@@ -32,6 +32,7 @@ export interface MigrationEntry {
   filename: string;
   filepath: string;
   checksum: string;
+  windowsChecksum: string;
 }
 
 /**
@@ -48,7 +49,10 @@ export function getAvailableMigrations(migrationsDir?: string): MigrationEntry[]
   return files.map((filename) => {
     const filepath = path.join(dir, filename);
     const content = fs.readFileSync(filepath, 'utf8');
-    const checksum = crypto.createHash('sha256').update(content).digest('hex');
+    const normalized=content.replace(/\r\n/g,'\n');
+    const checksum = crypto.createHash('sha256').update(normalized).digest('hex');
+    // Aceita apenas a diferença CRLF/LF de instalações Windows anteriores.
+    const windowsChecksum=crypto.createHash('sha256').update(normalized.replace(/\n/g,'\r\n')).digest('hex');
     const parts = filename.split('_');
     const version = parts[0];
     const name = parts.slice(1).join('_').replace('.sql', '');
@@ -59,6 +63,7 @@ export function getAvailableMigrations(migrationsDir?: string): MigrationEntry[]
       filename,
       filepath,
       checksum,
+      windowsChecksum,
     };
   });
 }
@@ -110,7 +115,7 @@ export async function runMigrations(customPool?: pg.Pool, migrationsDir?: string
       if (appliedMap.has(mig.version)) {
         const storedChecksum = appliedMap.get(mig.version);
         // Conferência estrita de checksum: migração aplicada não pode ser adulterada
-        if (storedChecksum !== mig.checksum) {
+        if (storedChecksum !== mig.checksum && storedChecksum !== mig.windowsChecksum) {
           throw new Error(
             `Inconsistência de integridade na migração "${mig.filename}" (versão ${mig.version}): ` +
             `o checksum registrado no banco ("${storedChecksum}") diverge do checksum do arquivo local ("${mig.checksum}"). ` +

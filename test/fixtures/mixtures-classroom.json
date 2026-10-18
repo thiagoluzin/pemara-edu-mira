@@ -1,0 +1,162 @@
+{
+  "lesson": {
+    "id": "regression-mixtures-notes",
+    "grade": "6EF",
+    "title": "Separação de misturas — aula revisada",
+    "topic": "science-6-misturas-transformacoes-e-separacao",
+    "author": "Acervo PEMARA (Conteúdo v2) — revisão docente pendente",
+    "subject": "science",
+    "language": "pt-BR",
+    "createdAt": "2026-10-17T20:47:06.129Z",
+    "updatedAt": "2026-10-17T20:47:06.129Z",
+    "visual_status": "READY",
+    "didactic_style": "complete",
+    "generation_mode": "MODE_A_NO_AI",
+    "duration_minutes": 45
+  },
+  "scenes": [
+    {
+      "id": "scene-01-title",
+      "type": "title",
+      "badge": "Material do professor · revisão pedagógica",
+      "title": "Separação de misturas — aula revisada",
+      "subtitle": "Aula preparada com o material do professor",
+      "layout_id": "01_title",
+      "teacher_notes": "Objetivo: escolher um método de separação e justificar pela propriedade dos componentes. Apresente as três misturas do desafio. Antes de reproduzir, peça previsões; depois, pause para discutir. A animação é um modelo ampliado, sem escala. Percurso: desafio, filtração, decantação, evaporação e avaliação."
+    },
+    {
+      "id": "material-1-1",
+      "type": "text",
+      "title": "Desafio inicial",
+      "content": [
+        "DESAFIO INICIAL. Temos água com areia, água com sal dissolvido e água com óleo. Um filtro de papel resolve os três casos? Em duplas, registrem uma previsão e expliquem o que imaginam que ficará no filtro."
+      ],
+      "layout_id": "02_title_body",
+      "atlas_model": "separation",
+      "teacher_notes": "Antes de reproduzir, pergunte: um filtro de papel separa os três casos? Peça que as duplas justifiquem. Reproduza e pause para comparar: grãos de areia sedimentam; o sal dissolvido está disperso em íons; o óleo forma outra fase. Os íons estão ampliados e não são grãos visíveis. Não antecipe todas as respostas: retome as previsões após estudar cada método.",
+      "material_source": {
+        "sha256": "7dde4bdb8f9132702e370141fc0f64822457211a1bff6e921040f09fbe9419d1",
+        "filename": "Material_Separacao_de_Misturas_6ano.txt",
+        "materialId": "183cfada-2398-4e54-9f82-bd0cba3dc7a9",
+        "sourceUnit": "paragrafo",
+        "sourceIndex": 2
+      },
+      "source_citation": "Material_Separacao_de_Misturas_6ano.txt · Parágrafo 2"
+    },
+    {
+      "id": "material-2-1",
+      "type": "text",
+      "title": "Filtração",
+      "content": [
+        "FILTRAÇÃO. O filtro retém partículas de areia suspensas na água quando elas são maiores que seus poros. O sal dissolvido atravessa um filtro de papel comum junto com a água. Aparência transparente não significa que a água seja potável."
+      ],
+      "layout_id": "02_title_body",
+      "teacher_notes": "Pergunte o que fica retido e o que atravessa o filtro. Relacione a retenção da areia ao tamanho dos grãos e dos poros. O sal dissolvido atravessa um filtro de papel comum com a água. Peça uma justificativa, não apenas o nome do método. Aparência transparente não comprova potabilidade; a água do ensaio não deve ser bebida.",
+      "material_source": {
+        "sha256": "7dde4bdb8f9132702e370141fc0f64822457211a1bff6e921040f09fbe9419d1",
+        "filename": "Material_Separacao_de_Misturas_6ano.txt",
+        "materialId": "183cfada-2398-4e54-9f82-bd0cba3dc7a9",
+        "sourceUnit": "paragrafo",
+        "sourceIndex": 3
+      },
+      "source_citation": "Material_Separacao_de_Misturas_6ano.txt · Parágrafo 3"
+    },
+    {
+      "id": "material-3-1",
+      "type": "text",
+      "title": "Decantação",
+      "content": [
+        "DECANTAÇÃO. Na mistura de água e areia, o repouso permite que os grãos se depositem; depois, podemos transferir cuidadosamente parte do líquido. Água e óleo formam fases separadas. A escolha do procedimento depende das propriedades dos componentes."
+      ],
+      "layout_id": "02_title_body",
+      "teacher_notes": "Peça que observem para onde os grãos se deslocam durante o repouso. Pause e diferencie sedimentação (os grãos se depositam) de decantação (transferir cuidadosamente o líquido após a separação). O desenho mostra a sedimentação; não mostra o ato de verter. Compare com água e óleo, que formam fases líquidas separadas.",
+      "material_source": {
+        "sha256": "7dde4bdb8f9132702e370141fc0f64822457211a1bff6e921040f09fbe9419d1",
+        "filename": "Material_Separacao_de_Misturas_6ano.txt",
+        "materialId": "183cfada-2398-4e54-9f82-bd0cba3dc7a9",
+        "sourceUnit": "paragrafo",
+        "sourceIndex": 4
+      },
+      "source_citation": "Material_Separacao_de_Misturas_6ano.txt · Parágrafo 4"
+    },
+    {
+      "id": "material-4-1",
+      "type": "text",
+      "title": "Evaporação",
+      "content": [
+        "EVAPORAÇÃO. Ao evaporar a água de uma solução de água e sal, podemos recuperar o sal. Nesse procedimento simples, a água não é recolhida. Compare esse objetivo com recuperar também o solvente. Discuta o modelo; não aqueça recipientes durante este ensaio."
+      ],
+      "layout_id": "02_title_body",
+      "teacher_notes": "Pergunte qual componente queremos recuperar. A água passa para o estado gasoso e o sal permanece; o vapor de água é invisível, representado por pontos azuis ampliados neste esquema. Na evaporação simples, a água não é recolhida. Para recuperá-la, seria necessário condensar e recolher o vapor, como na destilação. Não faça aquecimento neste ensaio de software.",
+      "material_source": {
+        "sha256": "7dde4bdb8f9132702e370141fc0f64822457211a1bff6e921040f09fbe9419d1",
+        "filename": "Material_Separacao_de_Misturas_6ano.txt",
+        "materialId": "183cfada-2398-4e54-9f82-bd0cba3dc7a9",
+        "sourceUnit": "paragrafo",
+        "sourceIndex": 5
+      },
+      "source_citation": "Material_Separacao_de_Misturas_6ano.txt · Parágrafo 5"
+    },
+    {
+      "id": "material-5-1",
+      "type": "text",
+      "title": "Avaliação de saída",
+      "content": [
+        "AVALIAÇÃO DE SAÍDA. Para cada mistura inicial, proponha um método e justifique. Explique por que a filtração comum não separa sal dissolvido da água. Complete: o modelo visual ajuda a prever, mas precisamos observar uma mistura real para conferir a previsão."
+      ],
+      "layout_id": "02_title_body",
+      "teacher_notes": "Retome as previsões do início. Aceite filtração para água e areia; repouso e decantação também podem separar parte do líquido. Para água e sal, peça evaporação se o objetivo for recuperar o sal; filtro comum não retém o sal dissolvido. Para água e óleo, discuta a separação das fases e a decantação. Avalie principalmente a justificativa pela propriedade dos componentes. A resposta é aberta e deve ser discutida com o professor.",
+      "material_source": {
+        "sha256": "7dde4bdb8f9132702e370141fc0f64822457211a1bff6e921040f09fbe9419d1",
+        "filename": "Material_Separacao_de_Misturas_6ano.txt",
+        "materialId": "183cfada-2398-4e54-9f82-bd0cba3dc7a9",
+        "sourceUnit": "paragrafo",
+        "sourceIndex": 6
+      },
+      "source_citation": "Material_Separacao_de_Misturas_6ano.txt · Parágrafo 6"
+    }
+  ],
+  "agent_logs": [
+    {
+      "agent": "Maestro",
+      "action": "Início da Orquestração Curricular",
+      "status": "info",
+      "details": "Modo: MODE_A_NO_AI. Disciplina: science. Série: 6EF. Tema: \"Misturas, transformações e separação\".",
+      "timestamp": "17:47:06"
+    },
+    {
+      "agent": "Maestro",
+      "action": "Material selecionado pelo professor",
+      "status": "warning",
+      "details": "5 cenas incluídas. Os trechos mantêm a ordem e a origem selecionadas; revisão pedagógica do professor necessária.",
+      "timestamp": "17:47:06"
+    },
+    {
+      "agent": "QA",
+      "action": "Validação Estrutural do Schema Aprovada",
+      "status": "success",
+      "details": "Campos, tipos e limites em conformidade estrita com o LessonSpec v1.0.",
+      "timestamp": "17:47:06"
+    },
+    {
+      "agent": "QA",
+      "action": "Pré-checagem Heurística Visual (1920x1080)",
+      "status": "info",
+      "details": "Auditando Safe Area (100px/80px), colisões cartesianas e limites tipográficos (heurística).",
+      "timestamp": "17:47:06"
+    },
+    {
+      "agent": "QA",
+      "action": "Conclusão da Pré-checagem Heurística Visual",
+      "status": "success",
+      "details": "Aula \"Misturas, transformações e separação\" avaliada [Status Visual Heurístico: READY] com 6 cenas.",
+      "timestamp": "17:47:06"
+    }
+  ],
+  "objectives": [
+    "Explorar o material selecionado e justificar as respostas às atividades."
+  ],
+  "lesson_version": 2,
+  "schema_version": "1.0",
+  "renderer_version": "0.3.0"
+}

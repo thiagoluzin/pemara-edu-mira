@@ -1,3 +1,7 @@
+import {MaterialPicker} from './MaterialPicker';
+import {OpenCodeLessonCreator} from './OpenCodeLessonCreator';
+import type {MaterialSelection,MaterialSceneOptions} from '../types/material';
+import {materialSceneCount,manualSelections,materialHeading,materialPart,orderedMaterials} from '../composer/materialScenes';
 import {aiGenerationProblem} from '../services/aiGenerationAvailability';
 import { gradeLabel } from '../ui/labels';
 /**
@@ -38,21 +42,30 @@ interface Props {
   onCreateLesson: (input: GenerationInput) => Promise<void>;
   isGenerating: boolean;
   errorMessage?: string | null;
+  onOpenSavedLesson?: (id:string)=>Promise<void>;
 }
 
-export const LessonCreator: React.FC<Props> = ({ onCreateLesson, isGenerating, errorMessage }) => {
+export const LessonCreator: React.FC<Props> = ({ onCreateLesson, isGenerating, errorMessage, onOpenSavedLesson }) => {
+  const [openCode,setOpenCode]=useState<{model:string}|null>(null);
+  const [checkingProvider,setCheckingProvider]=useState(true);
   const [subject, setSubject] = useState<Subject>('history');
   const [grade, setGrade] = useState<string>('6EF');
   const [topic, setTopic] = useState<string>('Grécia Antiga: Pólis, Democracia e Sociedade');
   const [duration, setDuration] = useState<number>(45);
   const [didacticStyle, setDidacticStyle] = useState<'visual' | 'summary' | 'review' | 'exercises' | 'complete'>('visual');
   const [generationMode, setGenerationMode] = useState<GenerationMode>('MODE_A_NO_AI');
-  const [attachedFileName, setAttachedFileName] = useState<string | null>(null);
+  const [materials,setMaterials]=useState<MaterialSelection[]>([]);
+  const [materialBusy,setMaterialBusy]=useState(false);
+  const [materialLimit,setMaterialLimit]=useState(8);
+  const [materialPosition,setMaterialPosition]=useState<MaterialSceneOptions['position']>('material-only');
+  const [materialReviewed,setMaterialReviewed]=useState(false);
   const [materialText, setMaterialText] = useState<string>('');
+  useEffect(()=>setMaterialReviewed(false),[materials,materialText,materialPosition]);
   const [clientError, setClientError] = useState<string | null>(null);
   const [providers, setProviders] = useState<{ id: string; name: string; model: string; configured: boolean }[]>([]);
   const [aiProvider, setAiProvider] = useState('');
   const [providerError, setProviderError] = useState('');
+  const [offline,setOffline]=useState(false);
   const errorRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{if(clientError){errorRef.current?.focus();errorRef.current?.scrollIntoView({block:'center',behavior:'smooth'});}},[clientError]);
   const [catalog, setCatalog] = useState<CurriculumTopicEntry[]>([]);
@@ -72,10 +85,12 @@ export const LessonCreator: React.FC<Props> = ({ onCreateLesson, isGenerating, e
       if (!res.ok) throw new Error('Entre na sua conta para consultar os provedores de IA.');
       const data = await res.json();
       if (controller.signal.aborted) return;
+      if(data.opencode){setOpenCode({model:data.model});return;}
       setProviders(data.providers);
+      if(data.offline){setOffline(true);setGenerationMode('MODE_A_NO_AI');setProviderError('Instalação offline: use Gerar sem IA.');}
       setAiProvider(data.providers.find((p: any) => p.id === data.defaultProvider && p.configured)?.id ||
         data.providers.find((p: any) => p.configured)?.id || '');
-    }).catch(err => { if (!controller.signal.aborted) setProviderError(err.message); });
+    }).catch(err => { if (!controller.signal.aborted) setProviderError(err.message); }).finally(()=>{if(!controller.signal.aborted)setCheckingProvider(false);});
     return () => controller.abort();
   }, []);
 
@@ -97,22 +112,13 @@ export const LessonCreator: React.FC<Props> = ({ onCreateLesson, isGenerating, e
     setClientError(null);
   };
 
-  // Simulação de leitura de material temporário do professor/escola
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAttachedFileName(file.name);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = (event.target?.result as string) || '';
-        setMaterialText(text.slice(0, 3000));
-      };
-      reader.readAsText(file);
-    }
-  };
-
   const generate = (mode:GenerationMode) => {
-    if(isGenerating)return;
+    if(isGenerating||materialBusy)return;
+    const selected=[...materials,...manualSelections(materialText)];
+    if(selected.length&&!materialReviewed){setClientError('Confira os trechos e marque a revisão antes de gerar.');return;}
+    if(selected.reduce((n,s)=>n+s.text.length,0)>120000){setClientError('Reduza a seleção para até 120 mil caracteres.');return;}
+    const needed=materialSceneCount(selected);
+    if(needed>materialLimit){setClientError(`A seleção precisa de ${needed} cenas. Reduza os trechos ou ajuste o limite.`);return;}
     setGenerationMode(mode);
     setClientError(null);
     if (!topic.trim()) return;
@@ -141,6 +147,8 @@ export const LessonCreator: React.FC<Props> = ({ onCreateLesson, isGenerating, e
       duration_minutes: duration,
       didactic_style: didacticStyle,
       material_text: materialText,
+      materials,
+      material_options:{maxScenes:materialLimit,position:materialPosition},
       generation_mode: mode,
       ai_provider: mode === 'MODE_C_API' ? aiProvider : undefined,
       pack_slug: matchedSlug || undefined
@@ -154,6 +162,10 @@ export const LessonCreator: React.FC<Props> = ({ onCreateLesson, isGenerating, e
   };
 
   const displayedError = clientError || catalogError || errorMessage;
+
+  if(checkingProvider)return <p role="status">Preparando criação de aula…</p>;
+  if(providerError&&!offline)return <section role="alert" className="rounded-xl border border-amber-500 p-5 space-y-3"><p>Não foi possível consultar a IA. Seus dados continuam guardados.</p><button className="rounded-lg bg-indigo-600 px-4 py-2" onClick={()=>window.location.reload()}>Tentar novamente</button></section>;
+  if(openCode&&onOpenSavedLesson)return <OpenCodeLessonCreator model={openCode.model} onOpenLesson={onOpenSavedLesson}/>;
 
   return (
     <div className="max-w-4xl mx-auto p-6 md:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-slate-100">
@@ -329,41 +341,24 @@ export const LessonCreator: React.FC<Props> = ({ onCreateLesson, isGenerating, e
           </div>
         </div>
 
-        {/* MATERIAL TEMPORÁRIO DO PROFESSOR (Regra Congelada 3) */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-            Material Temporário do Professor / Escola (Opcional)
-          </label>
-          <div className="border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-2xl p-5 text-center transition-colors bg-slate-950/30">
-            <input
-              type="file"
-              id="file-upload"
-              accept=".pdf,.docx,.txt"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <label
-              htmlFor="file-upload"
-              className="cursor-pointer flex flex-col items-center justify-center gap-2"
-            >
-              <Upload className="w-7 h-7 text-indigo-400" />
-              {attachedFileName ? (
-                <div className="flex items-center gap-2 text-sm text-emerald-400 font-semibold">
-                  <FileText className="w-4 h-4" />
-                  <span>Arquivo anexado: {attachedFileName}</span>
-                </div>
-              ) : (
-                <>
-                  <span className="text-sm font-semibold text-slate-200">
-                    Anexar plano de aula ou documento da escola (referência)
-                  </span>
-                  <span className="text-xs text-slate-400">
-                    🔒 Nota do Piloto V1: Extração automática de arquivos não implementada nesta fase. O anexo serve apenas como referência visual e não altera a composição determinística.
-                  </span>
-                </>
-              )}
-            </label>
-          </div>
+        <div className="space-y-4 rounded-xl border border-slate-600 p-4">
+          <h3 className="font-semibold">Materiais do professor (opcional)</h3>
+          <MaterialPicker value={materials} onChange={setMaterials} onBusy={setMaterialBusy}/>
+          <label className="block">Ou escreva seu texto<textarea aria-label="Texto do professor" rows={5} value={materialText} maxLength={120000} onChange={e=>setMaterialText(e.target.value)} className="block w-full rounded bg-slate-950 p-3 mt-2"/></label>
+          <div className="flex gap-4 flex-wrap"><label>Máximo de cenas do material<input aria-label="Máximo de cenas do material" type="number" min="1" max="24" value={materialLimit} onChange={e=>setMaterialLimit(Math.max(1,Math.min(24,Number(e.target.value)||1)))} className="block w-24 rounded bg-slate-950 p-2"/></label>
+          <label>Como montar a aula<select aria-label="Como montar a aula" value={materialPosition} onChange={e=>setMaterialPosition(e.target.value as MaterialSceneOptions['position'])} className="block rounded bg-slate-950 p-2"><option value="material-only">Usar meu material como roteiro</option><option value="lesson-flow">Acrescentar ao acervo por etapa</option></select></label></div>
+          {materials.length>0&&<section aria-label="Organizar trechos" className="space-y-3 rounded border border-slate-600 p-3">
+            <h3>Ordem da aula: abertura → desenvolvimento → avaliação</h3>
+            <p className="text-sm">Confira a etapa sugerida pelo título de cada trecho. As setas mudam a ordem dentro da etapa. O texto original é preservado.</p>
+            {orderedMaterials(materials).map((selection,index,ordered)=><div key={`${selection.materialId}-${selection.sourceIndex}-${index}`} className="flex flex-wrap items-center gap-2 border-t border-slate-700 pt-2">
+              <span>{index+1}. {materialHeading(selection)}</span>
+              <select aria-label={`Etapa de ${selection.sourceLabel}`} value={materialPart(selection)} onChange={e=>setMaterials(materials.map(s=>s===selection?{...s,lessonPart:e.target.value as MaterialSelection['lessonPart']}:s))} className="bg-slate-950 p-2 rounded"><option value="opening">Abertura</option><option value="development">Desenvolvimento</option><option value="assessment">Avaliação e encerramento</option></select>
+              {([-1,1] as const).map(delta=><button key={delta} type="button" aria-label={`${delta<0?'Subir':'Descer'} ${selection.sourceLabel}`} disabled={!ordered[index+delta]||materialPart(ordered[index+delta])!==materialPart(selection)} onClick={()=>{const next=[...ordered];[next[index],next[index+delta]]=[next[index+delta],next[index]];setMaterials(next);}} className="border rounded px-3 py-2 disabled:opacity-30">{delta<0?'↑':'↓'}</button>)}
+            </div>)}
+          </section>}
+          {(materials.length>0||materialText.trim())&&<p className="text-amber-200 text-sm">{materialPosition==='material-only'?`Roteiro com ${1+materialSceneCount([...materials,...manualSelections(materialText)])} páginas, incluindo a abertura; sem páginas extras do acervo.`:'O acervo será mantido. Abertura no início, desenvolvimento antes das atividades e avaliação antes da síntese.'} Reserve tempo para discussão e avaliação; a duração escolhida não é calculada automaticamente.</p>}
+          <p className="text-sm">A seleção precisa de {materialSceneCount([...materials,...manualSelections(materialText)])} cenas. Ajuste a seleção ao tempo disponível da aula.</p>
+          {(materials.length>0||materialText.trim())&&<label className="block"><input type="checkbox" checked={materialReviewed} onChange={e=>setMaterialReviewed(e.target.checked)}/> Conferi a leitura, as fontes e a pertinência dos trechos para esta aula.</label>}
         </div>
 
         {/* MODOS DE OPERAÇÃO */}
@@ -389,7 +384,7 @@ export const LessonCreator: React.FC<Props> = ({ onCreateLesson, isGenerating, e
                 badgeColor: 'text-indigo-400 bg-indigo-950/70 border-indigo-500/40',
                 desc: 'Escolha um provedor configurado. Ollama e LM Studio podem funcionar sem chave. A opção sem IA continua disponível.'
               },
-            ].map((mode) => {
+            ].filter(mode=>!offline||mode.id==='MODE_A_NO_AI').map((mode) => {
               const Icon = mode.icon;
               const isSelected = generationMode === mode.id;
 
@@ -444,8 +439,8 @@ export const LessonCreator: React.FC<Props> = ({ onCreateLesson, isGenerating, e
         <div className="pt-4 border-t border-slate-800 space-y-3">
           <p className="text-sm text-slate-300">Você escolhe como gerar. Sem IA usa o acervo local e não exige modelo nem chave de API.</p>
           <div className="flex flex-wrap justify-end gap-3">
-            <button type="submit" value="MODE_A_NO_AI" disabled={isGenerating||catalogLoading||!!catalogError||!topic} className="rounded-xl bg-emerald-700 hover:bg-emerald-600 px-6 py-4 font-bold disabled:opacity-50">Gerar sem IA</button>
-            <button type="submit" value="MODE_C_API" disabled={isGenerating||catalogLoading||!!catalogError||!topic} className="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-6 py-4 font-bold disabled:opacity-50">Gerar com IA</button>
+            <button type="submit" value="MODE_A_NO_AI" disabled={isGenerating||materialBusy||catalogLoading||!!catalogError||!topic} className="rounded-xl bg-emerald-700 hover:bg-emerald-600 px-6 py-4 font-bold disabled:opacity-50">Gerar sem IA</button>
+            {!offline&&<button type="submit" value="MODE_C_API" disabled={isGenerating||materialBusy||catalogLoading||!!catalogError||!topic} className="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-6 py-4 font-bold disabled:opacity-50">Gerar com IA</button>}
           </div>
           {isGenerating&&<p role="status">Preparando sua aula…</p>}
         </div>

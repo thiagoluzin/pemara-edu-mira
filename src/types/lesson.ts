@@ -3,7 +3,7 @@ import type {TeachingVisual} from '../engine/teachingVisual';
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * 
- * PEMARA AULA — CONTRATO PRINCIPAL DO LESSON SPEC v1.0
+ * PEMARA EDU — CONTRATO PRINCIPAL DO LESSON SPEC v1.0
  */
 
 import { ApprovedLayoutId } from '../design-system/tokens';
@@ -63,6 +63,9 @@ export type SceneType =
   | 'summary';
 
 export interface BaseScene {
+  atlas_parameters?: {breathingRate?:number;energy?:number;values?:number[];speed?:number;tempo?:number;angle?:number;index?:number;x?:number;y?:number;event?:string;subject?:string;predicate?:string};
+  atlas_model?: import('../animations/atlas').AtlasKind | 'none';
+  material_source?: {materialId:string;sha256?:string;filename:string;sourceUnit:string;sourceIndex:number};
   visual?:TeachingVisual;
   learning_progress?: { completed:number[]; notes:string };
   id: string;

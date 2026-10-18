@@ -1,5 +1,6 @@
 node_modules/
 .local-demo/
+.local-teacher/
 build/
 dist/
 coverage/
@@ -28,3 +29,16 @@ docs/*.md
 !docs/CONFIGURACAO_IA.md
 !docs/PLANO_CONSTRUCAO_ESTAGIARIO.md
 server/curriculum/raw/*.pdf
+
+# Local distributions and teacher content (never source backups on GitHub)
+/ENTREGAS/
+/EXPORTACOES/
+/pilotos/openchamber/source/
+/pilotos/openchamber/perfil/
+/pilotos/openchamber/originais/
+/pilotos/openchamber/projetos/
+**/DevToolsActivePort
+**/ai-jobs/
+*.exe
+*.7z
+*.zip

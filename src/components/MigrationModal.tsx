@@ -103,7 +103,7 @@ export const MigrationModal: React.FC<Props> = ({
             <div>
               <h3 className="text-lg font-bold text-white">Migração de Aulas do Navegador</h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Destinatário confirmado: <span className="text-indigo-400 font-bold">{currentUser.name}</span> ({currentUser.username})
+                {currentUser.local ? 'Destino: acervo deste computador' : <>Destinatário confirmado: <span className="text-indigo-400 font-bold">{currentUser.name}</span> ({currentUser.username})</>}
               </p>
             </div>
           </div>
@@ -129,13 +129,13 @@ export const MigrationModal: React.FC<Props> = ({
                 {report.failed > 0 && <li className="text-rose-400">• Falhas na validação: <strong>{report.failed}</strong></li>}
               </ul>
               <p className="text-xs text-slate-400 pt-2 border-t border-emerald-500/20">
-                Seu acervo no banco agora está sincronizado e acessível em qualquer computador da rede escolar.
+                {currentUser.local ? 'Suas aulas foram copiadas para o acervo deste computador. Os originais no navegador foram preservados.' : 'Seu acervo foi copiado para o banco da instalação.'}
               </p>
             </div>
           ) : (
             <>
               <p className="leading-relaxed">
-                Identificamos <strong>{localLessons.length}</strong> aula(s) armazenada(s) temporariamente no navegador desta máquina. Você pode sincronizá-las diretamente com sua conta no servidor seguro banco de dados da escola.
+                Identificamos <strong>{localLessons.length}</strong> aula(s) armazenada(s) no navegador desta máquina. {currentUser.local ? 'Você pode copiá-las para o acervo local, sem internet nem conta.' : 'Você pode copiá-las para sua conta nesta instalação.'}
               </p>
 
               {errorMessage && (

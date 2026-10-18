@@ -68,19 +68,20 @@ export async function validateCompleteCatalog(packs: CurriculumPack[], requireAl
 }
 
 /** Carga incremental. Não reescreve versões publicadas nem aulas existentes. */
-export async function publishCompleteCatalog(pool:pg.Pool,packs:CurriculumPack[], options: {onlyMissing?: boolean} = {}) {
+export async function publishCompleteCatalog(pool:pg.Pool,packs:CurriculumPack[], options: {onlyMissing?: boolean;bundledBootstrap?:boolean;onlySlugs?:string[]} = {}) {
   const validation=await validateCompleteCatalog(packs);
   if(validation.errors.length) throw new Error(validation.errors.join('\n'));
   const client=await pool.connect(); let published=0, unchanged=0;
   try {
     await client.query('BEGIN');
     await client.query("SELECT pg_advisory_xact_lock(7302026)");
-    const actor=(await client.query("SELECT id FROM users WHERE role='admin' ORDER BY created_at LIMIT 1")).rows[0]?.id;
-    if(!actor) throw new Error('Administrador responsável não encontrado.');
+    const actor=(await client.query("SELECT id FROM users WHERE role='admin' ORDER BY created_at LIMIT 1")).rows[0]?.id ?? null;
+    if(!actor&&!options.bundledBootstrap) throw new Error('Administrador responsável não encontrado.');
     await client.query(`INSERT INTO licenses(id,name,code,commercial_use,derivatives_allowed,attribution_required,redistribution_allowed,verified,notes) VALUES('lic-pemara-original-ef2','Material original — uso educacional interno','Internal',false,true,true,false,true,'Redação original assistida; referências são sugestões de consulta, sem reprodução integral de obras externas.') ON CONFLICT(id) DO NOTHING`);
     await client.query(`INSERT INTO sources(id,provider,title,url,language,source_type,status) VALUES('src-bncc-local-reference','MEC — referência curricular','BNCC — habilidades conferidas com o PDF oficial do MEC','https://cdn.mec.gov.br/basenacionalcomum.mec.gov.br/images/BNCC_EI_EF_110518_versaofinal_site.pdf','pt-BR','official','verified') ON CONFLICT(id) DO NOTHING`);
     for(const skill of getOfficialBnccSkills()) await client.query(`INSERT INTO curriculum_skills(id,code,thematic_unit,knowledge_object,description,grade_level,subject_code,source_id,status,version) VALUES($1,$2,$3,$4,$5,$6,$7,'src-bncc-local-reference','OFFICIAL_BNCC','2018.3') ON CONFLICT(code) DO NOTHING`,[idFor('skill-bncc',skill.code),skill.code,skill.thematic_unit,skill.knowledge_object,skill.description,skill.grade_level,skill.subject_code]);
     for(const pack of packs) {
+      if(options.onlySlugs&&!options.onlySlugs.includes(pack.slug))continue;
       const hash=digest(pack);
       const registered=(await client.query('SELECT id,status FROM content_packs WHERE slug=$1',[pack.slug])).rows[0];
       if(registered && (options.onlyMissing || !['ACTIVE','PUBLISHED'].includes(registered.status))) {unchanged++;continue;}

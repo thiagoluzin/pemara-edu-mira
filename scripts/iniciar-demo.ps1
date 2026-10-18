@@ -1,7 +1,8 @@
+﻿param([switch]$Professor)
 $ErrorActionPreference = 'Stop'
 $demoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $demoRoot
-$demoData = Join-Path $demoRoot '.local-demo'
+$demoData = Join-Path $demoRoot $(if ($Professor) { '.local-teacher' } else { '.local-demo' })
 $demoState = Join-Path $demoData 'running.json'
 
 function Test-DemoReady([string]$Url) {
@@ -29,8 +30,11 @@ if (!(Test-Path -LiteralPath (Join-Path $demoRoot 'dist/index.html'))) {
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao compilar aplicação.' }
 }
 New-Item -ItemType Directory -Path $demoData -Force | Out-Null
-$nodePath = (Get-Command node.exe).Source
-$demoProcess = Start-Process -FilePath $nodePath -ArgumentList @('--import','tsx','scripts/demo-local.ts') -WorkingDirectory $demoRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $demoData 'server.log') -RedirectStandardError (Join-Path $demoData 'server-error.log')
+$nodePath = Join-Path $demoRoot 'runtime/node.exe'
+if (!(Test-Path -LiteralPath $nodePath)) { $nodePath = (Get-Command node.exe).Source }
+$launchArgs = @('--import','tsx','scripts/demo-local.ts')
+if ($Professor) { $launchArgs += '--teacher' }
+$demoProcess = Start-Process -FilePath $nodePath -ArgumentList $launchArgs -WorkingDirectory $demoRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $demoData 'server.log') -RedirectStandardError (Join-Path $demoData 'server-error.log')
 for ($attempt = 0; $attempt -lt 60; $attempt++) {
     Start-Sleep -Seconds 1
     $demoProcess.Refresh()
@@ -43,4 +47,4 @@ for ($attempt = 0; $attempt -lt 60; $attempt++) {
     }
     }
 }
-throw 'Inicialização ainda não confirmou prontidão. Consulte .local-demo/server.log.'
+throw ('Inicialização ainda não confirmou prontidão. Consulte ' + (Join-Path $demoData 'server.log'))

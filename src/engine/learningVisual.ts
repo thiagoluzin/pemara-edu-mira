@@ -1,8 +1,13 @@
+import {bodyMotion} from '../animations/phenomenonMotion';
 import {teachingDiagram,type TeachingVisual} from './teachingVisual';
 import type {LessonMeta, Scene, Subject, TextScene, SummaryScene} from '../types/lesson';
 import {biologySvg} from './biologyModel';
+import {chooseAnimation,isAtlasKind,type AtlasKind} from '../animations/atlas';
+import {atlasSvg} from '../animations/atlasSvg';
+import {ATLAS_MOTION_CSS,travel,readingCue} from '../animations/motionPrimitives';
+import {hasLearningMotion} from './learningMotion';
 
-export type LearningKind = 'cell'|'organization'|'fractions'|'number_line'|'timeline'|'particles'|'circuit'|'water_cycle'|'geometry'|'earth_layers'|'orbit'|'language'|'movement'|'colors'|'concepts';
+export type LearningKind = AtlasKind | 'cell'|'organization'|'fractions'|'number_line'|'timeline'|'particles'|'circuit'|'water_cycle'|'geometry'|'earth_layers'|'orbit'|'language'|'movement'|'colors'|'concepts';
 export interface LearningPlan {
   visual?:TeachingVisual;
   title:string; subject:Subject; kind:LearningKind;
@@ -21,6 +26,7 @@ export function createLearningPlan(scene:TextScene|SummaryScene,meta?:Partial<Le
   const unique=[...new Set(source.filter(s=>typeof s==='string'&&s.trim()))];
   // Sentenças completas, sem truncar conteúdo; a versão integral continua disponível.
   const steps=scene.visual?source.filter(s=>typeof s==='string'&&s.trim()):unique.flatMap(s=>s.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ý])/u)).filter(Boolean);
+  if(scene.material_source&&steps.length>1&&norm(steps[0]).replace(/[.!?]$/,'')===norm(scene.title))steps.shift();
   if(!steps.length) steps.push(scene.title);
   const subject=meta?.subject||'science';
   const local=norm([scene.title,...unique].join(' '));
@@ -60,25 +66,42 @@ export function createLearningPlan(scene:TextScene|SummaryScene,meta?:Partial<Le
   }else if(['portuguese','english'].includes(subject)){
     kind='language';variants=['Organizar','Relacionar','Interpretar'];initialVariant=0;caption='Percurso de leitura e produção: observe a organização, as relações e o sentido. O esquema orienta a análise do conteúdo ao lado; não classifica palavras automaticamente.';
   }else if(subject==='physical_education'){
-    kind='movement';variants=['Posição inicial','Deslocamento','Equilíbrio'];initialVariant=0;caption='Figura articulada para observar posições e coordenação. Esquema exploratório, sem prescrição de exercício ou avaliação corporal.';
+    kind='movement';variants=['Braços','Caminhada','Equilíbrio'];initialVariant=0;caption='Figura articulada para observar posições e coordenação. Esquema exploratório, sem prescrição de exercício ou avaliação corporal.';
   }
+  if(!scene.visual && scene.atlas_model!=='none'){
+    const selected=chooseAnimation(subject,scene.title,unique.join(' '),meta?.bncc_skill||'',scene.atlas_model);
+    if(selected){kind=selected.id;variants=selected.variants;initialVariant=0;caption=selected.caption;
+      if(kind==='separation'){
+        const title=norm(scene.title);
+        if(/^filtracao\b/.test(title))initialVariant=1;
+        else if(/^decantacao\b/.test(title))initialVariant=2;
+        else if(/^evaporacao\b/.test(title))initialVariant=3;
+      }
+    }
+  }
+  // A comparison of chemical reaction and physical change must not be illustrated
+  // as if the reaction were a change of state. Keep the literal text as cards.
+  if(!scene.visual&&!scene.atlas_model&&kind==='particles'&&/reacao|reacoes|bicarbonato|outras substancias|nova substancia/.test(local)){
+    kind='concepts';variants=[];initialVariant=0;caption='Compare os exemplos do texto: uma mudança de estado conserva a substância; uma reação química forma outras substâncias. Os cartões não simulam uma reação.';
+  }
+  if(scene.atlas_model==='none'){kind='concepts';variants=[];initialVariant=0;}
   if(scene.visual){kind='concepts';variants=[];caption=scene.visual.caption;}
   return {visual:scene.visual,title:scene.title,subject,kind,mode,steps,labels:steps.map((s,i)=>`${i+1}. ${s.length>66?s.slice(0,63)+'…':s}`),variants,initialVariant,denominator,caption,source:unique,years};
 }
 
-export const LEARNING_CSS=`
+export const LEARNING_CSS=ATLAS_MOTION_CSS+`
 .learning-canvas{--lc-accent:#22d3ee;color:#e2e8f0;background:linear-gradient(135deg,#0b1224,#101a31);border:1px solid #334155;border-radius:20px;padding:clamp(14px,2vw,26px);width:100%;box-sizing:border-box;container-type:inline-size}
 .learning-canvas *{box-sizing:border-box}.learning-canvas h2{font-size:clamp(23px,2.5vw,34px);line-height:1.2;color:#f8fafc;margin:6px 0 16px}.learning-eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.13em;color:#67e8f9;font-weight:700}
 .learning-stage{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(260px,1fr);gap:22px;align-items:center}.learning-art{min-width:0;background:#02061780;border-radius:16px;border:1px solid #1e293b;overflow:hidden}.learning-art svg{display:block;width:100%;height:auto;max-height:340px}.learning-reading{min-width:0;border-left:3px solid var(--lc-accent);padding:10px 0 10px 20px}.learning-reading h3{margin:0 0 12px;font-size:16px;color:#fbbf24}.learning-reading p{font-size:clamp(17px,1.65vw,22px);line-height:1.55;margin:0;overflow-wrap:anywhere}.learning-actions,.learning-variants{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0}.learning-canvas button{font:inherit;font-size:14px;padding:9px 13px;color:#f8fafc;background:#1e293b;border:1px solid #475569;border-radius:9px;cursor:pointer;transition:background .15s}.learning-canvas button[aria-pressed=true]{background:#155e75;border-color:#22d3ee}.learning-canvas button:disabled{opacity:.4;cursor:default}.learning-canvas button:focus-visible,.learning-canvas summary:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}.learning-canvas .learning-primary{background:#155e75;border-color:#22d3ee}.learning-caption{font-size:13px;line-height:1.45;color:#a5b4cc;margin:8px 0}.learning-progress{display:flex;gap:5px;flex-wrap:wrap}.learning-progress button{min-width:34px;padding:5px}.learning-canvas details{margin-top:14px;border-top:1px solid #334155;padding-top:10px;font-size:14px;line-height:1.5}.learning-canvas summary{cursor:pointer;color:#cbd5e1}.learning-canvas details p{margin:12px 0}.learning-canvas input[type=range]{width:min(260px,60%)}
 .semantic-highlight{animation:semantic-emphasis 1.8s ease-in-out infinite;animation-play-state:paused}.learning-canvas[data-running=true] .semantic-highlight{animation-play-state:running}@keyframes semantic-emphasis{50%{stroke-opacity:.45}}
 .learning-trace{stroke-dasharray:12 8;animation:learning-travel 3s linear infinite;animation-play-state:paused}.learning-particle{animation:learning-jitter 2s ease-in-out infinite alternate;animation-play-state:paused;transform-box:fill-box;transform-origin:center}.learning-flow{animation:learning-flow 3s linear infinite;animation-play-state:paused;transform-box:fill-box}.learning-orbit{transform-origin:310px 190px;animation:learning-orbit 18s linear infinite;animation-play-state:paused}.learning-canvas[data-running=true] .learning-trace,.learning-canvas[data-running=true] .learning-particle,.learning-canvas[data-running=true] .learning-flow,.learning-canvas[data-running=true] .learning-orbit{animation-play-state:running}.learning-canvas[data-running=true] .bio-molecule,.learning-canvas[data-running=true] .bio-heart{animation-play-state:running}
 @keyframes learning-travel{to{stroke-dashoffset:-100}}@keyframes learning-jitter{to{transform:translate(var(--dx,8px),var(--dy,-8px))}}@keyframes learning-flow{0%{transform:translateY(0);opacity:0}25%{opacity:1}90%{opacity:1}100%{transform:translateY(-80px);opacity:0}}@keyframes learning-orbit{to{transform:rotate(360deg)}}
-@container(max-width:700px){.learning-stage{grid-template-columns:1fr}.learning-art svg{max-height:260px}.learning-reading p{font-size:17px}.learning-reading{padding-left:12px}}@media(prefers-reduced-motion:reduce){.learning-canvas *{animation:none!important;transition:none!important}}@media print{.learning-actions,.learning-variants,.learning-progress{display:none}.learning-canvas{background:white;color:#0f172a;break-inside:avoid}.learning-canvas h2{color:#0f172a}.learning-reading p{font-size:14px}.learning-art{background:#0b1224}.learning-canvas *{animation:none!important}}
+@container(max-width:700px){.learning-stage{grid-template-columns:1fr}.learning-art svg{max-height:260px}.learning-reading p{font-size:17px}.learning-reading{padding-left:12px}}@media(prefers-reduced-motion:reduce){.learning-canvas:not([data-motion-allowed=true]) *{animation:none!important;transition:none!important}}@media print{.learning-actions,.learning-variants,.learning-progress{display:none}.learning-canvas{background:white;color:#0f172a;break-inside:avoid}.learning-canvas h2{color:#0f172a}.learning-reading p{font-size:14px}.learning-art{background:#0b1224}.learning-canvas *{animation:none!important}}
 `;
 
 const svg=(body:string,label:string)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 380" role="img" aria-label="${escapeLearning(label)}">${body}</svg>`;
 const text=(x:number,y:number,value:string,size=20,color='#e2e8f0')=>`<text x="${x}" y="${y}" text-anchor="middle" font-family="sans-serif" font-size="${size}" fill="${color}">${escapeLearning(value)}</text>`;
-export function learningDiagram(plan:LearningPlan,step:number,variant:number):string {
+function learningDiagramRaw(plan:LearningPlan,step:number,variant:number):string {
   if(plan.visual)return teachingDiagram(plan.visual,step);
   const safeStep=Math.max(0,Math.min(step,plan.steps.length-1));
   const v=Math.max(0,Math.min(variant,Math.max(0,plan.variants.length-1)));
@@ -94,19 +117,15 @@ export function learningDiagram(plan:LearningPlan,step:number,variant:number):st
   }
   if(plan.kind==='earth_layers')return svg([150,126,76,38].map((r,i)=>`<circle cx="260" cy="187" r="${r}" fill="${['#64748b','#c2410c','#f59e0b','#fef08a'][i]}" stroke="${v===i?'#22d3ee':'#0f172a'}" stroke-width="${v===i?7:2}"/>`).join('')+plan.variants.map((s,i)=>`<path d="M${[395,368,320,270][i]} ${[121,145,166,187][i]} L460 ${90+i*65}" stroke="${v===i?'#22d3ee':'#94a3b8'}" stroke-width="2"/>`+text(518,96+i*65,s,18,v===i?'#67e8f9':'#cbd5e1')).join(''),'Camadas internas da Terra em corte');
   if(plan.kind==='orbit'){
-    const angle=(Math.max(1,v)-1)*Math.PI/2;const x=310+148*Math.cos(angle),y=190+148*Math.sin(angle);
-    return svg(`<circle cx="310" cy="190" r="148" fill="none" stroke="#475569" stroke-width="2"/><circle cx="310" cy="190" r="47" fill="#fbbf24"/>`+text(310,198,'Sol',22,'#713f12')+`<g class="${v===0?'learning-orbit':''}"><circle cx="${x}" cy="${y}" r="24" fill="#0284c7" stroke="#7dd3fc" stroke-width="3"/><path d="M${x-11} ${y-8} l12 -7 12 18 -13 12 -13 -10Z" fill="#4ade80"/></g>`+text(310,32,'Translação da Terra',25),'Terra em órbita circular didática ao redor do Sol');
+    const angle=(Math.max(1,v)-1)*Math.PI/2;const x=310+124*Math.cos(angle),y=190+124*Math.sin(angle);
+    return svg(`<circle cx="310" cy="190" r="124" fill="none" stroke="#475569" stroke-width="2"/><circle cx="310" cy="190" r="47" fill="#fbbf24"/>`+text(310,198,'Sol',22,'#713f12')+`<g class="${v===0?'learning-orbit':''}"><circle cx="${x}" cy="${y}" r="24" fill="#0284c7" stroke="#7dd3fc" stroke-width="3"/><path d="M${x-11} ${y-8} l12 -7 12 18 -13 12 -13 -10Z" fill="#4ade80"/></g>`+text(310,32,'Translação da Terra',25),'Terra em órbita circular didática ao redor do Sol');
   }
   if(plan.kind==='colors'){
-    const colors=[['#ef4444','#22c55e','#000'],['#000','#22c55e','#3b82f6'],['#ef4444','#000','#3b82f6'],['#ef4444','#22c55e','#3b82f6']][v];
+    const colors=[['#ff0000','#00ff00','#000000'],['#000000','#00ff00','#0000ff'],['#ff0000','#000000','#0000ff'],['#ff0000','#00ff00','#0000ff']][v];
     return svg(`<rect x="30" y="30" width="560" height="320" rx="25" fill="black"/>`+[[265,150],[355,150],[310,230]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="82" fill="${colors[i]}" style="mix-blend-mode:screen"/>`).join('')+text(310,325,'Mistura de luzes',24),'Sobreposição aditiva de luzes vermelha, verde e azul');
   }
-  if(plan.kind==='movement'){
-    const poses=[[-68,0,68,0,-55,105,55,105],[-78,-25,55,32,-85,80,70,85],[-90,-38,90,-38,0,105,90,52]][v];
-    const[a,b,c,d,e,f,g,h]=poses;
-    return svg(`<path d="M90 325 H530" stroke="#334155" stroke-width="5"/><g transform="translate(310 175)"><circle cy="-83" r="25" fill="#fbbf24"/><path d="M0 -52 V28 M${a} ${b} L0 -35 ${c} ${d} M${e} ${f} L0 28 ${g} ${h}" fill="none" stroke="#22d3ee" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><circle cy="-35" r="8" fill="#fbbf24"/><circle cy="28" r="8" fill="#fbbf24"/></g>`+text(310,365,plan.variants[v],25),'Figura humana articulada em diferentes posições');
-  }
-  if(plan.kind==='language')return svg(`<rect x="150" y="40" width="315" height="290" rx="12" fill="#e2e8f0"/><rect x="180" y="69" width="200" height="18" rx="4" fill="${v===0?'#0891b2':'#64748b'}"/>`+Array.from({length:6},(_,i)=>`<rect x="180" y="${110+i*30}" width="${i%3===2?175:255}" height="12" rx="4" fill="${v===0?'#94a3b8':i===safeStep%6?'#0284c7':'#64748b'}"/>`).join('')+(v===1?'<path class="learning-trace" d="M480 110 Q580 155 480 210" fill="none" stroke="#fbbf24" stroke-width="5"/>':'')+(v===2?'<circle cx="445" cy="250" r="65" fill="#22d3ee30" stroke="#fbbf24" stroke-width="8"/><path d="M492 296 L540 344" stroke="#fbbf24" stroke-width="14"/>':'')+text(310,368,plan.variants[v],24),'Diagrama de organização, relações e leitura de um texto');
+  if(plan.kind==='movement')return svg(bodyMotion(v),'Corpo articulado em movimento');
+  if(plan.kind==='language')return svg(`<rect x="150" y="40" width="315" height="290" rx="12" fill="#e2e8f0"/><rect x="180" y="69" width="200" height="18" rx="4" fill="${v===0?'#0891b2':'#64748b'}"/>`+Array.from({length:6},(_,i)=>`<rect x="180" y="${110+i*30}" width="${i%3===2?175:255}" height="12" rx="4" fill="${v===0?'#94a3b8':i===safeStep%6?'#0284c7':'#64748b'}"/>`).join('')+(v===1?'<path class="learning-trace" d="M480 110 Q580 155 480 210" fill="none" stroke="#fbbf24" stroke-width="5"/>':'')+(v===2?'<circle cx="445" cy="250" r="65" fill="#22d3ee30" stroke="#fbbf24" stroke-width="8"/><path d="M492 296 L540 344" stroke="#fbbf24" stroke-width="14"/>':'')+text(310,350,plan.variants[v],24),'Diagrama de organização, relações e leitura de um texto');
   if(plan.kind==='fractions'){
     const d=plan.denominator,n=v;
     const relation=Math.abs(Number((n/d).toFixed(3))-n/d)<1e-10?'=':'≈';
@@ -120,16 +139,38 @@ export function learningDiagram(plan:LearningPlan,step:number,variant:number):st
       return `<circle class="learning-particle" cx="${x}" cy="${y}" r="12" fill="${['#a5b4fc','#22d3ee','#fbbf24'][v]}" style="--dx:${v===0?2:(i%2?20:-20)}px;--dy:${v===0?2:(i%3?12:-12)}px;animation-delay:-${i/7}s"/>`;
     }).join('')+text(310,42,plan.variants[v],28),'Arranjo e movimento esquemático de partículas');
   }
-  if(plan.kind==='circuit')return svg(`<path d="M100 160 V280 H500 V110 H365 M255 110 H100 V160" fill="none" stroke="#64748b" stroke-width="7"/><path d="M255 110 L365 ${v?110:55}" stroke="#fbbf24" stroke-width="7"/><circle cx="255" cy="110" r="7" fill="#fbbf24"/><circle cx="365" cy="110" r="7" fill="#fbbf24"/><path d="M75 185 H125 M85 203 H115" stroke="#f8fafc" stroke-width="7"/><circle cx="500" cy="205" r="38" fill="${v?'#fbbf24':'#334155'}" stroke="#f8fafc" stroke-width="4"/>${v?'<path class="learning-trace" d="M100 160 V110 H500 V280 H100 V210" fill="none" stroke="#22d3ee" stroke-width="3"/>':''}`+text(310,32,plan.variants[v],26)+text(100,330,'Pilha')+text(500,330,v?'Lâmpada acesa':'Lâmpada apagada'),'Circuito elétrico com pilha, interruptor e lâmpada');
+  if(plan.kind==='circuit')return svg(`<path d="M100 180 V110 H255 M365 110 H500 V280 H100 V208" fill="none" stroke="#64748b" stroke-width="7"/><path d="M255 110 L365 ${v?110:55}" stroke="#fbbf24" stroke-width="7"/><circle cx="255" cy="110" r="7" fill="#fbbf24"/><circle cx="365" cy="110" r="7" fill="#fbbf24"/><path d="M75 185 H125 M85 203 H115" stroke="#f8fafc" stroke-width="7"/><circle cx="500" cy="205" r="38" fill="${v?'#fbbf24':'#334155'}" stroke="#f8fafc" stroke-width="4"/>${v?'<path class="learning-trace" d="M100 160 V110 H500 V280 H100 V210" fill="none" stroke="#22d3ee" stroke-width="3"/>':''}`+text(310,32,plan.variants[v],26)+text(100,330,'Pilha')+text(500,330,v?'Lâmpada acesa':'Lâmpada apagada'),'Circuito elétrico com pilha, interruptor e lâmpada');
   if(plan.kind==='water_cycle')return svg(`<circle cx="86" cy="70" r="32" fill="#fbbf24"/><path d="M0 285 Q80 270 155 290 T310 285 V380 H0Z" fill="#0284c7"/><path d="M270 310 L455 110 L620 310 V380 H270Z" fill="#166534"/><path d="M400 170 L455 110 L505 170Z" fill="#e2e8f0"/><path d="M235 95 Q210 43 265 44 Q305 5 340 49 Q415 35 405 96Z" fill="#cbd5e1"/>${v===0?Array.from({length:6},(_,i)=>`<circle class="learning-flow" cx="${95+i*22}" cy="254" r="5" fill="#bae6fd" style="animation-delay:-${i*.4}s"/>`).join(''):''}<path class="${v===0?'learning-trace':''}" d="M170 270 Q130 160 230 106" stroke="${v===0?'#fbbf24':'#38bdf8'}" fill="none" stroke-width="6"/><path class="${v===2?'learning-trace':''}" d="M355 109 L400 215" stroke="${v===2?'#fbbf24':'#38bdf8'}" stroke-width="6"/><path class="${v===3?'learning-trace':''}" d="M450 215 Q390 285 225 318" stroke="${v===3?'#fbbf24':'#38bdf8'}" fill="none" stroke-width="6"/>`+text(310,358,plan.variants[v],26,'#f8fafc'),'Processos do ciclo da água');
   if(plan.kind==='geometry'){
     const n=v+3;const points=Array.from({length:n},(_,i)=>({x:310+125*Math.cos(-Math.PI/2+i*2*Math.PI/n),y:185+125*Math.sin(-Math.PI/2+i*2*Math.PI/n)}));
     return svg(`<polygon points="${points.map(p=>`${p.x},${p.y}`).join(' ')}" fill="#164e63" stroke="#22d3ee" stroke-width="5"/>`+points.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="9" fill="#fbbf24"/>`+text(p.x,p.y-15,String(i+1),18)).join('')+text(310,355,`${n} lados • ${n} vértices`,27),'Polígono com lados e vértices identificados');
   }
   // Leitura legada sem semântica explícita: cartões fiéis ao texto, sem globo decorativo.
+  if(isAtlasKind(plan.kind)) return atlasSvg(plan.kind,v,safeStep);
   const start=Math.floor(safeStep/6)*6;
   return teachingDiagram({layout:'cards',caption:'Quadro de ideias do conteúdo; cada cartão abre uma etapa de leitura.',nodes:plan.steps.slice(start,start+6).map((idea,i)=>({id:String(i),label:idea.split(/\s+/).slice(0,6).join(' ').slice(0,48),icon:plan.mode==='activity'?'question':plan.mode==='summary'?'check':'document',step:start+i}))},safeStep);
 
+}
+
+// Explicit guides for interactive frames that formerly had no playback at all.
+// Guides locate/count/compare fixed information; they do not simulate physical change.
+export function learningDiagram(plan:LearningPlan,step:number,variant:number):string {
+ let diagram=learningDiagramRaw(plan,step,variant);
+ if(hasLearningMotion(diagram))return diagram;
+ const v=variant;let guide='',description='';
+ switch(plan.kind){
+  case 'cell':guide=readingCue(120,105,360,195);description='Guia de leitura: localize membrana, citoplasma e DNA';break;
+  case 'number_line':guide=v===10?readingCue(292,172,36,46):travel(`M310 195H${50+v*26}`);description='Percurso do zero até a posição escolhida';break;
+  case 'fractions':guide=v===0?readingCue(35,294,30,32):travel(`M50 310H${50+520*v/plan.denominator}`);description='Guia de leitura: relacione a fração à reta';break;
+  case 'earth_layers':guide=`<circle class="atlas-cue" cx="260" cy="187" r="${[150,126,76,38][v]}" stroke="#22d3ee" stroke-width="6" fill="none"/>`;description='Guia de leitura: localize a camada selecionada';break;
+  case 'orbit':diagram=diagram.replace('<g class="">','<g class="learning-orbit">');description='Translação iniciada na posição escolhida';break;
+  case 'colors':{let i=0;diagram=diagram.replaceAll('style="mix-blend-mode:screen"',()=>{const j=i++;return `class="learning-particle" style="mix-blend-mode:screen;--dx:${[24,-24,0][j]}px;--dy:${[0,0,-20][j]}px"`;});description='Observe a sobreposição das luzes em movimento';break;}
+  case 'language':guide=travel(v===0?'M170 75V265':'M420 220L468 280','#fbbf24',5,6);description='Guia de leitura: observe a organização do texto';break;
+  case 'circuit':guide=readingCue(246,45,130,80);description='Circuito aberto: observe a interrupção. Sem corrente';break;
+  case 'water_cycle':guide=travel('M220 145Q250 75 300 70','#bae6fd',5,5)+travel('M410 145Q375 75 340 70','#bae6fd',5,5);description='Condensação: formação de gotículas na nuvem (esquema)';break;
+  case 'geometry':{const n=v+3;let route='';for(let i=0;i<=n;i++){const a=-Math.PI/2+(i%n)*2*Math.PI/n;route+=(i?'L':'M')+(310+125*Math.cos(a))+' '+(185+125*Math.sin(a));}guide=travel(route);description='Percorra os lados e conte os vértices';break;}
+ }
+ return guide||description?diagram.replace('</svg>',guide+text(310,378,description,13,'#a5b4cc')+'</svg>'):diagram;
 }
 
 export function learningMarkup(plan:LearningPlan,step=0,variant=plan.initialVariant):string {

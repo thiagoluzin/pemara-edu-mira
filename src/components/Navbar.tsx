@@ -25,8 +25,8 @@ import { AuthUser } from '../services/authApi';
 import { knowledgeApi } from '../services/knowledgeApi';
 
 interface Props {
-  activeTab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings';
-  onTabChange: (tab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings') => void;
+  activeTab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas';
+  onTabChange: (tab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas') => void;
   activeMode: GenerationMode;
   onStartPresentation: () => void;
   canPresent: boolean;
@@ -49,11 +49,12 @@ export const Navbar: React.FC<Props> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDbHealthy, setIsDbHealthy] = useState<boolean>(true);
+  const personal = currentUser?.local === true;
 
   const modeLabels: Record<GenerationMode, { label: string; color: string }> = {
     MODE_A_NO_AI: { label: 'Aula sem inteligência artificial', color: 'text-emerald-400 bg-emerald-950/70 border-emerald-500/40' },
     MODE_B_LOCAL_AI: { label: 'Variações para ensinar', color: 'text-cyan-400 bg-cyan-950/70 border-cyan-500/40' },
-    MODE_C_API: { label: 'Inteligência artificial opcional', color: 'text-indigo-400 bg-indigo-950/70 border-indigo-500/40' },
+    MODE_C_API: { label: 'Aula criada com IA', color: 'text-indigo-400 bg-indigo-950/70 border-indigo-500/40' },
     MODE_D_AGENTS: { label: 'Criação guiada (demonstração)', color: 'text-amber-400 bg-amber-950/70 border-amber-500/40' }
   };
 
@@ -91,7 +92,7 @@ export const Navbar: React.FC<Props> = ({
             </div>
             <div>
               <span className="text-lg font-black tracking-tight text-white flex items-center gap-1.5">
-                PEMARA <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">AULA</span>
+                PEMARA <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">EDU</span>
               </span>
               <span className="text-[10px] text-slate-400 block -mt-1 font-medium">
                 Crie e apresente suas aulas
@@ -100,9 +101,9 @@ export const Navbar: React.FC<Props> = ({
           </div>
 
           {/* Active Generation Mode Pill */}
-          <span className={`hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${currentModeBadge.color}`}>
+          {activeTab !== 'create' && <span className={`hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${currentModeBadge.color}`}>
             {currentModeBadge.label}
-          </span>
+          </span>}
 
           {/* banco de dados DB Connection Pill */}
           <span
@@ -120,6 +121,7 @@ export const Navbar: React.FC<Props> = ({
 
         {/* Navigation Tabs */}
         <nav className="flex flex-wrap items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+          <button onClick={() => onTabChange('atlas')} className={`px-3.5 py-1.5 rounded-lg ${activeTab === 'atlas' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>Atlas</button>
           <button
             onClick={() => onTabChange('editor')}
             className={`px-3.5 py-1.5 rounded-lg transition-all ${
@@ -165,7 +167,7 @@ export const Navbar: React.FC<Props> = ({
           </button>
 
           {/* Administraçãoistrativo — Exclusivo para administradores */}
-          {currentUser?.role === 'admin' && (
+          {personal === false && currentUser?.role === 'admin' && (
             <button
               onClick={() => onTabChange('admin')}
               className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
@@ -178,7 +180,7 @@ export const Navbar: React.FC<Props> = ({
               <span>Administração</span>
             </button>
           )}
-          {currentUser?.role==='admin'&&<button onClick={()=>onTabChange('settings')} className={`px-3.5 py-1.5 rounded-lg ${activeTab==='settings'?'bg-indigo-600 text-white':'text-indigo-300 hover:text-white'}`}>Configurações de IA</button>}
+          {!personal&&currentUser?.role==='admin'&&<button onClick={()=>onTabChange('settings')} className={`px-3.5 py-1.5 rounded-lg ${activeTab==='settings'?'bg-indigo-600 text-white':'text-indigo-300 hover:text-white'}`}>Configurações de IA</button>}
         </nav>
 
         {/* Right Action: Present & Profile */}
@@ -194,9 +196,10 @@ export const Navbar: React.FC<Props> = ({
           )}
 
           {/* Usuário autenticado ou botão de login */}
-          {currentUser ? (
+          {personal ? <span className="text-xs text-emerald-300">Neste computador · Offline</span> : currentUser ? (
             <div className="relative">
               <button
+                aria-label="Abrir menu da conta"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="flex items-center gap-2 pl-3 border-l border-slate-800 text-xs hover:opacity-90 transition-opacity cursor-pointer"
               >

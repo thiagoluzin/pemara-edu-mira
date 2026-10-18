@@ -319,6 +319,7 @@ export const LessonEditor: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col gap-6">
+      <label className="text-sm text-slate-300">Título da aula<input aria-label="Título da aula" key={`${lesson.lesson.id}-${lesson.lesson.title}`} defaultValue={lesson.lesson.title} maxLength={160} onBlur={e=>{const title=e.target.value.trim();if(title&&title!==lesson.lesson.title)onUpdateLesson({...lesson,lesson:{...lesson.lesson,title},scenes:lesson.scenes.map(s=>s.type==='title'?{...s,title}:s)});}} className="block mt-1 w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"/></label>
       {/* BARRA SUPERIOR DE AÇÕES RÁPIDAS COM STATUS DO VISUAL VALIDATOR */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
         <div>
@@ -337,12 +338,12 @@ export const LessonEditor: React.FC<Props> = ({
               {overallVisualStatus === 'READY' ? (
                 <>
                   <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  <span>Pronta para apresentar</span>
+                  <span>Estrutura verificada · revise o conteúdo</span>
                 </>
               ) : (
                 <>
                   <XCircle className="w-3 h-3 text-rose-400" />
-                  <span>STATUS: NEEDS REVIEW</span>
+                  <span>Revisar estrutura e conteúdo</span>
                 </>
               )}
             </span>
@@ -622,7 +623,7 @@ export const LessonEditor: React.FC<Props> = ({
                     <span className="font-mono font-bold text-indigo-400 flex items-center gap-1.5">
                       <span>Página {index + 1}</span>
                       {valReport.status === 'PASS' && (
-                        <span title="Validado (PASS)"><CheckCircle2 className="w-3 h-3 text-emerald-400" /></span>
+                        <span title="Estrutura verificada; conteúdo requer revisão"><CheckCircle2 className="w-3 h-3 text-emerald-400" /></span>
                       )}
                       {valReport.status === 'WARNING' && (
                         <span title="Atenção"><AlertTriangle className="w-3 h-3 text-amber-400" /></span>
@@ -636,6 +637,9 @@ export const LessonEditor: React.FC<Props> = ({
                     </span>
                   </div>
                   <h4 className="text-sm font-semibold text-white truncate">{scene.title}</h4>
+                  <div className="flex gap-2">
+                    {([-1,1] as const).map(delta=><button key={delta} aria-label={`${delta<0?'Subir':'Descer'} página ${index+1}`} disabled={index+delta<0||index+delta>=lesson.scenes.length} className="border border-slate-600 rounded px-2 py-1 text-xs disabled:opacity-30" onClick={e=>{e.stopPropagation();const scenes=[...lesson.scenes];[scenes[index],scenes[index+delta]]=[scenes[index+delta],scenes[index]];onUpdateLesson({...lesson,scenes});setActiveSceneIndex(index+delta);}}>{delta<0?'↑ Subir':'↓ Descer'}</button>)}
+                  </div>
                 </div>
               );
             })}

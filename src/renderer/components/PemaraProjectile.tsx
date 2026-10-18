@@ -43,6 +43,7 @@ export const PemaraProjectile: React.FC<Props> = ({ scene, onParamsChange }) => 
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const requestRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
+  useEffect(()=>{setIsPlaying(false);setCurrentTime(0);},[params.velocity,params.angle,params.gravity,params.initial_height]);
 
   // Estado instantâneo atual
   const currentState = useMemo(() => {
@@ -51,7 +52,7 @@ export const PemaraProjectile: React.FC<Props> = ({ scene, onParamsChange }) => 
 
   const animate = (timestamp: number) => {
     if (lastTimestampRef.current !== null) {
-      const dt = ((timestamp - lastTimestampRef.current) / 1000) * playbackSpeed;
+      const dt = (Math.min(100,timestamp - lastTimestampRef.current) / 1000) * playbackSpeed;
       setCurrentTime((prev) => {
         const next = prev + dt;
         if (next >= telemetry.flightTime) {
@@ -398,7 +399,7 @@ export const PemaraProjectile: React.FC<Props> = ({ scene, onParamsChange }) => 
 
           {/* O PROJÉTIL (Esfera animada com brilho) */}
           <g transform={`translate(${currSvgX}, ${currSvgY})`}>
-            <circle r="14" fill="#6366f1" opacity="0.3" className="animate-pulse" />
+            <circle r="14" fill="#6366f1" opacity="0.3" />
             <circle r="7" fill="#818cf8" stroke="#ffffff" strokeWidth="2" />
           </g>
         </svg>
@@ -451,6 +452,7 @@ export const PemaraProjectile: React.FC<Props> = ({ scene, onParamsChange }) => 
           </span>
           <input
             type="range"
+            aria-label="Tempo do lançamento"
             min="0"
             max={telemetry.flightTime || 1}
             step="0.01"
@@ -480,6 +482,7 @@ export const PemaraProjectile: React.FC<Props> = ({ scene, onParamsChange }) => 
           </div>
           <input
             type="range"
+            aria-label="Velocidade inicial"
             min="5"
             max="60"
             step="1"
@@ -504,6 +507,7 @@ export const PemaraProjectile: React.FC<Props> = ({ scene, onParamsChange }) => 
           </div>
           <input
             type="range"
+            aria-label="Ângulo de lançamento"
             min="5"
             max="85"
             step="1"
@@ -513,7 +517,7 @@ export const PemaraProjectile: React.FC<Props> = ({ scene, onParamsChange }) => 
           />
           <div className="flex justify-between text-[10px] text-slate-500 mt-1">
             <span>5° (quase rasante)</span>
-            <span>45° (alcance máx)</span>
+            <span>45°</span>
             <span>85° (quase vertical)</span>
           </div>
         </div>
@@ -529,6 +533,7 @@ export const PemaraProjectile: React.FC<Props> = ({ scene, onParamsChange }) => 
           </div>
           <input
             type="range"
+            aria-label="Gravidade"
             min="1"
             max="30"
             step="0.1"

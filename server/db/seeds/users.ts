@@ -61,6 +61,7 @@ export const INITIAL_USERS: SeedUserDef[] = [
  * Insere os usuários canônicos no banco relacional caso ainda não existam.
  */
 export async function seedInitialUsers(pool: pg.Pool): Promise<{ createdCount: number; existingCount: number }> {
+  if(process.env.PEMARA_SINGLE_TEACHER==='true')return {createdCount:0,existingCount:0};
   let createdCount = 0;
   let existingCount = 0;
 

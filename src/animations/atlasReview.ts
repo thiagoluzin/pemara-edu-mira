@@ -1,0 +1,28 @@
+import type {AtlasKind} from './atlas';
+/** Concrete observation to make in each Atlas variant. Also used in the review lessons. */
+export const ATLAS_REVIEW:Record<Exclude<AtlasKind,'moon_phases'|'tectonics'>,{action:string;roles:string[]}>={
+ digestive:{action:'Acompanhe o conteúdo pelos órgãos e a passagem dos nutrientes para a circulação.',roles:['alimento','alimento','alimento','alimento']},
+ respiration:{action:'Compare o volume dos pulmões, o diafragma e os sentidos das trocas de gases.',roles:['pulmoes','oxigenio','pulmoes']},
+ photosynthesis:{action:'Observe o transporte de energia e substâncias e a formação dos produtos.',roles:['energia-luminosa','agua','co2','materia-organica']},
+ food_chain:{action:'Observe a alimentação, o crescimento do produtor e os caminhos da matéria e da energia.',roles:['crescimento','inseto-alimenta','ave-alimenta','materia-organica']},
+ separation:{action:'Compare sedimentação, passagem da água pelo filtro e saída de partículas de água na evaporação.',roles:['particula-percurso','agua-filtrada','particula-percurso','particula-percurso']},
+ heat:{action:'Compare vibração local, circulação do fluido e propagação de ondas.',roles:['vibracao-local','fluido','onda-termica']},
+ optics:{action:'Acompanhe a luz chegando à superfície, retornando ou passando ao outro meio.',roles:['frente-luminosa','frente-luminosa','frente-luminosa']},
+ population_pyramid:{action:'Observe a construção das barras por idade. Os números são fictícios e fixos.',roles:['barra-etaria','barra-etaria']},
+ climate:{action:'Observe a energia chegando à superfície, o ar se deslocando e a formação da nuvem.',roles:['radiacao-solar','ar-aquecido','massa-de-ar','nuvem-forma']},
+ watershed:{action:'Acompanhe a água em direção à foz e observe a conexão do afluente com o rio.',roles:['agua-rio','agua-rio','agua-rio','agua-rio']},
+ equation_balance:{action:'Compare quantidades iguais e a retirada simultânea de três unidades dos dois lados.',roles:['termos-esquerda','menos-tres-esquerda','valor-x']},
+ probability:{action:'Organize os seis resultados possíveis e escolha o evento para contar os casos favoráveis. A animação não é um sorteio.',roles:['favoravel','favoravel','favoravel']},
+ statistics:{action:'Construa o gráfico, redistribua o total para encontrar a média e ordene os valores para a mediana.',roles:['organizar-dados','redistribuir','ordenar-dados','construir-barra']},
+ coordinates:{action:'Acompanhe a construção: primeiro o deslocamento x, depois o deslocamento y.',roles:['ponto-construcao','ponto-construcao','ponto-construcao','ponto-construcao']},
+ transformations:{action:'Compare a figura inicial e final. Na reflexão, o rebatimento animado é uma construção da imagem.',roles:['transformacao','transformacao','reflexao']},
+ sentence:{action:'Monte a oração e observe quais palavras compõem o sujeito e o predicado.',roles:['sujeito','sujeito','predicado']},
+ argument:{action:'Organize tese, evidências, desenvolvimento e conclusão na estrutura do texto.',roles:['etapa-argumentativa','etapa-argumentativa','etapa-argumentativa','etapa-argumentativa']},
+ genres:{action:'Observe como partes de um texto são organizadas segundo seu propósito comunicativo.',roles:['parte-do-genero','parte-do-genero','parte-do-genero','parte-do-genero']},
+ sources:{action:'Examine a fonte ilustrativa e associe informações de autoria, data e contexto.',roles:['inspecao-fonte','inspecao-fonte','inspecao-fonte','inspecao-fonte']},
+ historical_change:{action:'Compare transformações de um local fictício e a ponte que permanece.',roles:['construcao-inicial','construcao-nova','circulacao-pessoas','construcao-nova']},
+ rhythm:{action:'Acompanhe o marcador nos quatro tempos e observe pausa e subdivisões.',roles:['marcador-ritmico','marcador-ritmico','marcador-ritmico','marcador-ritmico']},
+ art_composition:{action:'Experimente percurso da linha, proximidade de cores, tamanho e recorte do quadro.',roles:['ponta-do-traco','cor-sobreposta','contraste-escala','enquadramento']},
+ court:{action:'Compare o deslocamento dos jogadores com o deslocamento da bola durante um passe.',roles:['jogador-abre-espaco','bola','jogador-desloca']},
+ dialogue:{action:'Acompanhe turnos de fala e organize duas ideias para comparação.',roles:['turno-de-fala','turno-de-fala','comparar-falas','turno-de-fala']},
+};

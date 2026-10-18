@@ -279,8 +279,8 @@ test('E4: Isolamento docente no navegador real com React, respostas atrasadas e 
     await clickButtonByText('Nova Aula');
     await new Promise((r) => setTimeout(r, 400));
 
-    // Clica no botão "CRIAR AULA"
-    await clickButtonByText('CRIAR AULA');
+    // Geração determinística disponível sem provedor externo.
+    await clickButtonByText('Gerar sem IA');
 
     // Aguarda geração e retorno para a aba do editor
     let generatedSuccess = false;

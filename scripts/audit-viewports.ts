@@ -8,8 +8,8 @@
  * 2. 1366x768 (Laptop educacional padrão)
  * 3. 1920x1080 (Full HD / Monitor moderno)
  * 
- * Percorre todas as 21 cenas dos 4 pilotos pedagógicos no Modo Apresentação:
- * - Grécia Antiga (10 cenas)
+ * Percorre todas as 20 cenas dos 4 pilotos pedagógicos no Modo Apresentação:
+ * - Grécia Antiga (9 cenas)
  * - Sistema Solar (4 cenas)
  * - Lançamento Oblíquo (4 cenas)
  * - Função Quadrática (3 cenas)
@@ -68,6 +68,8 @@ export async function runViewportAudit(): Promise<{
 
   // 1. Inicia servidor Express estático local com rota dedicada para impressão/PDF
   const app = express();
+  // This static visual harness deliberately runs as a visitor, without a DB.
+  app.get('/api/auth/me', (_req,res) => res.status(401).json({authenticated:false}));
 
   const templateMap: Record<string, LessonSpec> = {
     grecia_antiga: TEMPLATE_GREECE_6EF,
@@ -104,10 +106,10 @@ export async function runViewportAudit(): Promise<{
   ];
 
   const pilots = [
-    { title: 'Grécia Antiga: Pólis, Democracia e Sociedade', slug: 'grecia_antiga', scenesCount: 10 },
-    { title: 'O Sistema Solar e os Movimentos da Terra', slug: 'sistema_solar', scenesCount: 4 },
-    { title: 'Lançamento Oblíquo: Trajetória e Vetores', slug: 'lancamento_obliquo', scenesCount: 4 },
-    { title: 'Função Quadrática e a Parábola: y = ax² + bx + c', slug: 'funcao_quadratica', scenesCount: 3 },
+    { title: 'Grécia Antiga: Pólis, Democracia e Sociedade', slug: 'grecia_antiga', scenesCount: TEMPLATE_GREECE_6EF.scenes.length },
+    { title: 'O Sistema Solar e os Movimentos da Terra', slug: 'sistema_solar', scenesCount: TEMPLATE_SOLAR_SYSTEM.scenes.length },
+    { title: 'Lançamento Oblíquo: Trajetória e Vetores', slug: 'lancamento_obliquo', scenesCount: TEMPLATE_PROJECTILE_MOTION.scenes.length },
+    { title: 'Função Quadrática e a Parábola: y = ax² + bx + c', slug: 'funcao_quadratica', scenesCount: TEMPLATE_MATH_FUNCTION.scenes.length },
   ];
 
   try {
@@ -380,7 +382,7 @@ export async function runViewportAudit(): Promise<{
           } else if (pilot.slug === 'funcao_quadratica' && s === 1) {
             const initialParabolaD = await browser.evaluate(`
               (() => {
-                const p = document.querySelector('svg path[stroke="#10b981"]');
+                const p = document.querySelector('svg path[data-math-curve]');
                 return p ? p.getAttribute('d') : '';
               })()
             `);
@@ -407,7 +409,7 @@ export async function runViewportAudit(): Promise<{
 
             const afterAD = await browser.evaluate(`
               (() => {
-                const p = document.querySelector('svg path[stroke="#10b981"]');
+                const p = document.querySelector('svg path[data-math-curve]');
                 return p ? p.getAttribute('d') : '';
               })()
             `);
@@ -438,7 +440,7 @@ export async function runViewportAudit(): Promise<{
 
             const afterCD = await browser.evaluate(`
               (() => {
-                const p = document.querySelector('svg path[stroke="#10b981"]');
+                const p = document.querySelector('svg path[data-math-curve]');
                 return p ? p.getAttribute('d') : '';
               })()
             `);
@@ -448,16 +450,15 @@ export async function runViewportAudit(): Promise<{
 
             interactiveOk = curveChangedA && curveChangedC && concavidadeOk;
             details = `Explorador Parábola: coeficiente 'a' (${targetA}) recalculou curva (${curveChangedA}), coeficiente 'c' (${targetC}) recalculou curva (${curveChangedC}), texto atualizado (${concavidadeOk})`;
-          } else if (metrics.sceneType === 'quiz') {
+          } else if (templateMap[pilot.slug].scenes[s].type === 'quiz') {
+            await browser.evaluate(`document.querySelector('.fixed.inset-0.z-50 main .space-y-3 button')?.click()`);
+            await new Promise(r=>setTimeout(r,150));
             const quizFeedback = await browser.evaluate(`
               (() => {
-                const quizContainer = document.querySelector('.space-y-3');
+                const quizContainer = document.querySelector('.fixed.inset-0.z-50 main .space-y-3');
                 if (!quizContainer) return { clicked: false, hasExplanation: false, hasStyle: false };
                 const optionButtons = Array.from(quizContainer.querySelectorAll('button'));
                 if (optionButtons.length === 0) return { clicked: false, hasExplanation: false, hasStyle: false };
-
-                // Clica na primeira alternativa
-                optionButtons[0].click();
 
                 // Verifica se a explicação apareceu no DOM
                 const txt = document.body.innerText;
@@ -500,15 +501,19 @@ export async function runViewportAudit(): Promise<{
             details
           });
 
-          // Avança para o próximo slide
+          // As setas percorrem ideias antes de mudar de página. Use o seletor
+          // de página para auditar a cena pretendida, sem pular conteúdo no app.
           if (s < pilot.scenesCount - 1) {
-            await browser.evaluate(`
+            const pageChange=await browser.evaluate(`
               (() => {
                 const btns = Array.from(document.querySelectorAll('button'));
-                const nextBtn = btns.find(b => (b.innerText || '').includes('Próximo'));
-                if (nextBtn) nextBtn.click();
+                const nextBtn = btns.find(b => (b.title || '').startsWith('Página ${s+2}:'));
+                if (!nextBtn) return {ok:false,titles:btns.map(b=>b.title),text:document.body.innerText.slice(-2000)};
+                nextBtn.click();
+                return {ok:true};
               })()
             `);
+            if(!pageChange.ok)throw new Error('Seletor da página ${s+2} ausente: '+JSON.stringify(pageChange));
           }
         }
 

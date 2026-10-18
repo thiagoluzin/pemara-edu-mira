@@ -22,6 +22,9 @@ export interface PlanetData {
   curiosity: string;
 }
 
+// Moon counts: NASA Science moon pages, checked 2026-10-17.
+// Jupiter: /jupiter/jupiter-moons/; Saturn, Uranus, Neptune: /<planet>/moons/.
+// Counts change with recognition of new satellites; they are dated reference data.
 export const PLANETS_DATA: Record<string, PlanetData> = {
   Mercury: {
     id: 'Mercury',
@@ -94,7 +97,7 @@ export const PLANETS_DATA: Record<string, PlanetData> = {
     diameterKm: 139820,
     relativeSize: 24,
     rotationHours: 9.9,
-    moons: 95,
+    moons: 115,
     highlight: 'Gigante gasoso com massa maior que todos os outros planetas juntos.',
     curiosity: 'Sua Grande Mancha Vermelha é uma tempestade anticiclônica maior que a Terra.'
   },
@@ -109,7 +112,7 @@ export const PLANETS_DATA: Record<string, PlanetData> = {
     diameterKm: 116460,
     relativeSize: 20,
     rotationHours: 10.7,
-    moons: 146,
+    moons: 293,
     highlight: 'Famoso pelo magnífico sistema de anéis formados por gelo e rocha.',
     curiosity: 'Saturno tem densidade menor que a da água; flutuaria em uma banheira cósmica!'
   },
@@ -124,7 +127,7 @@ export const PLANETS_DATA: Record<string, PlanetData> = {
     diameterKm: 50724,
     relativeSize: 15,
     rotationHours: -17.2,
-    moons: 28,
+    moons: 29,
     highlight: 'Gigante de gelo que gira "deitado", com eixo inclinado a 98°.',
     curiosity: 'Sua cor azul-esverdeada decorre da absorção de luz vermelha pelo gás metano.'
   },

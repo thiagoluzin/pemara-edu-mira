@@ -1,0 +1,15 @@
+* text=auto
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.sql text eol=lf
+*.md text eol=lf
+*.md whitespace=-blank-at-eol
+*.patch text eol=lf -whitespace
+*.mjs text eol=lf
+*.mts text eol=lf
+*.bat text eol=crlf
+*.pdf binary
+*.docx binary
+*.pptx binary
+*.traineddata binary

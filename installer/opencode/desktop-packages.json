@@ -1,0 +1,118 @@
+{
+  "Bundle": "2026.10.18.4-desktop",
+  "Created": "2026-10-18T11:04:54.367Z",
+  "Packages": [
+    {
+      "Id": "node",
+      "Arch": "x64",
+      "File": "node-v24.22.0-win-x64.zip",
+      "Url": "https://nodejs.org/dist/v24.22.0/node-v24.22.0-win-x64.zip",
+      "Sha256": "f9683a19877e12a9b167305c8db71040d812876359de21f0d2e97c3f321f80c3",
+      "Version": "24.22.0",
+      "Size": 37733703
+    },
+    {
+      "Id": "python",
+      "Arch": "x64",
+      "File": "python-3.13.16-amd64.zip",
+      "Url": "https://www.python.org/ftp/python/3.13.16/python-3.13.16-amd64.zip",
+      "Sha256": "bbf675bb5e763c1efbb09a3a461b259d81598a63c30c4b0d7ea11b9f063df159",
+      "Version": "3.13.16",
+      "Size": 31153407
+    },
+    {
+      "Id": "opencode",
+      "Arch": "x64",
+      "File": "opencode-windows-x64-baseline.zip",
+      "Url": "https://github.com/anomalyco/opencode/releases/download/v1.19.3/opencode-windows-x64-baseline.zip",
+      "Sha256": "0d59113484bfe8d6dc146fc981f5c33faa8318303c183711b7a9387060b289e8",
+      "Version": "1.19.3",
+      "Size": 62204138
+    },
+    {
+      "Id": "git",
+      "Arch": "x64",
+      "File": "MinGit-2.56.0.2-64-bit.zip",
+      "Url": "https://github.com/git-for-windows/git/releases/download/v2.56.0.windows.2/MinGit-2.56.0.2-64-bit.zip",
+      "Sha256": "da35e72aa21c005a5a0d298cfbae110bc1609a815730ea0dde84b01a1b3cd3be",
+      "Version": "2.56.0.windows.2",
+      "Size": 39806486
+    },
+    {
+      "Id": "node",
+      "Arch": "arm64",
+      "File": "node-v24.22.0-win-arm64.zip",
+      "Url": "https://nodejs.org/dist/v24.22.0/node-v24.22.0-win-arm64.zip",
+      "Sha256": "3a5c209a5bc59e65b3bc0fa13ed5e166a26bd3d55332847f498b76b037408d61",
+      "Version": "24.22.0",
+      "Size": 33770411
+    },
+    {
+      "Id": "python",
+      "Arch": "arm64",
+      "File": "python-3.13.16-arm64.zip",
+      "Url": "https://www.python.org/ftp/python/3.13.16/python-3.13.16-arm64.zip",
+      "Sha256": "49b24a002efcf7451fe47a52ad9bc57a012a0c987eb6a635973ede200c421044",
+      "Version": "3.13.16",
+      "Size": 30269557
+    },
+    {
+      "Id": "opencode",
+      "Arch": "arm64",
+      "File": "opencode-windows-arm64.zip",
+      "Url": "https://github.com/anomalyco/opencode/releases/download/v1.19.3/opencode-windows-arm64.zip",
+      "Sha256": "c1b9daf18c97564b2d171703279621f7edc3613e70750d796ef78db87257ad89",
+      "Version": "1.19.3",
+      "Size": 60695316
+    },
+    {
+      "Id": "git",
+      "Arch": "arm64",
+      "File": "MinGit-2.56.0.2-arm64.zip",
+      "Url": "https://github.com/git-for-windows/git/releases/download/v2.56.0.windows.2/MinGit-2.56.0.2-arm64.zip",
+      "Sha256": "38b33dc6024026e3315cf88ab2cfea65205bbd7bb3a8e824bd21c8ad4fe609a7",
+      "Version": "2.56.0.windows.2",
+      "Size": 37936336
+    },
+    {
+      "Id": "desktop",
+      "Arch": "x64",
+      "File": "opencode-desktop-pemara-1.19.3-r2-x64.zip",
+      "Version": "1.19.3-pemara.2",
+      "Sha256": "6076527a3b5e5ea866da972cca07fa830d42870690733cef9a024ee09659caed",
+      "Size": 180976531,
+      "Upstream": {
+        "Id": "desktop",
+        "Arch": "x64",
+        "File": "opencode-desktop-win-x64.exe",
+        "Url": "https://github.com/anomalyco/opencode/releases/download/v1.19.3/opencode-desktop-win-x64.exe",
+        "Sha256": "eb2554ab5484886db78fd861008a2a2db985bfa3dc3720ce7d1cda027ce99174",
+        "Version": "1.19.3",
+        "Size": 126269464
+      }
+    },
+    {
+      "Id": "desktop",
+      "Arch": "arm64",
+      "File": "opencode-desktop-pemara-1.19.3-r2-arm64.zip",
+      "Version": "1.19.3-pemara.2",
+      "Sha256": "c37a361eb010d38f0a4e76c3017dc78e4c132e715b3b7d97a7332a790d0361a3",
+      "Size": 177755504,
+      "Upstream": {
+        "Id": "desktop",
+        "Arch": "arm64",
+        "File": "opencode-desktop-win-arm64.exe",
+        "Url": "https://github.com/anomalyco/opencode/releases/download/v1.19.3/opencode-desktop-win-arm64.exe",
+        "Sha256": "41da1cbed2e860d3cb2fe99a18223b8f4539263e79d5b0ec85b228d6f95c6f0b",
+        "Version": "1.19.3",
+        "Size": 118790656
+      }
+    }
+  ],
+  "Sources": [
+    "https://github.com/anomalyco/opencode/releases/tag/v1.19.3",
+    "https://nodejs.org/dist/v24.22.0/SHASUMS256.txt",
+    "https://www.python.org/ftp/python/3.13.16/windows-3.13.16.json",
+    "https://github.com/git-for-windows/git/releases/tag/v2.56.0.windows.2"
+  ]
+}

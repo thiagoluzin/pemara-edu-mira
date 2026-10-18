@@ -36,13 +36,13 @@ test('E2 (PostgreSQL REAL): Ciclo completo em instâncias reais — migrations, 
 
     // 2. Migração em banco vazio (5 migrações canônicas: 001, 002, 003, 004 e 005)
     const migResult = await runMigrations(poolA);
-    assert.equal(migResult.appliedCount, 6);
+    assert.equal(migResult.appliedCount, 7);
     assert.equal(migResult.alreadyAppliedCount, 0);
 
     // 3. Reaplicação de migrações (Idempotência e Checksum no banco real)
     const migReapply = await runMigrations(poolA);
     assert.equal(migReapply.appliedCount, 0);
-    assert.equal(migReapply.alreadyAppliedCount, 6);
+    assert.equal(migReapply.alreadyAppliedCount, 7);
 
     // 4. Teste de Rollback Atômico Real no PostgreSQL
     const userRepoA = new UserRepository(poolA);
@@ -308,8 +308,8 @@ test('E2 (PostgreSQL REAL): Ciclo completo em instâncias reais — migrations, 
       assert.equal(bMig2.status, 'fulfilled', 'Migração concorrente 2 em banco limpo deve cumprir');
       const bRes1 = (bMig1 as PromiseFulfilledResult<any>).value;
       const bRes2 = (bMig2 as PromiseFulfilledResult<any>).value;
-      assert.equal(bRes1.appliedCount + bRes2.appliedCount, 6, 'Exatamente as 6 migrações são aplicadas');
-      assert.equal(bRes1.alreadyAppliedCount + bRes2.alreadyAppliedCount, 6, 'A outra detecta já aplicada');
+      assert.equal(bRes1.appliedCount + bRes2.appliedCount, 7, 'Exatamente as 7 migrações são aplicadas');
+      assert.equal(bRes1.alreadyAppliedCount + bRes2.alreadyAppliedCount, 7, 'A outra detecta já aplicada');
 
       // Restaura o backup da instância A na instância B
       console.log('[PostgreSQL Real] Restaurando envelope do Banco A no Banco B...');

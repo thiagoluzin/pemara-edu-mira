@@ -4,6 +4,7 @@ import {randomUUID} from 'node:crypto';
 import type {LessonSpec} from './src/types/lesson';
 import {aiSettings} from './server/ai/settings';
 import {createAISettingsRouter} from './server/routes/aiSettings';
+import {createOpenCodeLessonsRouter,hasOpenCodeLessons,openCodeModel} from './server/ai/openCodeJobs';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -24,6 +25,10 @@ import { seedInitialUsers } from './server/db/seeds/users';
 import { seedInitialKnowledge } from './server/db/seeds/knowledge';
 import { createAuthMiddleware, requireAuth } from './server/auth/middleware';
 import { createAuthRouter } from './server/routes/auth';
+import { createMaterialsRouter } from './server/routes/materials';
+import {createSetupRouter} from './server/routes/setup';
+import {ensureLocalOwner, createLocalWorkspaceMiddleware} from './server/auth/localWorkspace';
+import type {SafeUser} from './server/db/types';
 import { createKnowledgeRouter } from './server/routes/knowledge';
 import { createLessonsRouter } from './server/routes/lessons';
 import { createAdminRouter } from './server/routes/admin';
@@ -39,6 +44,9 @@ app.use(express.json({ limit: '10mb' }));
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const HOST = process.env.HOST || '127.0.0.1';
+const personal = process.env.PEMARA_SINGLE_TEACHER === 'true';
+if (personal && !['127.0.0.1','localhost','::1'].includes(HOST)) throw new Error('A edição individual exige endereço local.');
+let localOwner: SafeUser | undefined;
 
 // Health & readiness endpoints
 app.get('/health', (_req, res) => {
@@ -66,10 +74,16 @@ app.get('/ready', async (_req, res) => {
 
 // Middleware de Autenticação e Sessão (E3)
 const pool = initDb();
-app.use(createAuthMiddleware(pool));
+if (personal) app.use('/api', createLocalWorkspaceMiddleware(() => localOwner));
+else app.use(createAuthMiddleware(pool));
 
 // Rotas de Autenticação e Usuários (E3)
-app.use('/api/auth', createAuthRouter(pool));
+if (personal) {
+  app.get('/api/auth/me', (_req, res) => res.json({authenticated:true, user:{...localOwner, local:true}}));
+  app.use('/api/auth', (_req, res) => res.status(404).json({error:'Esta edição abre diretamente o acervo local, sem contas.'}));
+} else app.use('/api/auth', createAuthRouter(pool));
+app.use('/api/setup',createSetupRouter(pool));
+app.use('/api/materials', createMaterialsRouter(pool));
 
 // Rotas do Knowledge Core conectadas ao PostgreSQL (E3)
 app.use('/api/knowledge', createKnowledgeRouter(pool));
@@ -78,14 +92,20 @@ app.use('/api/knowledge', createKnowledgeRouter(pool));
 app.use('/api/lessons', createLessonsRouter(pool));
 
 // Rotas do Painel Administrativo Geral (E3 / E4)
-app.use('/api/admin', createAdminRouter(pool));
+if (!personal) app.use('/api/admin', createAdminRouter(pool));
+else app.use('/api/admin', (_req,res)=>res.status(404).json({error:'Gestão de contas indisponível na edição individual.'}));
 
 // IA opcional: metadados públicos para usuários autenticados, sem chaves ou URLs.
 app.use('/api/ai/settings',createAISettingsRouter());
-app.get('/api/ai/providers', requireAuth, (_req, res) => {try{res.json(listProviders(aiSettings.environment()));}catch{res.status(503).json({error:'Configurações de IA indisponíveis.'});}});
+app.use('/api/ai/opencode/jobs',createOpenCodeLessonsRouter(pool));
+app.get('/api/ai/providers', requireAuth, async (_req, res) => {try{
+  if(hasOpenCodeLessons()) { const model=await openCodeModel().catch(()=>undefined); return res.json({opencode:true,model:model||'',providers:[],defaultProvider:'opencode',offline:false}); }
+  res.json(process.env.PEMARA_OFFLINE==='true'?{providers:[],defaultProvider:'',offline:true}:listProviders(aiSettings.environment()));
+}catch{res.status(503).json({error:'Configurações de IA indisponíveis.'});}});
 
 // Alias legado preservado; nenhuma dependência obrigatória de Gemini.
 app.post(['/api/ai/generate-lesson', '/api/gemini/generate-lesson'], requireAuth, async (req, res) => {
+  if(process.env.PEMARA_OFFLINE==='true')return res.status(409).json({error:'Esta instalação funciona offline. Use Gerar sem IA.'});
   try {
     const { subject, topic, grade, duration_minutes, didactic_style } = req.body;
     if (typeof subject !== 'string' || typeof topic !== 'string' || typeof grade !== 'string' ||
@@ -145,14 +165,16 @@ export async function startServer() {
 
     // Sementes iniciais de usuários e acervo Marco 1 (idempotentes)
     const userSeed = await seedInitialUsers(currentPool);
+    if (personal) localOwner = await ensureLocalOwner(currentPool);
     const knowledgeSeed = await seedInitialKnowledge(currentPool);
     console.log(`[DB] Sementes verificadas: ${userSeed.createdCount} novos usuários criados (${userSeed.existingCount} já existiam). Conhecimento: ${knowledgeSeed.nodesCount} nós, ${knowledgeSeed.relationsCount} relações.`);
   } catch (dbErr: any) {
     console.error('[DB] Erro ao inicializar banco de dados ou migrações:', dbErr);
+    if (personal) throw dbErr;
   }
 
   if (process.env.NODE_ENV === 'production') {
-    const distPath = path.resolve('dist');
+    const distPath = path.resolve(process.env.PEMARA_RESOURCE_ROOT || '.', 'dist');
     if (!fs.existsSync(distPath)) {
       console.warn('AVISO: Pasta dist/ não encontrada. Execute `npm run build` antes de rodar em produção.');
     }

@@ -4,6 +4,7 @@ import {AIError} from '../ai/providers';
 import {AISettingsStore,aiSettings} from '../ai/settings';
 export function createAISettingsRouter(store:AISettingsStore=aiSettings){
  const router=Router();router.use(requireAuth,requireRole('admin'));
+ router.use((_req,res,next)=>process.env.PEMARA_OFFLINE==='true'?res.status(409).json({error:'Configuração de serviços externos desativada nesta instalação offline.'}):next());
  router.use((req,res,next)=>{
   if(req.method!=='GET'&&req.headers.origin){
    try{if(new URL(req.headers.origin).host!==req.get('host'))return res.status(403).json({error:'Origem da solicitação não permitida.'});}catch{return res.status(403).json({error:'Origem inválida.'});}

@@ -1,0 +1,482 @@
+diff --git a/packages/ui/src/components/chat/SessionErrorNotice.test.ts b/packages/ui/src/components/chat/SessionErrorNotice.test.ts
+index 5c16f02..5d203f4 100644
+--- a/packages/ui/src/components/chat/SessionErrorNotice.test.ts
++++ b/packages/ui/src/components/chat/SessionErrorNotice.test.ts
+@@ -25,12 +25,14 @@ const assistantMessage = (time: { created: number; completed?: number }): Messag
+ 
+ describe('readLastMessageState', () => {
+   test('a stray completed: 0 on a user message is ignored in favour of created', () => {
+-    expect(readLastMessageState(optimisticUserMessage)).toEqual({ role: 'user', timestamp: 1_000, hasError: false });
++    expect(readLastMessageState(optimisticUserMessage)).toEqual({ role: 'user', timestamp: 1_000, hasError: false, incomplete: false });
+   });
+ 
+   test('an unfinished assistant message uses created, a finished one uses completed', () => {
+     expect(readLastMessageState(assistantMessage({ created: 1_000 }))?.timestamp).toBe(1_000);
++    expect(readLastMessageState(assistantMessage({ created: 1_000 }))?.incomplete).toBe(true);
+     expect(readLastMessageState(assistantMessage({ created: 1_000, completed: 2_000 }))?.timestamp).toBe(2_000);
++    expect(readLastMessageState(assistantMessage({ created: 1_000, completed: 2_000 }))?.incomplete).toBe(false);
+   });
+ 
+   test('no message yields no state', () => {
+diff --git a/packages/ui/src/components/chat/SessionErrorNotice.tsx b/packages/ui/src/components/chat/SessionErrorNotice.tsx
+index a10f3b7..e53ff99 100644
+--- a/packages/ui/src/components/chat/SessionErrorNotice.tsx
++++ b/packages/ui/src/components/chat/SessionErrorNotice.tsx
+@@ -112,7 +112,7 @@ const useLastMessageState = (sessionId: string, directory?: string): LastMessage
+       return null;
+     }
+     const cached = cacheRef.current;
+-    if (cached && cached.role === next.role && cached.timestamp === next.timestamp && cached.hasError === next.hasError) {
++    if (cached && cached.role === next.role && cached.timestamp === next.timestamp && cached.hasError === next.hasError && cached.incomplete === next.incomplete) {
+       return cached;
+     }
+     cacheRef.current = next;
+@@ -164,7 +164,7 @@ export const SessionErrorNotice: React.FC<SessionErrorNoticeProps> = ({ sessionI
+   // while, is a reply that never began: the send was accepted but OpenCode
+   // produced neither a message nor an error for it.
+   const unansweredSince = !reportedError && !storedFailureApplies && isIdle
+-    && lastMessage?.role === 'user' && lastMessage.timestamp > 0
++    && (lastMessage?.role === 'user' || (lastMessage?.incomplete && !lastMessage.hasError)) && lastMessage.timestamp > 0
+     ? lastMessage.timestamp
+     : null;
+   const [now, setNow] = React.useState(() => Date.now());
+@@ -216,9 +216,9 @@ export const SessionErrorNotice: React.FC<SessionErrorNoticeProps> = ({ sessionI
+     hasDetails = storedFailure.parentToolError !== null;
+     detail = storedFailure.parentToolError ?? t('chat.sessionError.noDetails');
+   } else {
+-    title = t('chat.sessionError.noReply');
++    title = t(lastMessage?.incomplete ? 'chat.sessionError.interrupted' : 'chat.sessionError.noReply');
+     hasDetails = false;
+-    detail = t('chat.sessionError.noDetails');
++    detail = t('chat.sessionError.continueConversation');
+   }
+ 
+   return (
+diff --git a/packages/ui/src/components/chat/sessionErrorNoticeState.ts b/packages/ui/src/components/chat/sessionErrorNoticeState.ts
+index b942beb..b499923 100644
+--- a/packages/ui/src/components/chat/sessionErrorNoticeState.ts
++++ b/packages/ui/src/components/chat/sessionErrorNoticeState.ts
+@@ -4,6 +4,7 @@ export type LastMessageState = {
+   role: Message['role'];
+   timestamp: number;
+   hasError: boolean;
++  incomplete: boolean;
+ } | null;
+ 
+ /**
+@@ -23,9 +24,10 @@ export const readLastMessageState = (last: Message | null | undefined): LastMess
+       role: last.role,
+       timestamp: completed > 0 ? completed : last.time.created,
+       hasError: Boolean(last.error),
++      incomplete: last.time.completed === undefined,
+     };
+   }
+-  return { role: last.role, timestamp: last.time.created, hasError: false };
++  return { role: last.role, timestamp: last.time.created, hasError: false, incomplete: false };
+ };
+ 
+ /**
+diff --git a/packages/ui/src/components/layout/MainLayout.tsx b/packages/ui/src/components/layout/MainLayout.tsx
+index cc7bf14..6e8d031 100644
+--- a/packages/ui/src/components/layout/MainLayout.tsx
++++ b/packages/ui/src/components/layout/MainLayout.tsx
+@@ -2,6 +2,8 @@ import React from 'react';
+ import { Header } from './Header';
+ import { Sidebar } from './Sidebar';
+ import { SidebarTopBar } from './SidebarTopBar';
++import { SidebarFilesTree } from './SidebarFilesTree';
++import { useI18n } from '@/lib/i18n';
+ import { useSidebarPeek } from './useSidebarPeek';
+ import { useLayoutAnimationMs } from '@/hooks/useLayoutAnimationMs';
+ import { TitlebarLeftControls } from './TitlebarLeftControls';
+@@ -76,6 +78,7 @@ const OnDemand: React.FC<{
+  * context panel beside it.
+  */
+ const LeftSidebar = React.memo<{ isMobile: boolean }>(({ isMobile }) => {
++    const { t } = useI18n();
+     const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
+     const peek = useSidebarPeek({ enabled: !isSidebarOpen && !isMobile, layoutAnimationMs: useLayoutAnimationMs() });
+     return (
+@@ -86,7 +89,17 @@ const LeftSidebar = React.memo<{ isMobile: boolean }>(({ isMobile }) => {
+             topBar={<SidebarTopBar />}
+             peek={peek}
+         >
+-            <SessionSidebar isVisible={isSidebarOpen || peek.state !== false} />
++            {import.meta.env.VITE_PEMARA_PILOT === '1' ? (
++                <div className="flex h-full min-h-0 flex-col">
++                    <div className="h-[45%] min-h-[180px] shrink-0">
++                        <SessionSidebar isVisible={isSidebarOpen || peek.state !== false} />
++                    </div>
++                    <section className="flex min-h-0 flex-1 flex-col" aria-label={t('contextPanel.mode.files')}>
++                        <div className="px-3 py-2 typography-ui-label text-muted-foreground">{t('contextPanel.mode.files')}</div>
++                        <SidebarFilesTree visible={isSidebarOpen || peek.state !== false} />
++                    </section>
++                </div>
++            ) : <SessionSidebar isVisible={isSidebarOpen || peek.state !== false} />}
+         </Sidebar>
+     );
+ });
+diff --git a/packages/ui/src/components/layout/ZoneFitArbiter.tsx b/packages/ui/src/components/layout/ZoneFitArbiter.tsx
+index bcd4f97..32b51e1 100644
+--- a/packages/ui/src/components/layout/ZoneFitArbiter.tsx
++++ b/packages/ui/src/components/layout/ZoneFitArbiter.tsx
+@@ -73,7 +73,7 @@ export const ZoneFitArbiter: React.FC = () => {
+         const tabId = getZoneView(state.contextPanelByDirectory[directoryKey], plan.displace).activeTabId;
+         if (tabId) displaced = { side: plan.displace, by: opening, tabId };
+       }
+-      if (plan.collapseSidebar) {
++      if (plan.collapseSidebar && import.meta.env.VITE_PEMARA_PILOT !== '1') {
+         sidebarFoldedByRef.current = opening;
+         setSidebar(false);
+       }
+diff --git a/packages/ui/src/components/ui/CommandPalette.tsx b/packages/ui/src/components/ui/CommandPalette.tsx
+index d7f9b87..c0e8f27 100644
+--- a/packages/ui/src/components/ui/CommandPalette.tsx
++++ b/packages/ui/src/components/ui/CommandPalette.tsx
+@@ -692,10 +692,13 @@ export const CommandPalette: React.FC = () => {
+   const hasQuery = liveTrimmed.length > 0;
+ 
+   const scoredCommands = React.useMemo(() => {
++    const availableCommands = import.meta.env.VITE_PEMARA_PILOT === '1'
++      ? commands.filter((item) => item.id !== 'toggle-terminal')
++      : commands;
+     if (!hasQuery) {
+-      return commands.filter((item) => !item.secondary).map((item) => ({ item, score: 0 }));
++      return availableCommands.filter((item) => !item.secondary).map((item) => ({ item, score: 0 }));
+     }
+-    const candidates = commands.filter((item) => matchesWordStarts(item.searchText, liveTrimmed));
++    const candidates = availableCommands.filter((item) => matchesWordStarts(item.searchText, liveTrimmed));
+     return scoreByFuzzyQuery(candidates, liveTrimmed, (c) => c.searchText, {
+       limit: 7,
+       noFuzzy: true,
+diff --git a/packages/ui/src/hooks/useSessionActivity.ts b/packages/ui/src/hooks/useSessionActivity.ts
+index 47392a7..9eed52f 100644
+--- a/packages/ui/src/hooks/useSessionActivity.ts
++++ b/packages/ui/src/hooks/useSessionActivity.ts
+@@ -1,7 +1,7 @@
+ import React from 'react';
+ import { getLastConversationMessage, isIncompleteAssistantTurn, type Message } from '@/lib/opencode/model';
+ import { useSessionUIStore } from '@/sync/session-ui-store';
+-import { useSessionStatus, useSessionMessagesSelector, useSessionPermissions, useSessionForms } from '@/sync/sync-context';
++import { useSessionStatus, useSessionStatusSnapshotReady, useSessionMessagesSelector, useSessionPermissions, useSessionForms } from '@/sync/sync-context';
+ 
+ // Mirrors OpenCode SessionStatus: busy|retry|idle.
+ type SessionActivityPhase = 'idle' | 'busy' | 'retry';
+@@ -38,6 +38,7 @@ const IDLE_RESULT: SessionActivityResult = {
+  */
+ export function useSessionActivity(sessionId: string | null | undefined, directory?: string): SessionActivityResult {
+   const status = useSessionStatus(sessionId ?? '', directory);
++  const statusSnapshotReady = useSessionStatusSnapshotReady(directory, sessionId ?? undefined);
+   const hasPendingAssistant = useSessionMessagesSelector(sessionId ?? '', directory, selectHasPendingAssistant);
+   const permissions = useSessionPermissions(sessionId ?? '', directory);
+   const forms = useSessionForms(sessionId ?? '', directory);
+@@ -53,7 +54,9 @@ export function useSessionActivity(sessionId: string | null | undefined, directo
+ 
+     // Only trust the trailing assistant message as a transient fallback while
+     // waiting for session.status/message.updated to settle.
+-    const hasAuthoritativeStatus = status !== undefined;
++    // Active snapshots omit idle sessions. A persisted unfinished reply must
++    // not override that successful snapshot after reconnect or app restart.
++    const hasAuthoritativeStatus = status !== undefined || statusSnapshotReady;
+     const statusWorking = hasAuthoritativeStatus && phase !== 'idle';
+     const isWorking = statusWorking || hasPendingAssistant;
+ 
+@@ -67,7 +70,7 @@ export function useSessionActivity(sessionId: string | null | undefined, directo
+       isBusy: phase === 'busy' || (!statusWorking && hasPendingAssistant),
+       isCooldown: false,
+     };
+-  }, [sessionId, status, hasPendingAssistant, permissions, forms]);
++  }, [sessionId, status, statusSnapshotReady, hasPendingAssistant, permissions, forms]);
+ }
+ 
+ export function useCurrentSessionActivity(): SessionActivityResult {
+diff --git a/packages/ui/src/lib/i18n/messages/ar.ts b/packages/ui/src/lib/i18n/messages/ar.ts
+index 6e381cc..bbfd053 100644
+--- a/packages/ui/src/lib/i18n/messages/ar.ts
++++ b/packages/ui/src/lib/i18n/messages/ar.ts
+@@ -1989,6 +1989,7 @@ export const dict = {
+   'chat.sessionError.showStatus': 'إظهار السجل الزمني للتشخيص',
+   'chat.sessionError.noReply': 'لم يبدأ OpenCode ردًا على هذه الرسالة.',
+   'chat.sessionError.interrupted': 'قاطع OpenCode هذا الرد.',
++  'chat.sessionError.continueConversation': "محادثتك وملفاتك المحفوظة ما زالت هنا. عندما يعود الاتصال، أرسل رسالة في هذه المحادثة للمتابعة.",
+   'chat.longError.expand': 'عرض الخطأ كاملًا',
+   'chat.longError.collapse': 'عرض أقل',
+   'chat.errorDetails.show': 'عرض تفاصيل الرد',
+diff --git a/packages/ui/src/lib/i18n/messages/de.ts b/packages/ui/src/lib/i18n/messages/de.ts
+index a229d52..27582df 100644
+--- a/packages/ui/src/lib/i18n/messages/de.ts
++++ b/packages/ui/src/lib/i18n/messages/de.ts
+@@ -1792,6 +1792,7 @@ export const dict = {
+   'chat.sessionError.showStatus': 'Diagnoseverlauf anzeigen',
+   'chat.sessionError.noReply': 'OpenCode hat keine Antwort auf diese Nachricht begonnen.',
+   'chat.sessionError.interrupted': 'OpenCode hat diese Antwort unterbrochen.',
++  'chat.sessionError.continueConversation': "Dein Gespräch und die gespeicherten Dateien sind weiterhin vorhanden. Sobald die Verbindung wiederhergestellt ist, sende eine Nachricht in diesem Gespräch, um fortzufahren.",
+   'chat.longError.expand': 'Vollständigen Fehler anzeigen',
+   'chat.longError.collapse': 'Weniger anzeigen',
+   'chat.errorDetails.show': 'Antwortdetails anzeigen',
+diff --git a/packages/ui/src/lib/i18n/messages/en.ts b/packages/ui/src/lib/i18n/messages/en.ts
+index 5c36df1..4187070 100644
+--- a/packages/ui/src/lib/i18n/messages/en.ts
++++ b/packages/ui/src/lib/i18n/messages/en.ts
+@@ -2038,6 +2038,7 @@ export const dict = {
+   'chat.sessionError.showStatus': 'Show diagnostic timeline',
+   'chat.sessionError.noReply': 'OpenCode did not start a reply to this message.',
+   'chat.sessionError.interrupted': 'OpenCode interrupted this reply.',
++  'chat.sessionError.continueConversation': "Your conversation and saved files are still here. When the connection returns, send a message in this conversation to continue.",
+   'chat.longError.expand': 'Show full error',
+   'chat.longError.collapse': 'Show less',
+   'chat.errorDetails.show': 'Show response details',
+diff --git a/packages/ui/src/lib/i18n/messages/es.ts b/packages/ui/src/lib/i18n/messages/es.ts
+index 8538ed2..739e72c 100644
+--- a/packages/ui/src/lib/i18n/messages/es.ts
++++ b/packages/ui/src/lib/i18n/messages/es.ts
+@@ -2004,6 +2004,7 @@ export const dict: Record<I18nKey, string> = {
+   "chat.sessionError.showStatus": "Mostrar cronología de diagnósticos",
+   "chat.sessionError.noReply": "OpenCode no comenzó una respuesta a este mensaje.",
+   "chat.sessionError.interrupted": 'OpenCode interrumpió esta respuesta.',
++  'chat.sessionError.continueConversation': "Tu conversación y los archivos guardados siguen aquí. Cuando vuelva la conexión, envía un mensaje en esta conversación para continuar.",
+   'chat.longError.expand': 'Mostrar el error completo',
+   'chat.longError.collapse': 'Mostrar menos',
+   "chat.errorDetails.show": "Mostrar detalles de la respuesta",
+diff --git a/packages/ui/src/lib/i18n/messages/fr.ts b/packages/ui/src/lib/i18n/messages/fr.ts
+index ce6cd1e..fae55b9 100644
+--- a/packages/ui/src/lib/i18n/messages/fr.ts
++++ b/packages/ui/src/lib/i18n/messages/fr.ts
+@@ -1774,6 +1774,7 @@ export const dict = {
+   'chat.sessionError.showStatus': 'Afficher la chronologie des diagnostics',
+   'chat.sessionError.noReply': 'OpenCode n\'a pas commencé de réponse à ce message.',
+   'chat.sessionError.interrupted': 'OpenCode a interrompu cette réponse.',
++  'chat.sessionError.continueConversation': "Votre conversation et les fichiers enregistrés sont toujours là. Lorsque la connexion revient, envoyez un message dans cette conversation pour continuer.",
+   'chat.longError.expand': 'Afficher l’erreur complète',
+   'chat.longError.collapse': 'Afficher moins',
+   'chat.errorDetails.show': 'Afficher les détails de la réponse',
+diff --git a/packages/ui/src/lib/i18n/messages/he.ts b/packages/ui/src/lib/i18n/messages/he.ts
+index e6af85a..c54e3bc 100644
+--- a/packages/ui/src/lib/i18n/messages/he.ts
++++ b/packages/ui/src/lib/i18n/messages/he.ts
+@@ -1989,6 +1989,7 @@ export const dict = {
+   'chat.sessionError.showStatus': 'הצג ציר זמן אבחון',
+   'chat.sessionError.noReply': 'OpenCode לא התחיל תגובה להודעה הזו.',
+   'chat.sessionError.interrupted': 'OpenCode קטע את התגובה הזו.',
++  'chat.sessionError.continueConversation': "השיחה והקבצים השמורים שלך עדיין כאן. כשהחיבור יחזור, אפשר לשלוח הודעה בשיחה הזו כדי להמשיך.",
+   'chat.longError.expand': 'הצג את השגיאה המלאה',
+   'chat.longError.collapse': 'הצג פחות',
+   'chat.errorDetails.show': 'הצג את פרטי התגובה',
+diff --git a/packages/ui/src/lib/i18n/messages/ja.ts b/packages/ui/src/lib/i18n/messages/ja.ts
+index c6cee14..189603e 100644
+--- a/packages/ui/src/lib/i18n/messages/ja.ts
++++ b/packages/ui/src/lib/i18n/messages/ja.ts
+@@ -2034,6 +2034,7 @@ export const dict: Record<I18nKey, string> = {
+   'chat.sessionError.showStatus': '診断タイムラインを表示',
+   'chat.sessionError.noReply': 'OpenCode はこのメッセージへの返答を開始しませんでした。',
+   'chat.sessionError.interrupted': 'OpenCode がこの応答を中断しました。',
++  'chat.sessionError.continueConversation': "会話と保存済みのファイルは残っています。接続が復旧したら、この会話にメッセージを送信して続けてください。",
+   'chat.longError.expand': 'エラー全文を表示',
+   'chat.longError.collapse': '折りたたむ',
+   'chat.errorDetails.show': 'レスポンスの詳細を表示',
+diff --git a/packages/ui/src/lib/i18n/messages/ko.ts b/packages/ui/src/lib/i18n/messages/ko.ts
+index 9e044ae..a14971a 100644
+--- a/packages/ui/src/lib/i18n/messages/ko.ts
++++ b/packages/ui/src/lib/i18n/messages/ko.ts
+@@ -2038,6 +2038,7 @@ export const dict: Record<I18nKey, string> = {
+   'chat.sessionError.showStatus': '진단 타임라인 표시',
+   'chat.sessionError.noReply': 'OpenCode가 이 메시지에 대한 응답을 시작하지 않았습니다.',
+   'chat.sessionError.interrupted': 'OpenCode가 이 응답을 중단했습니다.',
++  'chat.sessionError.continueConversation': "대화와 저장된 파일은 그대로 있습니다. 연결이 복구되면 이 대화에 메시지를 보내 계속하세요.",
+   'chat.longError.expand': '전체 오류 보기',
+   'chat.longError.collapse': '간략히 보기',
+   'chat.errorDetails.show': '응답 세부 정보 표시',
+diff --git a/packages/ui/src/lib/i18n/messages/nl.ts b/packages/ui/src/lib/i18n/messages/nl.ts
+index 6463bf5..5fe4cf4 100644
+--- a/packages/ui/src/lib/i18n/messages/nl.ts
++++ b/packages/ui/src/lib/i18n/messages/nl.ts
+@@ -2038,6 +2038,7 @@ export const dict = {
+   'chat.sessionError.showStatus': 'Diagnostische tijdlijn tonen',
+   'chat.sessionError.noReply': 'OpenCode is geen antwoord op dit bericht begonnen.',
+   'chat.sessionError.interrupted': 'OpenCode heeft dit antwoord onderbroken.',
++  'chat.sessionError.continueConversation': "Je gesprek en opgeslagen bestanden zijn er nog. Stuur een bericht in dit gesprek om verder te gaan zodra de verbinding terug is.",
+   'chat.longError.expand': 'Volledige fout tonen',
+   'chat.longError.collapse': 'Minder tonen',
+   'chat.errorDetails.show': 'Antwoorddetails tonen',
+diff --git a/packages/ui/src/lib/i18n/messages/pl.ts b/packages/ui/src/lib/i18n/messages/pl.ts
+index 9c88532..ced1ca9 100644
+--- a/packages/ui/src/lib/i18n/messages/pl.ts
++++ b/packages/ui/src/lib/i18n/messages/pl.ts
+@@ -2751,6 +2751,7 @@ export const dict: Record<I18nKey, string> = {
+   'chat.sessionError.showStatus': 'Pokaż oś czasu diagnostyki',
+   'chat.sessionError.noReply': 'OpenCode nie rozpoczął odpowiedzi na tę wiadomość.',
+   'chat.sessionError.interrupted': 'OpenCode przerwał tę odpowiedź.',
++  'chat.sessionError.continueConversation': "Rozmowa i zapisane pliki nadal tu są. Gdy połączenie wróci, wyślij wiadomość w tej rozmowie, aby kontynuować.",
+   'chat.longError.expand': 'Pokaż cały błąd',
+   'chat.longError.collapse': 'Pokaż mniej',
+   'chat.errorDetails.show': 'Pokaż szczegóły odpowiedzi',
+diff --git a/packages/ui/src/lib/i18n/messages/pt-BR.ts b/packages/ui/src/lib/i18n/messages/pt-BR.ts
+index 3c4f71a..0777dc8 100644
+--- a/packages/ui/src/lib/i18n/messages/pt-BR.ts
++++ b/packages/ui/src/lib/i18n/messages/pt-BR.ts
+@@ -2004,6 +2004,7 @@ export const dict: Record<I18nKey, string> = {
+   "chat.sessionError.showStatus": "Mostrar linha do tempo de diagnósticos",
+   "chat.sessionError.noReply": "O OpenCode não iniciou uma resposta a esta mensagem.",
+   "chat.sessionError.interrupted": 'O OpenCode interrompeu esta resposta.',
++  'chat.sessionError.continueConversation': "Sua conversa e os arquivos salvos continuam aqui. Quando a conexão voltar, envie uma mensagem nesta conversa para continuar.",
+   'chat.longError.expand': 'Mostrar o erro completo',
+   'chat.longError.collapse': 'Mostrar menos',
+   "chat.errorDetails.show": "Mostrar detalhes da resposta",
+@@ -2283,23 +2284,23 @@ export const dict: Record<I18nKey, string> = {
+   "chat.changedFiles.actions.showFewer": "Mostrar menos arquivos",
+   "chat.emptyState.opencodeUnreachable": "OpenCode não está acessível",
+   "chat.emptyState.startNewChat": "Iniciar uma nova conversa",
+-  "chat.emptyState.draftTitle": "What are we working on?",
+-  "chat.emptyState.draftTitleWithProject": "What are we working on in {project}?",
+-  "chat.draftPresets.explore.label": "Explore the codebase",
+-  "chat.draftPresets.catchup.label": "Catch me up",
+-  "chat.draftPresets.weigh.label": "Weigh my options",
+-  "chat.draftPresets.plan.label": "Start feature planning",
+-  "chat.draftPresets.craftGoal.label": "Criar um Goal",
++  "chat.emptyState.draftTitle": "O que vamos criar hoje?",
++  "chat.emptyState.draftTitleWithProject": "O que vamos criar em {project}?",
++  "chat.draftPresets.explore.label": "Conhecer o projeto",
++  "chat.draftPresets.catchup.label": "Retomar o trabalho",
++  "chat.draftPresets.weigh.label": "Comparar opções",
++  "chat.draftPresets.plan.label": "Planejar uma melhoria",
++  "chat.draftPresets.craftGoal.label": "Definir um objetivo",
+   "chat.draftPresets.scheduleTask.label": "Agendar uma tarefa",
+-  "chat.draftPresets.debug.label": "Debug an issue",
+-  "chat.draftPresets.review.label": "Review my changes",
+-  "chat.draftStarters.add": "Add a starter",
+-  "chat.draftStarters.searchPlaceholder": "Search commands and skills…",
+-  "chat.draftStarters.empty": "Nothing to add",
+-  "chat.draftStarters.sectionBuiltIn": "Built-in",
+-  "chat.draftStarters.sectionCommands": "Commands",
+-  "chat.draftStarters.sectionSkills": "Skills",
+-  "chat.draftStarters.remove": "Remove",
++  "chat.draftPresets.debug.label": "Investigar um problema",
++  "chat.draftPresets.review.label": "Revisar minhas alterações",
++  "chat.draftStarters.add": "Adicionar sugestão",
++  "chat.draftStarters.searchPlaceholder": "Pesquisar comandos e habilidades…",
++  "chat.draftStarters.empty": "Nenhuma sugestão disponível",
++  "chat.draftStarters.sectionBuiltIn": "Padrão",
++  "chat.draftStarters.sectionCommands": "Comandos",
++  "chat.draftStarters.sectionSkills": "Habilidades",
++  "chat.draftStarters.remove": "Remover",
+   "chat.draftStarters.sharedTitle": "Fixado na configuração do repositório; altere lá",
+   "chat.draftStarters.share": "Mover para a configuração do repositório",
+   "chat.draftStarters.makePersonal": "Mover para minhas configurações",
+diff --git a/packages/ui/src/lib/i18n/messages/tr.ts b/packages/ui/src/lib/i18n/messages/tr.ts
+index a1d18ee..7f5801b 100644
+--- a/packages/ui/src/lib/i18n/messages/tr.ts
++++ b/packages/ui/src/lib/i18n/messages/tr.ts
+@@ -1905,6 +1905,7 @@ export const dict = {
+   'chat.sessionError.showStatus': 'Tanılama zaman çizelgesini göster',
+   'chat.sessionError.noReply': 'OpenCode bu mesaja yanıt vermeye başlamadı.',
+   'chat.sessionError.interrupted': 'OpenCode bu yanıtı kesti.',
++  'chat.sessionError.continueConversation': "Konuşmanız ve kaydedilen dosyalarınız burada duruyor. Bağlantı geri geldiğinde devam etmek için bu konuşmaya bir mesaj gönderin.",
+   'chat.longError.expand': 'Hatanın tamamını göster',
+   'chat.longError.collapse': 'Daha az göster',
+   'chat.errorDetails.show': 'Yanıt ayrıntılarını göster',
+diff --git a/packages/ui/src/lib/i18n/messages/uk.ts b/packages/ui/src/lib/i18n/messages/uk.ts
+index 9f7b1ad..a471b0a 100644
+--- a/packages/ui/src/lib/i18n/messages/uk.ts
++++ b/packages/ui/src/lib/i18n/messages/uk.ts
+@@ -2004,6 +2004,7 @@ export const dict: Record<I18nKey, string> = {
+   "chat.sessionError.showStatus": "Показати хронологію діагностики",
+   "chat.sessionError.noReply": "OpenCode не почав відповідь на це повідомлення.",
+   "chat.sessionError.interrupted": 'OpenCode перервав цю відповідь.',
++  'chat.sessionError.continueConversation': "Ваша розмова та збережені файли залишилися тут. Коли з’єднання відновиться, надішліть повідомлення в цій розмові, щоб продовжити.",
+   'chat.longError.expand': 'Показати помилку повністю',
+   'chat.longError.collapse': 'Згорнути',
+   "chat.errorDetails.show": "Показати деталі відповіді",
+diff --git a/packages/ui/src/lib/i18n/messages/zh-CN.ts b/packages/ui/src/lib/i18n/messages/zh-CN.ts
+index 06b2806..2b4416d 100644
+--- a/packages/ui/src/lib/i18n/messages/zh-CN.ts
++++ b/packages/ui/src/lib/i18n/messages/zh-CN.ts
+@@ -2004,6 +2004,7 @@ export const dict: Record<I18nKey, string> = {
+   'chat.sessionError.showStatus': '显示诊断时间线',
+   'chat.sessionError.noReply': 'OpenCode 没有开始回复这条消息。',
+   'chat.sessionError.interrupted': 'OpenCode 中断了此回复。',
++  'chat.sessionError.continueConversation': "您的对话和已保存的文件仍在这里。连接恢复后，请在此对话中发送消息以继续。",
+   'chat.longError.expand': '显示完整错误',
+   'chat.longError.collapse': '收起',
+   'chat.errorDetails.show': '显示响应详情',
+diff --git a/packages/ui/src/lib/i18n/messages/zh-TW.ts b/packages/ui/src/lib/i18n/messages/zh-TW.ts
+index 729ed41..4d3a29e 100644
+--- a/packages/ui/src/lib/i18n/messages/zh-TW.ts
++++ b/packages/ui/src/lib/i18n/messages/zh-TW.ts
+@@ -2013,6 +2013,7 @@ export const dict: Record<I18nKey, string> = {
+   'chat.sessionError.showStatus': '顯示診斷時間軸',
+   'chat.sessionError.noReply': 'OpenCode 沒有開始回覆這則訊息。',
+   'chat.sessionError.interrupted': 'OpenCode 中斷了此回覆。',
++  'chat.sessionError.continueConversation': "您的對話和已儲存的檔案仍在這裡。連線恢復後，請在此對話中傳送訊息以繼續。",
+   'chat.longError.expand': '顯示完整錯誤',
+   'chat.longError.collapse': '收合',
+   'chat.errorDetails.show': '顯示回應詳情',
+diff --git a/packages/ui/src/lib/surfaces/registry.ts b/packages/ui/src/lib/surfaces/registry.ts
+index 3cc904e..813b62b 100644
+--- a/packages/ui/src/lib/surfaces/registry.ts
++++ b/packages/ui/src/lib/surfaces/registry.ts
+@@ -225,6 +225,9 @@ type VisibleRailSurfacesOptions = {
+  */
+ export const getVisibleContextRailSurfaces = (options: VisibleRailSurfacesOptions): ContextSurfaceDescriptor[] => {
+   return sortContextSurfaces(options.railOrder, options.extras).filter((surface) => {
++    if (import.meta.env.VITE_PEMARA_PILOT === '1' && surface.id === 'terminal') {
++      return false;
++    }
+     if (options.hiddenSurfaces?.includes(surface.id)) {
+       return false;
+     }
+diff --git a/packages/ui/src/stores/useUIStore.ts b/packages/ui/src/stores/useUIStore.ts
+index b345a55..2a997a8 100644
+--- a/packages/ui/src/stores/useUIStore.ts
++++ b/packages/ui/src/stores/useUIStore.ts
+@@ -1438,7 +1438,7 @@ export const useUIStore = create<UIStore>()(
+         contextRailOrder: [],
+         contextRailHiddenSurfaces: [],
+         contextSurfaceZones: {},
+-        contextEditorTreeVisible: true,
++        contextEditorTreeVisible: import.meta.env.VITE_PEMARA_PILOT !== '1',
+         fileTreeSide: 'right',
+         contextEditorVisible: true,
+         contextEditorTreeWidth: 240,
+@@ -1675,6 +1675,7 @@ export const useUIStore = create<UIStore>()(
+         // mode, opens a fresh singleton tab when none exists, and toggles the
+         // panel closed when the requested mode is already active and visible.
+         openContextSurface: (directory, mode) => {
++          if (import.meta.env.VITE_PEMARA_PILOT === '1' && mode === 'terminal') return;
+           const normalizedDirectory = normalizeDirectoryPath((directory || '').trim());
+           if (!normalizedDirectory) {
+             return;
+@@ -1710,7 +1711,7 @@ export const useUIStore = create<UIStore>()(
+ 
+           // The file surface's entry point is its file tree: reopening it
+           // always lands on the tree even when it was last left toggled off.
+-          if (mode === 'file' && !state.contextEditorTreeVisible) {
++          if (mode === 'file' && !state.contextEditorTreeVisible && import.meta.env.VITE_PEMARA_PILOT !== '1') {
+             set({ contextEditorTreeVisible: true });
+           }
+ 
+@@ -1747,6 +1748,7 @@ export const useUIStore = create<UIStore>()(
+         },
+ 
+         openContextPanelTab: (directory, tab, options) => {
++          if (import.meta.env.VITE_PEMARA_PILOT === '1' && tab.mode === 'terminal') return;
+           const normalizedDirectory = normalizeDirectoryPath((directory || '').trim());
+           if (!normalizedDirectory) {
+             return;
+diff --git a/packages/ui/src/sync/DOCUMENTATION.md b/packages/ui/src/sync/DOCUMENTATION.md
+index 5909d2a..4099016 100644
+--- a/packages/ui/src/sync/DOCUMENTATION.md
++++ b/packages/ui/src/sync/DOCUMENTATION.md
+@@ -635,6 +635,13 @@ Initial loads use smaller requests on constrained VS Code/mobile surfaces and pu
+ 
+ ## Failed-turn diagnostics
+ 
++A successful active-session snapshot makes omitted sessions idle for the
++activity hook. Historical unfinished assistant records remain in the transcript
++but cannot hold the stop button or working indicator after that snapshot.
++An idle unfinished reply follows the same bounded message rechecks as an
++unanswered prompt, then shows the interruption notice. A new prompt resumes
++the same conversation explicitly; reconnect and restart never replay sends.
++
+ Successful HTML responses and the packaged protocol's `runtime-unavailable` response are definite routing failures. The SDK boundary rejects them before decoding and marks the normalized error through `lib/relay/transport-error.ts`. Send-failure classification uses that authority before HTTP timeout heuristics, so even the packaged `503` uses normal optimistic rollback. These failures do not count against a model provider's circuit. Requests whose outcome the transport cannot confirm remain ambiguous and are not retried as definite rejections.
+ 
+ A `session.error` event is the live account of a turn OpenCode stopped, and
