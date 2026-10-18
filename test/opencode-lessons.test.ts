@@ -15,14 +15,14 @@ import type {AddressInfo} from 'node:net';
 test('OpenCode jobs preserve requests, retry one conversation, save once, and isolate owners',async()=>{
  const db=await createDisposablePostgres('pemara-opencode-'),pool=db.createPool();
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'pemara-jobs-'));let server:ReturnType<ReturnType<typeof express>['listen']>|undefined;
- const sessions:string[]=[],prompts:string[]=[];let fail=true,hang=false;
+ const sessions:string[]=[],prompts:string[]=[];let fail=true,hang=false,catalogDown=false;
  const raw=structuredClone(TEMPLATE_GREECE_6EF);raw.lesson.subject='science';raw.lesson.generation_mode='MODE_C_API';
  const visual=(layout:string)=>({layout,caption:'Esquema didático.',nodes:[{id:'a',label:'Água',icon:'water',explanation:'A água pode mudar de estado.'},{id:'b',label:'Vapor',icon:'energy',explanation:'Vapor de água é água no estado gasoso.'}]});
  const scenes=[{id:'s1',type:'title',title:'Evaporação'},...['flow','cards','comparison','flow','cards'].map((layout,i)=>({id:'s'+(i+2),type:'text',title:i===3?'Atividade: observar a roupa':'Observar a água '+i,visual:visual(layout),...(i===0?{atlas_model:'separation'}:{})})),{id:'q',type:'quiz',title:'Verifique',question:'Qual mudança ocorre?',answers:['Líquido para gás','Gás para sólido'],correct_index:0,explanation:'Na evaporação, água líquida passa ao estado gasoso.'},{id:'end',type:'summary',title:'Síntese',visual:visual('cards')}];
  (scenes[1] as any).atlas_model={id:'separation'};
  const response=JSON.stringify({...raw,scenes});
  let currentModel='';
- configureOpenCodeLessons({models:async()=>[{id:'test/refused',name:'Indisponível'},{id:'test/model',name:'Gratuito'}],model:async()=>'test/refused',create:async({id,jobId,model})=>{const sessionID=id||'ses_'+jobId;sessions.push(sessionID);currentModel=model;return sessionID;},generate:async({prompt},signal)=>{prompts.push(prompt);signal.throwIfAborted();if(hang)await new Promise<void>((_resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));if(fail||currentModel==='test/refused')throw new Error('Conexão interrompida. Pedido guardado.');return{text:response,model:'test/model'};}},dir);
+ configureOpenCodeLessons({models:async()=>{if(catalogDown)throw new Error('Catálogo sem conexão.');return[{id:'test/refused',name:'Indisponível'},{id:'test/model',name:'Gratuito'}];},model:async()=>{if(catalogDown)throw new Error('Catálogo sem conexão.');return'test/refused';},create:async({id,jobId,model})=>{const sessionID=id||'ses_'+jobId;sessions.push(sessionID);currentModel=model;return sessionID;},generate:async({prompt},signal)=>{prompts.push(prompt);signal.throwIfAborted();if(hang)await new Promise<void>((_resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));if(fail||currentModel==='test/refused')throw new Error('Conexão interrompida. Pedido guardado.');return{text:response,model:'test/model'};}},dir);
  try {
   await runMigrations(pool);const users=new UserRepository(pool);
   const owner=await users.create({username:'owner',name:'Professor',email:'owner@example.invalid',password_hash:'test',role:'teacher'});
@@ -55,7 +55,10 @@ test('OpenCode jobs preserve requests, retry one conversation, save once, and is
   await send('',input);const blocked=await poll('failed');assert.match(blocked.message,/IA respondeu/);
   assert.ok(fs.existsSync(path.join(dir,input.requestId+'.pending.json')));const calls=prompts.length;
   await pool.query('ALTER TABLE lessons DROP CONSTRAINT test_storage_failure');
+  catalogDown=true;
   await send('/'+input.requestId+'/resume',{});await poll('completed');assert.equal(prompts.length,calls);
   assert.equal((await pool.query('SELECT count(*)::int n FROM lessons')).rows[0].n,3);
+  input.requestId=randomUUID();assert.equal((await send('',input)).status,202);await poll('failed');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(dir,input.requestId+'.json'),'utf8')).input.topic,input.topic);
  } finally {await stopOpenCodeLessons();if(server)await new Promise<void>(r=>server!.close(()=>r()));await db.cleanup();}
 });

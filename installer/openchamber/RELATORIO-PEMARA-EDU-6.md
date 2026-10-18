@@ -22,7 +22,9 @@ A revisão pedagógica encontrou na versão 1 a expressão incorreta “vapor vi
 
 Aplicativo empacotado: criação real com material importado, salvamento, exportação pela interface, percurso até a síntese, abertura de notas do professor, geometria em movimento e pausa estável no Atlas com rede do navegador desabilitada. Fechar e reabrir manteve a aula e o acervo. O HTML foi aberto, animado, pausado, fechado e reaberto em Chrome offline. A simulação de rede é do contexto do navegador, não a desconexão física de todo o Windows.
 
-Oito testes de regressão de jobs, visuais e nomes de arquivo, três testes de catálogo/espera/cancelamento, TypeScript e build de produção passaram. Falha de armazenamento seguida de retomada sem nova chamada de IA foi testada em PostgreSQL descartável. O scanner Pemara passou sem erros; cinco avisos históricos de BOM em scripts PowerShell de manutenção foram mantidos e registrados.
+O instalador final foi aplicado sobre a instalação existente, com código de saída zero. No executável instalado, a mesma aula passou novamente por notas, sequência até a síntese, movimento/pausa offline, exportação e reabertura do aplicativo e do HTML, sem outra geração de IA. Atalhos da Área de Trabalho e do menu Iniciar foram conferidos. Seis recursos de código/build instalados corresponderam aos empacotados por SHA-256. O teste confirma esta atualização no Windows 11, não uma instalação limpa em todos os notebooks.
+
+Oito testes de regressão de jobs, visuais e nomes de arquivo, três testes de catálogo/espera/cancelamento, TypeScript e build de produção passaram. Falha de armazenamento seguida de retomada sem nova chamada de IA, inclusive sem conexão com o catálogo, foi testada em PostgreSQL descartável. Um pedido novo também foi preservado quando a consulta ao catálogo falhou. O scanner Pemara passou sem erros; cinco avisos históricos de BOM em scripts PowerShell de manutenção foram mantidos e registrados.
 
 Comparação com os backups anteriores preservou **33 aulas, 48 revisões, seis rascunhos, quatro materiais, 46 mensagens anteriores, quatro conversas anteriores e 18 arquivos do professor**. Os dois pedidos antigos permaneceram iguais. Os testes acrescentaram pedidos, materiais e uma aula novos; nada do acervo anterior foi substituído.
 
@@ -31,5 +33,7 @@ Evidências locais: `build/openchamber/2.4.0-pemara.6/evidencias/`, em especial 
 ## Implantação
 
 Windows 10 e 11 x64 são os destinos; o teste efetivo desta máquina é Windows 11 x64. Windows 10 ainda exige validação em máquina própria. O pacote mantém o identificador de instalação e os diretórios de dados anteriores. Não inclui perfis, conversas, materiais pessoais ou credenciais do autor. As versões anteriores dos instaladores continuam preservadas. A disponibilidade futura do serviço gratuito depende do provedor; o programa não migra automaticamente para serviços pagos.
+
+Instalador: `PEMARA-EDU-2.4.0-pemara.6-Windows-x64-Instalar.exe`, 413.447.637 bytes. SHA-256: `1aedb417251dc13bbd67bae636d41acc152568f717b0ee314777a537b88931a8`. Pasta de entrega: `ENTREGAS/PEMARA-EDU-2.4.0-pemara.6`.
 
 Fontes e receitas ficam no GitHub; executáveis, bancos e dados pessoais ficam fora do Git. Consulte [compilação](BUILD-PEMARA-EDU.md), [integração](INTEGRACAO-IA.md), [guia](AULAS-PROFESSORES.txt) e [licenças](../../THIRD_PARTY_NOTICES.md). Referências técnicas: [OpenCode](https://github.com/anomalyco/opencode/tree/v2.0.32), [OpenChamber](https://github.com/openchamber/openchamber). O relatório da versão 5 permanece como registro histórico da recusa 403.
