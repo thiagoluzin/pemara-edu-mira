@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { startEducation } from './education-service.mjs';
 import { educationDataDir, educationExportsDir } from './pemara-bootstrap.mjs';
 import { createLessonAdapter } from './opencode-lesson-adapter.mjs';
+import { createEducationNavigation } from './education-navigation.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = educationDataDir;
@@ -38,7 +39,7 @@ function service() {
       if (!state) throw new Error('Abra a janela local do OpenChamber.');
       return state.win.webContents.executeJavaScript('({baseUrl:window.__OPENCHAMBER_API_BASE_URL__,headers:window.__OPENCHAMBER_RUNTIME_HEADERS__})');
     },
-  }) });
+  }) }).catch(error => { servicePromise = undefined; throw error; });
   return servicePromise;
 }
 export async function stopEducation() {
@@ -57,20 +58,7 @@ ipcMain.handle('pemara:education:navigate', async (event, area) => {
   const state = states.get(event.sender.id);
   if (!state || event.senderFrame !== state.nav.webContents.mainFrame || !['chat','create','library','atlas','exports'].includes(area)) throw new Error('Navegação não autorizada.');
   if (area === 'exports') { fs.mkdirSync(exportsDir, { recursive: true }); const error = await shell.openPath(exportsDir); if (error) throw new Error(error); return; }
-  if (area === 'chat') { state.edu.setVisible(false); state.win.webContents.focus(); return; }
-  try {
-    const { url } = await service();
-    if (!state.loaded) {
-      await state.edu.webContents.loadURL(url + '/' + area);
-      state.loaded = true;
-    } else {
-      await state.edu.webContents.executeJavaScript(`history.pushState({}, '', ${JSON.stringify('/' + area)}); window.dispatchEvent(new PopStateEvent('popstate'));`);
-    }
-    state.edu.setVisible(true); state.edu.webContents.focus();
-  } catch (error) {
-    await dialog.showMessageBox(state.win, { type: 'error', title: 'Aulas e Atlas', message: 'Não foi possível abrir o acervo local.', detail: error.message + '\nOs arquivos e as conversas permanecem salvos.' });
-    throw error;
-  }
+  return state.navigate(area);
 });
 
 app.on('browser-window-created', (_event, win) => {
@@ -89,6 +77,15 @@ app.on('browser-window-created', (_event, win) => {
     const eduSession = session.fromPartition('persist:pemara-education');
     const edu = new WebContentsView({ webPreferences: { session: eduSession, sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: true } });
     const state = { nav, edu, win, loaded: false };
+    state.navigate = createEducationNavigation({
+      ready: service,
+      alive: () => !win.isDestroyed() && !edu.webContents.isDestroyed(),
+      load: async url => { await edu.webContents.loadURL(url); state.loaded = true; },
+      route: route => edu.webContents.executeJavaScript(`history.pushState({}, '', ${JSON.stringify(route)}); window.dispatchEvent(new PopStateEvent('popstate'));`),
+      show: () => { edu.setVisible(true); edu.webContents.focus(); },
+      chat: () => { edu.setVisible(false); win.webContents.focus(); },
+      failed: error => dialog.showMessageBox(win, { type: 'error', title: 'Aulas e Atlas', message: 'Não foi possível abrir o acervo local.', detail: error.message + '\nTente clicar novamente na área desejada. Os arquivos e as conversas permanecem salvos.' }),
+    });
     states.set(nav.webContents.id, state);
     win.contentView.addChildView(edu); win.contentView.addChildView(nav);
     edu.setVisible(false);

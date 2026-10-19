@@ -48,7 +48,7 @@ console.log(JSON.stringify({ dependencies: copied.size, target }));
 const bundle = path.join(stage, 'bundle');
 fs.cpSync(path.join(repo, 'build/openchamber/2.4.0-pemara.1/bundle'), bundle, { recursive: true });
 fs.copyFileSync(path.join(here, 'bootstrap.mjs'), path.join(bundle, 'pemara-bootstrap.mjs'));
-for (const file of ['education-service.mjs','education-shell.mjs','education-nav.html','education-nav.js','education-preload.cjs']) fs.copyFileSync(path.join(here, file), path.join(bundle, file));
+for (const file of ['education-service.mjs','education-shell.mjs','education-navigation.mjs','education-nav.html','education-nav.js','education-preload.cjs']) fs.copyFileSync(path.join(here, file), path.join(bundle, file));
 const entry = path.join(bundle, 'entry.mjs');
 fs.writeFileSync(entry, fs.readFileSync(entry, 'utf8').replace("import './pemara-bootstrap.mjs';", "import './pemara-bootstrap.mjs';\nimport './education-shell.mjs';"));
 for (const main of [entry, path.join(bundle, 'main.mjs')]) {
