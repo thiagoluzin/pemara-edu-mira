@@ -8,6 +8,7 @@ A navegação agora executa um carregamento por vez, descarta pedidos ultrapassa
 
 - Cinco testes de regressão: cliques rápidos; clique durante carregamento; retorno ao chat; falha real seguida de nova tentativa; janela fechada durante inicialização.
 - Executável instalado: cinco solicitações simultâneas sem aviso; navegação por Atlas, Criar aula e Minhas aulas; fechar e abrir novamente. Duas execuções com as mesmas 34 aulas disponíveis.
+- Instalador de manutenção executado com saída 0. Após reinstalar, o teste acima passou novamente em dois ciclos. A conversa atual permaneceu idêntica e os 18 arquivos originais dos professores mantiveram seus SHA256.
 - Não houve geração de IA nem alteração de conteúdo nesta correção.
 - Arquivo original `app.asar` preservado em `build/openchamber/navigation-fix-20261019/app-original.asar`. A atualização local preserva os bytes e as entradas dos demais arquivos; recibo em `patch-receipt.json`.
 - Evidências antes/depois e capturas em `build/openchamber/navigation-fix-20261019`. Windows 11 testado; Windows 10 não foi testado neste atendimento.
