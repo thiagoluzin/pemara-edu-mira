@@ -25,8 +25,8 @@ import { AuthUser } from '../services/authApi';
 import { knowledgeApi } from '../services/knowledgeApi';
 
 interface Props {
-  activeTab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas';
-  onTabChange: (tab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas') => void;
+  activeTab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas' | 'chat-reviews';
+  onTabChange: (tab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas' | 'chat-reviews') => void;
   activeMode: GenerationMode;
   onStartPresentation: () => void;
   canPresent: boolean;
@@ -101,7 +101,7 @@ export const Navbar: React.FC<Props> = ({
           </div>
 
           {/* Active Generation Mode Pill */}
-          {activeTab !== 'create' && <span className={`hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${currentModeBadge.color}`}>
+          {activeTab !== 'create' && activeTab !== 'chat-reviews' && <span className={`hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${currentModeBadge.color}`}>
             {currentModeBadge.label}
           </span>}
 
@@ -185,7 +185,7 @@ export const Navbar: React.FC<Props> = ({
 
         {/* Right Action: Present & Profile */}
         <div className="flex items-center gap-3">
-          {canPresent && (
+          {canPresent && activeTab !== 'chat-reviews' && (
             <button
               onClick={onStartPresentation}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/50 transition-all transform hover:scale-105"

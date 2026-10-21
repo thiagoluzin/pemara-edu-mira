@@ -6,6 +6,7 @@ import type {LessonSpec} from './src/types/lesson';
 import {aiSettings} from './server/ai/settings';
 import {createAISettingsRouter} from './server/routes/aiSettings';
 import {createOpenCodeLessonsRouter,hasOpenCodeLessons,openCodeModel} from './server/ai/openCodeJobs';
+import {createDirectChatReviewRouter} from './server/ai/directChatReview';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -99,6 +100,7 @@ else app.use('/api/admin', (_req,res)=>res.status(404).json({error:'Gestão de c
 // IA opcional: metadados públicos para usuários autenticados, sem chaves ou URLs.
 app.use('/api/ai/settings',createAISettingsRouter());
 app.use('/api/ai/opencode/jobs',createOpenCodeLessonsRouter(pool));
+app.use('/api/ai/opencode/chat-reviews',createDirectChatReviewRouter());
 app.get('/api/ai/providers', requireAuth, async (_req, res) => {try{
   if(hasOpenCodeLessons()) { const model=await openCodeModel().catch(()=>undefined); return res.json({opencode:true,model:model||'',providers:[],defaultProvider:'opencode',offline:false}); }
   res.json(process.env.PEMARA_OFFLINE==='true'?{providers:[],defaultProvider:'',offline:true}:listProviders(aiSettings.environment()));

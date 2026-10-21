@@ -63,7 +63,7 @@ export async function stopEducation() {
 
 ipcMain.handle('pemara:education:navigate', async (event, area) => {
   const state = states.get(event.sender.id);
-  if (!state || event.senderFrame !== state.nav.webContents.mainFrame || !['chat','create','library','atlas','exports'].includes(area)) throw new Error('Navegação não autorizada.');
+  if (!state || event.senderFrame !== state.nav.webContents.mainFrame || !['chat','create','library','atlas','chat-reviews','exports'].includes(area)) throw new Error('Navegação não autorizada.');
   if (area === 'exports') { fs.mkdirSync(exportsDir, { recursive: true }); const error = await shell.openPath(exportsDir); if (error) throw new Error(error); return; }
   return state.navigate(area);
 });
@@ -135,5 +135,21 @@ app.on('browser-window-created', (_event, win) => {
       if (!edu.webContents.isDestroyed()) edu.webContents.close();
     });
     await nav.webContents.loadURL(pathToFileURL(path.join(here, 'education-nav.html')).href);
+    // Start observing direct chat even when the teacher never opens Criar aula.
+    let reviewTimer;
+    win.once('closed',()=>clearInterval(reviewTimer));
+    void service().then(runtime=>{
+      if(win.isDestroyed())return;
+      reviewTimer=setInterval(()=>{
+        if(nav.webContents.isDestroyed())return;
+        const status=runtime.reviewStatus(),jobs=status?.jobs||[];
+        const pending=jobs.some(j=>['queued','classifying','reviewing'].includes(j.status));
+        const failed=jobs.some(j=>j.status==='failed');
+        const text=status?.error?'Revisão do chat: conexão indisponível.':pending?'Revisão de aula em andamento. Veja Revisões do chat.':failed?'Há revisões pendentes. Abra Revisões do chat.':jobs.length?'Pareceres disponíveis em Revisões do chat.':'Revisão automática de aulas do chat ativa.';
+        void nav.webContents.executeJavaScript(`document.getElementById('status').textContent=${JSON.stringify(text)}`).catch(()=>{});
+      },3000);
+    }).catch(()=>{
+      if(!nav.webContents.isDestroyed())void nav.webContents.executeJavaScript("document.getElementById('status').textContent='Revisão do chat indisponível. Abra Revisões do chat para tentar novamente.'");
+    });
   });
 });

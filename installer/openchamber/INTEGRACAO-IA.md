@@ -57,3 +57,29 @@ Selection is independent of a model manually selected in chat. A validated respo
 The teacher UI receives no runtime credentials. Every SDK call names the teacher project directory. Generation uses OpenCode's standard planning agent; shell, edits, writes and external-directory access are denied in that dedicated session. Application code validates and saves the returned lesson. Other chat sessions keep their existing permissions. OpenCode creates native session/message IDs; job metadata links requests to them, allowing recovery after queued work and preventing a stale earlier answer from being mistaken for the current response. The adapter waits for the matching completed answer, including when the runtime initially reports idle. No automatic downgrade to generation without AI.
 
 Versions .4 and .5 and their installers are preserved. Version .6 requires no local model or special GPU on the teacher's notebook and adds no packages. Generation requires internet and service availability; saved lessons and exported HTML work offline. Automatic selection cannot promise permanent availability of a third-party free tier.
+# Automatic direct-chat review (.18)
+
+`direct-chat-turns.mjs` projects completed OpenCode user turns without reasoning,
+intermediate tool-call steps, errors, child sessions or PEMARA internal jobs.
+The desktop adapter pages through sessions and observes changes without editing
+upstream OpenChamber. The education service starts with the chat window, so
+opening Criar aula is not required. Its durable activation timestamp excludes
+older requests and permits resuming captured work across app restarts.
+
+`server/ai/directChatReview.ts` uses the existing verified-free OpenCode bridge
+for a bounded semantic decision about whether a response delivered a lesson.
+Known file containment, byte limits, hashes, idempotency and state transitions
+remain deterministic code. No TypeSafe account key or additional paid provider
+is introduced. The original response and in-project text artifacts are frozen
+before review. Five independent reviewer conversations reuse the existing
+review engine and persist each completed report. Failed reviews require explicit
+retry; a clean shutdown or interrupted process resumes pending work on startup.
+
+The local-only `/api/ai/opencode/chat-reviews` route exposes status and retry to
+the isolated single-teacher profile. The Revisões do chat screen shows exact
+artifact hashes and partial results. A synthetic receipt is queued to the source
+session without waking its model; the visible results are in the review screen.
+Neither the author model's review claims nor a classifier output can fabricate
+completed reports. Classifier mistakes remain possible; validation of review
+JSON is not factual or pedagogical approval. Binary formats, external/hidden
+paths, files changed after the response and oversized inputs are explicit limits.

@@ -1,0 +1,18 @@
+PEMARA EDU 2.4.0-pemara.18 — revisão automática de aulas do chat
+
+O chat Conversas e projetos passa a acionar os professores agentes quando
+entrega uma aula. A opção Revisões do chat mostra o andamento e os pareceres
+de Conteúdo e Faixa Etária, Didática, Avaliação, Fontes e Inclusão.
+
+São usadas conversas independentes e modelos verificados como gratuitos no
+catálogo do OpenCode. A resposta e os arquivos textuais do projeto são
+capturados antes da revisão. Originais são preservados; cada parecer concluído
+é guardado, permitindo retomar falhas sem repetir os anteriores.
+
+A revisão começa após a resposta do autor. Não modifica automaticamente a aula,
+não reprocessa pedidos anteriores à ativação e não concede aprovação docente.
+Os pareceres examinam texto, sem certificar imagens, animações ou acessibilidade
+visual. Arquivos externos, reservados, inacessíveis, modificados após a resposta
+ou acima dos limites não recebem uma falsa indicação de revisão completa.
+
+Validação e recibos da entrega: evidencias/revisao-chat-20261021.

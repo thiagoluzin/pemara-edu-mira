@@ -1,8 +1,10 @@
 import {setTimeout as pause} from 'node:timers/promises';
 import { OpenCode, isSessionNotFoundError } from '../../pilotos/openchamber/source/node_modules/@opencode/client/dist/promise/index.js';
 import {freeCloudModels,lessonPermissions,waitForLessonReply} from './free-models.mjs';
+import {completedChatTurns} from './direct-chat-turns.mjs';
 
 export function createLessonAdapter({ getConnection, directory, makeClient = OpenCode.make }) {
+  const observed=new Map();
   async function client() {
     const connection = await getConnection();
     const url = new URL(connection.baseUrl);
@@ -20,6 +22,33 @@ export function createLessonAdapter({ getConnection, directory, makeClient = Ope
   }
   return {
     models,
+    async chatTurns(since,signal) {
+      signal=AbortSignal.any([signal,AbortSignal.timeout(20000)]);
+      const sdk=await client(),active=await sdk.session.active({signal});
+      const turns=[],seen=new Map();let cursor;
+      const cursors=new Set();
+      do {
+        const page=await sdk.session.list({limit:100,order:'desc',...(cursor?{cursor}:{})},{signal});
+        for(const info of page.data) {
+          if(active[info.id]||info.parentID||info.metadata?.pemaraLessonJobId||info.time.updated<since||observed.get(info.id)===info.time.updated)continue;
+          turns.push(...completedChatTurns(await sdk.session.export({sessionID:info.id},{signal}),since));
+          seen.set(info.id,info.time.updated);
+        }
+        cursor=page.cursor?.next;
+        if(cursor&&cursors.has(cursor))throw Error('Paginação das conversas não avançou.');
+        cursors.add(cursor);
+      }while(cursor);
+      for(const [id,updated] of seen)observed.set(id,updated);
+      return turns;
+    },
+    async chatNotice(sessionID,key,text,signal) {
+      const sdk=await client();
+      const exported=await sdk.session.export({sessionID},{signal});
+      if(exported.messages.some(m=>m.metadata?.pemaraChatReview===key))return;
+      const inbox=await sdk.session.inbox.list({sessionID},{signal});
+      if(inbox.some(item=>item.payload?.metadata?.pemaraChatReview===key))return;
+      await sdk.session.synthetic({sessionID,text,description:'Revisão pedagógica PEMARA',metadata:{pemaraChatReview:key},resume:false,delivery:'queue'},{signal});
+    },
     async model() {
       return (await models())[0]?.id || '';
     },

@@ -1,3 +1,4 @@
+import {DirectChatReviews} from './components/DirectChatReviews';
 import { AtlasLibrary } from './components/AtlasLibrary';
 import {AISettings} from './components/admin/AISettings';
 /**
@@ -46,10 +47,11 @@ import { resolvePackSlugForInput } from './catalog/curriculumCatalog';
 import { MigrationModal } from './components/MigrationModal';
 import { ShieldAlert, Download, CheckCircle2, UploadCloud } from 'lucide-react';
 
-function getTabFromPath(): 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas' {
+function getTabFromPath(): 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas' | 'chat-reviews' {
   if (typeof window === 'undefined') return 'editor';
   const path = window.location.pathname.replace(/^\//, '');
   if (path === 'atlas') return 'atlas';
+  if (path === 'chat-reviews') return 'chat-reviews';
   if (path === 'admin') return 'admin';
   if (path === 'settings') return 'settings';
   if (path === 'library') return 'library';
@@ -106,9 +108,9 @@ export default function App() {
   const [isAccountModalOpen, setIsAccountModalOpen] = useState<boolean>(false);
 
   // Navegação de Abas e Roteamento URL SPA (B2.2)
-  const [activeTab, setActiveTabState] = useState<'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas'>(getTabFromPath);
+  const [activeTab, setActiveTabState] = useState<'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas' | 'chat-reviews'>(getTabFromPath);
 
-  const setActiveTab = (tab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas') => {
+  const setActiveTab = (tab: 'editor' | 'create' | 'library' | 'knowledge' | 'admin' | 'settings' | 'atlas' | 'chat-reviews') => {
     setActiveTabState(tab);
     if (typeof window !== 'undefined') {
       const targetPath = tab === 'editor' ? '/' : `/${tab}`;
@@ -824,6 +826,7 @@ export default function App() {
           const saved = { ...spec, lesson_version: result.lesson.current_version, lesson: { ...spec.lesson, id: result.lesson.id } };
           setSavedLessons(previous => [saved, ...previous]); setCurrentLesson(saved); setAutosaveStatus('saved'); setActiveTab('editor');
         }} />}
+        {activeTab === 'chat-reviews' && <DirectChatReviews/>}
         {activeTab === 'create' && (
           <LessonCreator
             onCreateLesson={handleCreateLesson}

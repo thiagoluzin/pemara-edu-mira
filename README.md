@@ -2,6 +2,21 @@
 
 Código aberto sob a [licença MIT](LICENSE).
 
+### Revisão automática no chat — 2.4.0-pemara.18
+
+Pedidos de aula feitos em **Conversas e projetos** também recebem revisão
+automática após a resposta do OpenCode. **Revisões do chat** mostra andamento,
+falhas que podem ser retomadas e cinco pareceres independentes: Conteúdo e Faixa
+Etária, Didática, Avaliação, Fontes e Inclusão. O aplicativo identifica aulas com
+os modelos gratuitos do OpenCode; não exige o formulário Criar aula nem o Atlas.
+
+A revisão usa a resposta e uma cópia dos documentos HTML/Markdown/TXT/JSON
+indicados na conversa, dentro da pasta do projeto. Os originais não são alterados.
+Arquivos inacessíveis, posteriores à resposta ou acima do limite ficam com falha
+explícita, sem alegação de revisão completa. Os pareceres são textuais: não testam
+animações nem equivalem à aprovação docente. Conversas anteriores à ativação não
+são reprocessadas. Os registros ficam no perfil local, fora do Git e do instalador.
+
 ### Aplicativo para o professor — PEMARA EDU
 
 A edição desktop reúne conversas e projetos, criação de aulas com a IA do

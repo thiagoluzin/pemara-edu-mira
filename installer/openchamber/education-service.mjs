@@ -23,6 +23,7 @@ async function freePort(port = 0) {
 }
 
 export async function startEducation({ root, dataDir, openCodeBridge }) {
+  const chatReviewEnabledAt=Date.now();
   fs.mkdirSync(dataDir, { recursive: true });
   const configFile = path.join(dataDir, 'config.json');
   if (!fs.existsSync(configFile)) {
@@ -36,12 +37,13 @@ export async function startEducation({ root, dataDir, openCodeBridge }) {
   const bin = path.join(root, 'node_modules/@embedded-postgres/windows-x64/native/bin');
   const pgctl = path.join(bin, 'pg_ctl.exe');
   const log = path.join(dataDir, 'postgres.log');
-  let started = false, pool, server, stopAI;
+  let started = false, pool, server, stopAI, chatReview;
   let stopping;
   async function stop() {
     if (stopping) return stopping;
     stopping = (async () => {
       let backupSaved = false;
+      if (chatReview) await chatReview.stop();
       if (stopAI) await stopAI();
       if (server) { server.closeIdleConnections(); await new Promise(resolve => server.close(resolve)); }
       try {
@@ -111,7 +113,11 @@ export async function startEducation({ root, dataDir, openCodeBridge }) {
     server = await startServer();
     if (!server.listening) await new Promise((resolve, reject) => { server.once('listening', resolve); server.once('error', reject); });
     const url = `http://127.0.0.1:${config.appPort}`;
+    if(openCodeBridge?.chatTurns) {
+      const {configureDirectChatReview}=await import(pathToFileURL(path.join(root,'server/ai/directChatReview.ts')).href);
+      chatReview=configureDirectChatReview(openCodeBridge,path.join(dataDir,'chat-reviews'),chatReviewEnabledAt);
+    }
     fs.writeFileSync(path.join(dataDir, 'running.json'), JSON.stringify({ pid: process.pid, url, dbPort }));
-    return { url, stop };
+    return { url, stop, reviewStatus:()=>chatReview?.list() };
   } catch (error) { await stop().catch(() => {}); throw error; }
 }
