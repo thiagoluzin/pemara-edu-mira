@@ -15,7 +15,8 @@ test('Desafio importado reconhece as misturas sem depender de seleção manual',
  assert.equal(createLearningPlan(scene,spec.lesson).kind,'separation');
 });
 
-test('Apresentação no programa: janela estreita não corta desenho, notas ou controles', {timeout:60000},async()=>{
+// Includes a cold Vite build; the viewport assertions below are unchanged.
+test('Apresentação no programa: janela estreita não corta desenho, notas ou controles', {timeout:180000},async()=>{
  const vite=await createServer({cacheDir:`node_modules/.vite-classroom-${process.pid}`,server:{host:'127.0.0.1',port:0,hmr:false}});await vite.listen();
  const browser=await launchHeadlessChrome(9594);
  try{

@@ -1,6 +1,7 @@
 import {buildVisualLessonPrompt,visualLessonIssues,parseVisualLessonResponse,normalizeGeneratedVisuals} from './server/ai/visualLesson';
 import {AuditRepository} from './server/repositories/auditRepository';
 import {randomUUID} from 'node:crypto';
+import {teacherForSubject,TEACHING_TEAM_VERSION} from './src/education/teachingAgents';
 import type {LessonSpec} from './src/types/lesson';
 import {aiSettings} from './server/ai/settings';
 import {createAISettingsRouter} from './server/routes/aiSettings';
@@ -139,6 +140,9 @@ app.post(['/api/ai/generate-lesson', '/api/gemini/generate-lesson'], requireAuth
     }
     // Metadados são da execução real no servidor, não declarações produzidas pelo modelo.
     accepted.lesson={...accepted.lesson,id:'pemara-ai-'+Date.now(),subject:subject as LessonSpec['lesson']['subject'],grade,topic,duration_minutes,language:'pt-BR',generation_mode:'MODE_C_API',didactic_style:didactic_style as LessonSpec['lesson']['didactic_style'],ai_provenance:{...used,generated_at:new Date().toISOString(),attempt_id:attemptId,visual_version:'2'}};
+    const teacher=teacherForSubject(subject);
+    accepted.lesson.pedagogical_team={version:TEACHING_TEAM_VERSION,teacher_id:teacher.id,teacher_name:teacher.name,reviews:[],human_review_required:true};
+    accepted.lesson.visual_status='NEEDS_REVIEW';
     await audit.recordGenerationAttempt({id:attemptId,userId:req.user!.id,requestedMode:'MODE_C_API',executedMode:'MODE_C_API',status:'SUCCESS',parametersJson:{...used,subject,topic,grade,scenes:accepted.scenes.length,visual_version:'2'}});
     res.json({lesson:accepted,...used});
   } catch (err) {
@@ -166,7 +170,7 @@ export async function startServer() {
     // Sementes iniciais de usuários e acervo Marco 1 (idempotentes)
     const userSeed = await seedInitialUsers(currentPool);
     if (personal) localOwner = await ensureLocalOwner(currentPool);
-    const knowledgeSeed = await seedInitialKnowledge(currentPool);
+    const knowledgeSeed = await seedInitialKnowledge(currentPool, {includeDemoResearch: !personal});
     console.log(`[DB] Sementes verificadas: ${userSeed.createdCount} novos usuários criados (${userSeed.existingCount} já existiam). Conhecimento: ${knowledgeSeed.nodesCount} nós, ${knowledgeSeed.relationsCount} relações.`);
   } catch (dbErr: any) {
     console.error('[DB] Erro ao inicializar banco de dados ou migrações:', dbErr);

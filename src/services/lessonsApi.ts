@@ -141,6 +141,8 @@ export const lessonsApi = {
       error.code = err.code;
       error.serverDraft = err.serverDraft;
       error.currentSpec = err.currentSpec;
+      error.currentVersion = err.currentVersion;
+      error.expectedVersion = err.expectedVersion;
       throw error;
     }
     const data=await res.json();

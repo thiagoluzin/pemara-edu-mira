@@ -45,7 +45,7 @@ export const ConflictModal: React.FC<Props> = ({
           <div className="flex-1">
             <h3 className="text-lg font-bold text-white">Conflito de Concorrência Detectado (HTTP 409)</h3>
             <p className="text-xs text-amber-200/80 mt-1">
-              Outra aba ou sessão já comitou alterações nesta mesma aula.
+              {serverDraft ? 'Há um rascunho mais recente desta aula. Confira antes de substituir suas alterações.' : 'A versão salva desta aula mudou. Confira antes de substituir suas alterações.'}
             </p>
           </div>
           <button

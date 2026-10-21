@@ -1,3 +1,4 @@
+import {bnccDescription} from '../../catalog/bnccLabels';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -129,7 +130,7 @@ const INITIAL_CURRICULUM: CurriculumSkill[] = [
     code: 'EF06HI09',
     thematic_unit: 'Antiguidade Clássica: Grécia e Roma',
     knowledge_object: 'O conceito de pólis, a democracia ateniense e a oligarquia espartana',
-    description: 'Discutir o conceito de Antiguidade Clássica, seu alcance e limite na tradição ocidental, assim como os impactos sobre a noção de cidadania.',
+    description: bnccDescription('EF06HI09'),
     grade_level: 6,
     subject_code: 'history',
     source_id: 'src-bncc-mec-2018',

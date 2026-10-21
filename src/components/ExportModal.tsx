@@ -1,5 +1,8 @@
 import {prepareMap,mapSvg,mapHtml} from '../engine/mapModel';
+import {atlasSupplement,presentationEnvelope,printFreePresentation} from '../engine/freeHtml';
+import {referenceUrl,referenceKindLabel} from '../education/lessonContext';
 import {lessonExportFilename} from '../engine/exportFilename';
+import {saveExport, saveExportBundle, type ExportFormat, type ExportRequest} from '../engine/saveExport';
 import {comparisonValue} from '../engine/comparisonModel';
 import { label, gradeLabel } from '../ui/labels';
 /**
@@ -19,7 +22,7 @@ import { createLearningPlan, learningDiagram, isLearningScene, LEARNING_CSS } fr
 import { LEARNING_OFFLINE_RUNTIME } from '../engine/learningOffline';
 import { FUNCTION_OFFLINE_RUNTIME } from '../engine/functionOffline';
 import { PLANETS_DATA } from '../engine/astronomyEngine';
-import { Download, Code, Globe, Printer, X, Check, Copy } from 'lucide-react';
+import { Download, Code, Globe, Printer, X, FileText } from 'lucide-react';
 
 interface Props {
   lesson: LessonSpec;
@@ -47,7 +50,11 @@ export const safeJsonForScript = (obj: unknown): string => {
     .replace(/\u2029/g, '\\u2029');
 };
 
-export const renderAllScenesForPrint = (lesson: LessonSpec, forceIncludeNotes = false): string => {
+export function renderLessonContext(lesson:LessonSpec):string {
+  if(!lesson.prerequisites?.length&&!lesson.references?.length)return '';
+  return `<section aria-label="Contexto e referências da aula"><h2>Preparação e referências</h2>${lesson.prerequisites?.length?'<h3>Pré-requisitos</h3><ul>'+lesson.prerequisites.map(p=>'<li>'+escapeHtml(p)+'</li>').join('')+'</ul>':''}${lesson.references?.length?'<h3>Referências e autoria</h3><ul>'+lesson.references.map(r=>'<li>'+escapeHtml(referenceKindLabel(r.kind)+': '+r.title)+(referenceUrl(r.url)?' — <a href="'+escapeHtml(r.url!)+'" rel="noreferrer">'+escapeHtml(r.url!)+'</a>':'')+(r.locator?' — '+escapeHtml(r.locator):'')+(r.license?' — '+escapeHtml(r.license):'')+'</li>').join('')+'</ul><p>A referência curricular não implica homologação ou alinhamento automático desta aula.</p>':''}</section>`;
+}
+export const renderAllScenesForPrint = (lesson: LessonSpec, forceIncludeNotes = false, includeNoteContent = forceIncludeNotes): string => {
   const safeSubject = escapeHtml(label(lesson.lesson.subject));
   const safeGrade = escapeHtml(gradeLabel(lesson.lesson.grade));
   const total = lesson.scenes.length;
@@ -357,7 +364,7 @@ export const renderAllScenesForPrint = (lesson: LessonSpec, forceIncludeNotes = 
             }).join('')}
           </div>
         </div>
-        ${quiz.explanation ? `
+        ${includeNoteContent && quiz.explanation ? `
           <div class="print-teacher-notes ${isTeacherVersion ? 'include-notes' : ''}" style="background:#f0fdf4; border-left:4px solid #16a34a; padding:10px 14px; border-radius:6px; font-size:13px; color:#166534; margin-top:10px;">
             <strong>Gabarito e Justificativa Pedagógica:</strong> Alternativa ${String.fromCharCode(65 + corrIdx)}) — ${escapeHtml(quiz.explanation)}
           </div>
@@ -391,7 +398,7 @@ export const renderAllScenesForPrint = (lesson: LessonSpec, forceIncludeNotes = 
         </div>
         ${bodyHtml}
           ${scene.source_citation ? `<p>Fonte: ${escapeHtml(scene.source_citation)}</p>` : ''}
-        ${scene.teacher_notes ? `
+        ${includeNoteContent && scene.teacher_notes ? `
           <div class="print-teacher-notes ${forceIncludeNotes ? 'include-notes' : ''}">
             <strong>Nota Pedagógica do Professor:</strong> ${escapeHtml(scene.teacher_notes)}
           </div>
@@ -406,6 +413,7 @@ export const generatePrintDocumentHtml = (
   options?: { includeTeacherNotes?: boolean }
 ): string => {
   const includeNotes = options?.includeTeacherNotes ?? false;
+  if(lesson.presentation)return printFreePresentation(lesson,includeNotes);
   const safeTitle = escapeHtml(lesson.lesson.title);
   const safeSubject = escapeHtml(label(lesson.lesson.subject));
   const safeGrade = escapeHtml(gradeLabel(lesson.lesson.grade));
@@ -468,6 +476,7 @@ export const generatePrintDocumentHtml = (
     </div>
   </div>
   <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    ${renderLessonContext(lesson)}
     ${renderAllScenesForPrint(lesson, includeNotes)}
   </div>
 </body>
@@ -475,6 +484,7 @@ export const generatePrintDocumentHtml = (
 };
 
 export const generateStandaloneHtml = (lesson: LessonSpec): string => {
+  if(lesson.presentation){const extra=atlasSupplement(lesson);return presentationEnvelope(lesson.presentation.html,lesson.lesson.title,extra?generateStandaloneHtml(extra):undefined);}
   const learningPlans=Object.fromEntries(lesson.scenes.filter(isLearningScene).map(scene=>{
     const plan=createLearningPlan(scene,lesson.lesson);
     return [scene.id,{plan,frames:Array.from({length:Math.max(1,plan.variants.length)},(_,v)=>plan.steps.map((_,s)=>learningDiagram(plan,s,v)))}];
@@ -857,6 +867,7 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
 </head>
 <body>
   <div class="container">
+    ${lesson.prerequisites?.length||lesson.references?.length?'<details class="lesson-context"><summary>Preparação e referências da aula</summary>'+renderLessonContext(lesson)+'</details>':''}
     <div class="header">
       <div>
         <span class="badge">${safeSubject} • ${safeGrade}</span>
@@ -885,7 +896,8 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
   </div>
 
   <div id="print-all-slides" class="print-doc-container">
-    ${renderAllScenesForPrint(lesson, false)}
+    ${renderLessonContext(lesson)}
+    ${renderAllScenesForPrint(lesson, false, true)}
   </div>
 
   <script>
@@ -1628,172 +1640,59 @@ export const generateStandaloneHtml = (lesson: LessonSpec): string => {
 };
 
 export const ExportModal: React.FC<Props> = ({ lesson, isOpen, onClose }) => {
-  const [copiedJson, setCopiedJson] = useState<boolean>(false);
-  const [includeTeacherNotes, setIncludeTeacherNotes] = useState<boolean>(false);
-
-  if (!isOpen) return null;
-
-  // 1. Exportação JSON Lesson Spec v1.0
-  const handleDownloadJson = () => {
-    const jsonStr = JSON.stringify(lesson, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = lessonExportFilename(lesson.lesson.title,'json',lesson.lesson_version);
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleCopyJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(lesson, null, 2));
-    setCopiedJson(true);
-    setTimeout(() => setCopiedJson(false), 2000);
-  };
-
-  // 2. Exportação Web Standalone HTML Autossuficiente
-  const handleDownloadStandaloneHtml = () => {
-    const htmlContent = generateStandaloneHtml(lesson);
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = lessonExportFilename(lesson.lesson.title,'html');
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // 3. Impressão / Salvar PDF pelo Navegador
-  const handlePrint = () => {
-    const printHtml = generatePrintDocumentHtml(lesson, { includeTeacherNotes });
-    const printBlob = new Blob([printHtml], { type: 'text/html;charset=utf-8' });
-    const blobUrl = URL.createObjectURL(printBlob);
-    const printWindow = window.open(blobUrl, '_blank');
-    if (printWindow) {
-      printWindow.onload = () => {
-        try {
-          printWindow.print();
-        } catch (e) {
-          console.error('Error invoking print dialog', e);
-        }
-      };
-    } else {
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `pemara-impressao-${lesson.lesson.topic.toLowerCase().replace(/\s+/g, '-')}.html`;
-      a.click();
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState('');
+  const [error,setError]=useState(false);
+  if(!isOpen)return null;
+  const prepareExport=async(format:ExportFormat,teacherPdf=false):Promise<ExportRequest>=>{
+    let data:string|Uint8Array;
+    if(format==='html')data=generateStandaloneHtml(lesson);
+    else if(format==='json')data=JSON.stringify(lesson,null,2);
+    else if(format==='pdf')data=generatePrintDocumentHtml(lesson,{includeTeacherNotes:teacherPdf});
+    else{
+      const {generateTeacherDocx}=await import('../engine/teacherDocx');
+      data=await generateTeacherDocx(lesson,generatePrintDocumentHtml(lesson,{includeTeacherNotes:true}));
     }
+    const filename=lessonExportFilename(lesson.lesson.title,format,lesson.lesson_version).replace(teacherPdf?'pemara-alunos-':'__unused__','pemara-professor-');
+    return{format,filename,data};
   };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-slate-100">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Download className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-xl font-bold text-white">Exportar Aula PEMARA</h3>
-          </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {/* Opção 1: Apresentação para abrir sem internet */}
-          <div
-            onClick={handleDownloadStandaloneHtml}
-            className="p-4 rounded-2xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/80 cursor-pointer transition-all flex items-center justify-between group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-indigo-950 border border-indigo-500/30 text-indigo-400 group-hover:scale-110 transition-transform">
-                <Globe className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-white text-sm">Apresentação para abrir sem internet</h4>
-                <p className="text-xs text-slate-400">
-                  Arquivo único pronto para projetar ou usar em qualquer computador, mesmo sem conexão.
-                </p>
-              </div>
-            </div>
-            <Download className="w-4 h-4 text-indigo-400" />
-          </div>
-
-          {/* Opção 2: Cópia da aula para importar */}
-          <div
-            onClick={handleDownloadJson}
-            className="p-4 rounded-2xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/80 cursor-pointer transition-all flex items-center justify-between group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-cyan-950 border border-cyan-500/30 text-cyan-400 group-hover:scale-110 transition-transform">
-                <Code className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-white text-sm">Cópia da aula para importar</h4>
-                <p className="text-xs text-slate-400">
-                  Arquivo com os dados da aula para fazer backup ou compartilhar com outros professores.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCopyJson();
-                }}
-                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs text-slate-200"
-                title="Copiar dados da aula"
-              >
-                {copiedJson ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-              <Download className="w-4 h-4 text-cyan-400" />
-            </div>
-          </div>
-
-          {/* Opção 3: Imprimir ou salvar em PDF */}
-          <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/80 transition-all flex flex-col gap-3">
-            <div
-              onClick={handlePrint}
-              className="cursor-pointer flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-amber-950 border border-amber-500/30 text-amber-400 group-hover:scale-110 transition-transform">
-                  <Printer className="w-6 h-6" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Imprimir ou salvar em PDF</h4>
-                  <p className="text-xs text-slate-400">
-                    Gera a aula completa com todas as {lesson.scenes.length} cenas diagramadas para folha de papel ou documento PDF.
-                  </p>
-                </div>
-              </div>
-              <Download className="w-4 h-4 text-amber-400" />
-            </div>
-
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-700/50" onClick={(e) => e.stopPropagation()}>
-              <input
-                type="checkbox"
-                id="checkbox-teacher-notes"
-                checked={includeTeacherNotes}
-                onChange={(e) => setIncludeTeacherNotes(e.target.checked)}
-                className="w-4 h-4 rounded text-amber-500 bg-slate-900 border-slate-700 focus:ring-amber-400 focus:ring-offset-slate-900 cursor-pointer"
-              />
-              <label htmlFor="checkbox-teacher-notes" className="text-xs text-slate-300 cursor-pointer select-none">
-                Incluir notas pedagógicas do professor na impressão
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 pt-4 border-t border-slate-800 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition-colors"
-          >
-            Fechar
-          </button>
-        </div>
+  const exportLesson=async(format:ExportFormat,teacherPdf=false)=>{
+    setBusy(true);setMessage('Preparando arquivo…');setError(false);
+    try{
+      setMessage(await saveExport(await prepareExport(format,teacherPdf)));
+    }catch(error){setError(true);setMessage(error instanceof Error?error.message:'Não foi possível exportar a aula. Tente novamente.');}
+    finally{setBusy(false);}
+  };
+  const exportBundle=async()=>{
+    setBusy(true);setMessage('Preparando HTML, PDF e Word…');setError(false);
+    try{setMessage(await saveExportBundle(await Promise.all((['html','pdf','docx'] as const).map(format=>prepareExport(format)))));}
+    catch(error){setError(true);setMessage(error instanceof Error?error.message:'Não foi possível exportar os arquivos. Tente novamente.');}
+    finally{setBusy(false);}
+  };
+  const options=[
+    {format:'html' as const,title:'HTML animado — Salvar como',description:'Apresentação com animações e atividades. Abre sem internet em qualquer computador.',Icon:Globe},
+    {format:'pdf' as const,title:'PDF para os alunos — Salvar como',description:'Todas as cenas para leitura ou impressão, sem notas do professor nem gabarito.',Icon:Printer},
+    {format:'docx' as const,title:'Word do professor — Salvar como',description:'Textos, atividades, notas e gabaritos editáveis em .docx. Figuras estáticas.',Icon:FileText},
+    {format:'json' as const,title:'Cópia da aula para importar',description:'Backup em JSON para reabrir e editar no PEMARA EDU.',Icon:Code},
+  ];
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="export-title">
+    <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-slate-100">
+      <div className="flex items-center justify-between mb-3">
+        <h3 id="export-title" className="text-xl font-bold text-white">Exportar Aula PEMARA</h3>
+        <button disabled={busy} onClick={onClose} aria-label="Fechar exportação" className="p-1 text-slate-400 hover:text-white disabled:opacity-50"><X className="w-5 h-5"/></button>
       </div>
+      <p className="text-sm text-slate-300 mb-5">Salve os três formatos juntos ou escolha um arquivo individual.</p>
+      <div className="space-y-3">
+        {window.pemaraExports?.saveBundle&&<button disabled={busy} onClick={()=>void exportBundle()} className="w-full text-left p-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 border border-indigo-400 flex items-center gap-3 disabled:opacity-50">
+          <Download className="w-6 h-6 shrink-0"/><span><span className="block font-bold text-white text-sm">Exportar HTML, PDF e Word juntos</span><span className="block text-xs text-indigo-100 mt-1">Escolha a pasta uma vez. Apresentação animada, PDF dos alunos e Word editável do professor. Arquivos anteriores são preservados.</span></span>
+        </button>}
+        {options.map(({format,title,description,Icon})=><button key={format} disabled={busy} onClick={()=>void exportLesson(format)} className="w-full text-left p-4 rounded-2xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/80 flex items-center gap-3 disabled:opacity-50">
+          <Icon className="w-6 h-6 shrink-0 text-indigo-300"/><span><span className="block font-bold text-white text-sm">{title}</span><span className="block text-xs text-slate-400 mt-1">{description}</span></span><Download className="w-4 h-4 shrink-0 ml-auto"/>
+        </button>)}
+      </div>
+      <button disabled={busy} onClick={()=>void exportLesson('pdf',true)} className="text-xs text-indigo-300 underline mt-4 disabled:opacity-50">Também salvar PDF com notas e gabarito do professor</button>
+      <p role={error?'alert':'status'} className={`text-xs mt-4 break-words ${error?'text-red-300':'text-emerald-300'}`}>{message}</p>
+      <div className="mt-4 pt-4 border-t border-slate-800 flex justify-end"><button disabled={busy} onClick={onClose} className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs disabled:opacity-50">Fechar</button></div>
     </div>
-  );
+  </div>;
 };

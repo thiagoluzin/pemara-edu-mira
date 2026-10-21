@@ -30,13 +30,15 @@ test('E2 (emulador pg-mem): Migrar banco vazio aplica todas as tabelas canônica
 
   // Verifica tabela de controle de migração
   const migRes = await pool.query('SELECT * FROM schema_migrations ORDER BY version ASC;');
-  assert.equal(migRes.rows.length, 7);
+  assert.equal(migRes.rows.length, 8);
   assert.equal(migRes.rows[0].version, '001');
   assert.equal(migRes.rows[1].version, '002');
   assert.equal(migRes.rows[2].version, '003');
   assert.equal(migRes.rows[3].version, '004');
   assert.equal(migRes.rows[4].version, '005');
   assert.equal(migRes.rows[5].version, '006');
+  assert.equal(migRes.rows[6].version, '007');
+  assert.equal(migRes.rows[7].version, '008');
 
   // Verifica tabelas essenciais criadas
   const checkTables = [
@@ -69,7 +71,7 @@ test('E2 (emulador pg-mem): Reaplicar migrações é idempotente e não duplica 
 
   // Primeira execução
   const res1 = await runMigrations(pool);
-  assert.equal(res1.appliedCount, 7);
+  assert.equal(res1.appliedCount, 8);
 
   // Inserir um dado de teste
   const userRepo = new UserRepository(pool);
@@ -84,7 +86,7 @@ test('E2 (emulador pg-mem): Reaplicar migrações é idempotente e não duplica 
   // Segunda execução
   const res2 = await runMigrations(pool);
   assert.equal(res2.appliedCount, 0, 'Segunda execução não deve reaplicar migrações');
-  assert.equal(res2.alreadyAppliedCount, 7, 'Deve identificar que as 7 migrações já foram aplicadas');
+  assert.equal(res2.alreadyAppliedCount, 8, 'Deve identificar que as 8 migrações já foram aplicadas');
 
   // Dados anteriores permanecem intactos
   const fetched = await userRepo.findById(teacher.id);
@@ -245,9 +247,14 @@ test('E2 (emulador pg-mem): Snapshots em lesson_revisions e entity_versions são
   assert.ok(rev2 !== null);
 
   // Snapshot da v1 preservou exatamente specV1
-  assert.deepEqual(rev1.spec_json, specV1);
+  assert.deepEqual(rev1.spec_json, {...specV1,lesson_version:1});
   // Snapshot da v2 preservou exatamente specV2
-  assert.deepEqual(rev2.spec_json, specV2);
+  assert.deepEqual(rev2.spec_json, {...specV2,lesson_version:2});
+  assert.equal(Object.hasOwn(specV1,'lesson_version'),false,'A entrada do chamador não deve ser alterada');
+  assert.equal(Object.hasOwn(specV2,'lesson_version'),false);
+  assert.equal(rev1.content_hash,crypto.createHash('sha256').update(JSON.stringify(rev1.spec_json)).digest('hex'));
+  assert.equal(rev2.content_hash,crypto.createHash('sha256').update(JSON.stringify(rev2.spec_json)).digest('hex'));
+  assert.deepEqual((await lessonRepo.getLessonRevision(created.lesson.id,1))?.spec_json,rev1.spec_json);
   // Hashes de conteúdo são distintos
   assert.notEqual(rev1.content_hash, rev2.content_hash);
 });

@@ -72,13 +72,23 @@ export async function launchHeadlessChrome(port = 9333): Promise<CdpSession> {
   });
 
   let msgId = 1;
-  const pending = new Map<number, { resolve: (val: any) => void; reject: (err: any) => void }>();
+  const pending = new Map<number, { resolve: (val: any) => void; reject: (err: any) => void; timer: ReturnType<typeof setTimeout> }>();
+  const rejectPending = () => {
+    for (const entry of pending.values()) {
+      clearTimeout(entry.timer);
+      entry.reject(new Error('Chrome CDP connection closed before replying.'));
+    }
+    pending.clear();
+  };
+  ws.addEventListener('close', rejectPending);
+  ws.addEventListener('error', rejectPending);
 
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data.toString());
       if (data.id && pending.has(data.id)) {
-        const { resolve, reject } = pending.get(data.id)!;
+        const { resolve, reject, timer } = pending.get(data.id)!;
+        clearTimeout(timer);
         pending.delete(data.id);
         if (data.error) {
           reject(new Error(data.error.message || JSON.stringify(data.error)));
@@ -94,8 +104,14 @@ export async function launchHeadlessChrome(port = 9333): Promise<CdpSession> {
   const send = (method: string, params?: any): Promise<any> => {
     const id = msgId++;
     return new Promise((resolve, reject) => {
-      pending.set(id, { resolve, reject });
-      ws.send(JSON.stringify({ id, method, params }));
+      if (ws.readyState !== WebSocket.OPEN) return reject(new Error('Chrome CDP connection is not open.'));
+      const timer = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error(`Chrome CDP timed out: ${method}`));
+      }, 30000);
+      pending.set(id, { resolve, reject, timer });
+      try { ws.send(JSON.stringify({ id, method, params })); }
+      catch (error) { clearTimeout(timer); pending.delete(id); reject(error); }
     });
   };
 
@@ -201,6 +217,7 @@ export async function launchHeadlessChrome(port = 9333): Promise<CdpSession> {
   };
 
   const close = async (): Promise<void> => {
+    rejectPending();
     try {
       ws.close();
     } catch {}

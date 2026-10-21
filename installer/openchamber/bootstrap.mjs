@@ -1,15 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { app } from 'electron';
+import { connectWindowsUserFolders } from './known-folder-links.mjs';
 
 // Runs before upstream early-startup imports. Never imports an existing personal profile.
 const localAppData = process.env.LOCALAPPDATA;
 if (!localAppData || !path.isAbsolute(localAppData)) throw new Error('Não foi possível localizar os dados locais do Windows.');
-const profile = path.join(localAppData, 'PEMARAOpenChamber', 'perfil');
-const projectsRoot = path.join(app.getPath('documents'), 'PEMARA Aulas');
-export const educationDataDir = path.join(localAppData, 'PEMARAOpenChamber', 'aulas');
+const distributionFile = path.join(process.resourcesPath, 'pemara/distribution.json');
+const cleanTest = fs.existsSync(distributionFile) && JSON.parse(fs.readFileSync(distributionFile, 'utf8')).edition === 'clean-test';
+const profileRoot = path.join(localAppData, cleanTest ? 'PEMARAEduTesteLimpo' : 'PEMARAOpenChamber');
+const profile = path.join(profileRoot, 'perfil');
+const projectsRoot = path.join(app.getPath('documents'), cleanTest ? 'PEMARA Aulas - Teste Limpo' : 'PEMARA Aulas');
+export const educationDataDir = path.join(profileRoot, 'aulas');
 export const educationExportsDir = path.join(projectsRoot, 'Minhas aulas', 'Exportadas');
-const demo = path.join(projectsRoot, 'Aula de exemplo');
 const materials = path.join(projectsRoot, 'Minhas aulas');
 const data = path.join(profile, '.config', 'openchamber');
 const resources = process.resourcesPath;
@@ -20,14 +23,16 @@ function writeOnce(file, value) {
   try { fs.writeFileSync(file, value, { flag: 'wx' }); }
   catch (error) { if (error.code !== 'EEXIST') throw error; }
 }
-for (const dir of [demo, materials, data, path.join(profile, 'AppData/Roaming'), path.join(profile, 'AppData/Local'), path.join(profile, 'chromium')]) fs.mkdirSync(dir, { recursive: true });
-for (const filename of ['aula.html', 'plano-professor.md', 'atividade-aluno.html']) {
-  writeOnce(path.join(demo, filename), fs.readFileSync(path.join(resources, 'pemara', 'exemplo', filename)));
+for (const dir of [materials, data, path.join(profile, 'AppData/Roaming'), path.join(profile, 'AppData/Local'), path.join(profile, 'chromium')]) fs.mkdirSync(dir, { recursive: true });
+// Capture the OS folders before changing USERPROFILE for the private AI runtime.
+if(process.platform==='win32') {
+  const folders=connectWindowsUserFolders(profile,name=>app.getPath(name));
+  fs.writeFileSync(path.join(profile,'windows-folders.json'),JSON.stringify(folders,null,2));
 }
 writeOnce(path.join(materials, 'LEIA-ME.txt'), 'Crie aqui suas aulas pelo chat. Seus arquivos permanecem nesta pasta depois de fechar ou desinstalar o aplicativo.\r\nA IA precisa de internet. As aulas HTML podem ser abertas offline.\r\n');
-const projects = [demo, materials].map(p => ({ id: `path_${Buffer.from(forward(p)).toString('base64url')}`, path: forward(p), label: path.basename(p), addedAt: Date.now() }));
+const projects = [materials].map(p => ({ id: `path_${Buffer.from(forward(p)).toString('base64url')}`, path: forward(p), label: path.basename(p), addedAt: Date.now() }));
 writeOnce(path.join(data, 'settings.json'), JSON.stringify({
-  projects, activeProjectId: projects[1].id, lastDirectory: forward(materials),
+  projects, activeProjectId: projects[0].id, lastDirectory: forward(materials),
   locale: 'pt-BR', useSystemTheme: false, themeId: 'pemara-dark', themeVariant: 'dark',
   darkThemeId: 'pemara-dark', lightThemeId: 'pemara-light',
   sidebarViewMode: 'projects', sidebarProjectDisplayMode: 'all', fileTreeSide: 'left', contextEditorTreeVisible: false,

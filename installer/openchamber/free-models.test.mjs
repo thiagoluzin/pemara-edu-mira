@@ -16,3 +16,17 @@ test('abort stops queued polling and never advances to another model',async()=>{
  const controller=new AbortController();let reads=0;const sdk={session:{export:async()=>{reads++;return{messages:[]};}}};
  await assert.rejects(waitForLessonReply(sdk,'session','prompt',controller.signal,async()=>controller.abort()),{name:'AbortError'});assert.equal(reads,1);
 });
+test('completed tool steps are not final answers, even with intermediate text',async()=>{
+ const request={id:'prompt',type:'user'};
+ const tool={type:'assistant',finish:'tool-calls',time:{completed:1},content:[{type:'text',text:'Vou preparar a aula.'},{type:'tool'}]};
+ const answer={type:'assistant',finish:'stop',time:{completed:2},content:[{type:'text',text:'<!DOCTYPE html>...'}]};
+ let reads=0;
+ const sdk={session:{export:async()=>({messages:++reads<3?[request,tool]:[request,tool,answer]})}};
+ assert.equal(await waitForLessonReply(sdk,'session','prompt',new AbortController().signal,async()=>{}),answer);
+ assert.equal(reads,3);
+});
+test('an error after a tool step ends the wait without hiding the provider failure',async()=>{
+ const request={id:'prompt',type:'user'},error={type:'assistant',error:{type:'provider.auth'},time:{}};
+ const sdk={session:{export:async()=>({messages:[request,error]})}};
+ assert.equal(await waitForLessonReply(sdk,'session','prompt',new AbortController().signal,async()=>{}),error);
+});

@@ -1,0 +1,24 @@
+PEMARA EDU 2.4.0-pemara.17 — troca automática de modelos
+
+Problema observado em geração real: o OpenCode pode marcar uma mensagem com
+tool-calls como concluída antes de produzir a resposta final. A integração
+anterior interpretava essa etapa como resposta vazia e trocava de modelo cedo.
+O novo modelo ainda recebia a conversa anterior, com etapas incompletas.
+
+Correções:
+- Aguardar a resposta final após etapas intermediárias de ferramentas.
+- Ao trocar de modelo, interromper a tentativa anterior e abrir uma conversa
+  separada, preservando a conversa antiga e o histórico do pedido.
+- Usar o agente de criação para entregar HTML ou parecer, evitando respostas
+  limitadas ao planejamento. Manter as permissões existentes.
+- Retomar a mesma conversa quando o modelo permanece o mesmo; normalizar a
+  variante padrão na comparação e recuperar sessões apenas do modelo correto.
+
+Validação: 8 testes de regressão da ponte e do catálogo gratuito. Dois cenários
+com geração e revisão reais no runtime do programa, simulando somente DeepSeek
+fora do catálogo ou indisponível (503). Evidências anteriores, incluindo a falha
+real da versão .16, preservadas em evidencias/troca-automatica-20261020.
+
+HTML livre, Atlas opcional, ano escolar e revisão de conteúdo permanecem ativos.
+Parecer de IA e aprovação docente continuam distintos. Nenhum modelo pago foi
+autorizado. Dados do proprietário e instalador .16 preservados para retorno.

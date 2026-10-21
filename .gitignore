@@ -1,6 +1,7 @@
 node_modules/
 .local-demo/
 .local-teacher/
+.codex-attachments/
 build/
 dist/
 coverage/

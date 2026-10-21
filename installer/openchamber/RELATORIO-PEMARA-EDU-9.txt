@@ -1,0 +1,53 @@
+PEMARA EDU 2.4.0-pemara.9 — EXPORTAÇÃO COM SALVAR COMO
+Validação: 2026-10-19T12:11:29.428Z
+
+COMO USAR
+Abra PEMARA EDU Teste Limpo. No editor da aula, clique em Exportar.
+Escolha HTML animado, PDF para os alunos ou Word do professor.
+Na janela Salvar como, escolha a pasta e o nome. O caminho aparece após salvar.
+
+HTML: arquivo autossuficiente com animações, navegação e quiz; abre offline.
+PDF dos alunos: cenas completas, sem notas do professor e sem gabarito.
+DOCX do professor: textos, tabelas, notas e respostas editáveis; figuras estáticas.
+JSON: backup para importar a aula no PEMARA. PDF com gabarito também disponível.
+Editar o Word não altera a aula no PEMARA nem o HTML. Para atualizar a apresentação,
+edite no programa e exporte novamente.
+
+TESTES EXECUTADOS
+- Instalação silenciosa do instalador final, saída 0; arquivos instalados conferidos.
+- Primeira abertura e reabertura sem aulas, materiais, pesquisas ou chats.
+- Exportação pela interface do executável instalado para outra pasta com acentos.
+- Cancelamento sem arquivo; erro de destino, nova tentativa e substituição.
+- HTML com animação, pausa e quiz funcionando offline.
+- PDF de 9 páginas: todas as 9 cenas, sem notas/respostas.
+- Word com 110 parágrafos e 1 tabela editáveis;
+  aberto no Microsoft Word, editado em cópia, salvo e reaberto com a alteração.
+- Cobertura adicional dos 11 tipos de cena; contraste de Biologia e paginação do
+  Sistema Solar corrigidos. PDF/Word renderizados e conferidos visualmente.
+- TypeScript e 6 testes de exportação aprovados; dependência docx fixada em 9.12.0.
+- Aula e versão permaneceram intactas após exportação.
+
+LIMITES DA EVIDÊNCIA
+Testado em Windows 11 x64. A seleção do destino/cancelamento foi automatizada
+na API do diálogo nativo, com registro dos filtros e opções; não houve clique
+manual no seletor de pastas do Windows. Não é uma garantia universal de 100%.
+A aula usada foi a geração real de Ciências e quatro revisores da validação .8;
+esta etapa não fez nova chamada de IA. PDF e Word são estáticos.
+O renderizador LibreOffice da skill não estava instalado; a conferência do DOCX
+usou o próprio Microsoft Word e imagens das páginas renderizadas por ele.
+
+PRESERVAÇÃO E INSTALADOR LIMPO
+45666 arquivos originais conferidos por SHA-256, sem alterações.
+Perfis e documentos originais restaurados; resultados de teste ficaram separados.
+Binários anteriores preservados em: C:\Users\admin_remoto\AppData\Local\Programs\PEMARA EDU Teste Limpo.preservado-export-v9-20261019
+O instalador contém o programa e recursos didáticos, sem aulas, pesquisas,
+chats, bancos de usuário ou credenciais. Reinstalar preserva os dados existentes.
+
+INSTALADOR
+G:\PEMARA_EDU\ENTREGAS\PEMARA-EDU-2.4.0-pemara.9-Limpo\PEMARA-EDU-2.4.0-pemara.9-Limpo-Windows-x64-Instalar.exe
+Tamanho: 418091772 bytes
+SHA-256: d7ed7699d5547520aafbe6af230902cf149f9971b4f0789d5ec654dd1146cfa4
+Assinatura Authenticode: não assinado.
+
+Evidências: G:\PEMARA_EDU\evidencias\export-v9-20261019
+Instalação e pacote: G:\PEMARA_EDU\build\openchamber\2.4.0-pemara.9\evidencias

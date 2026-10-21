@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $stage = Join-Path $repo 'build/openchamber/2.4.0-pemara.1'
 $program = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs/PEMARA OpenChamber'))

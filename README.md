@@ -18,14 +18,49 @@ zerados e tenta outro modelo quando houver falha. Não exige IA local, download
 de pesos ou GPU no notebook. Gerar exige internet e disponibilidade do provedor.
 A biblioteca, as animações e os HTMLs exportados podem ser usados sem internet.
 
+Desde a edição **2.4.0-pemara.11**, **Exportar HTML, PDF e Word juntos** permite
+escolher uma pasta e salvar os três arquivos com uma confirmação: HTML animado
+offline, PDF dos alunos sem gabarito e DOCX do professor com texto, tabelas,
+notas e respostas editáveis. As opções individuais continuam disponíveis.
+Figuras no PDF/Word são estáticas.
+O JSON continua disponível como backup importável. Editar o Word não altera a
+aula salva no PEMARA nem a apresentação HTML; exporte novamente após editar no aplicativo.
+
 - [Guia do professor](installer/openchamber/AULAS-PROFESSORES.txt)
 - [Arquitetura da integração](installer/openchamber/INTEGRACAO-IA.md)
 - [Compilação do desktop](installer/openchamber/BUILD-PEMARA-EDU.md)
-- [Resultado dos testes e limitações](installer/openchamber/RELATORIO-PEMARA-EDU-6.md)
+- [Instalador limpo .8: IA real, testes e preservação](installer/openchamber/RELATORIO-PEMARA-EDU-8.txt)
+- [Instalador limpo .9: Salvar como, HTML, PDF e Word](installer/openchamber/RELATORIO-PEMARA-EDU-9.txt)
 - [Referências e licenças](THIRD_PARTY_NOTICES.md)
 
 O backup neste repositório inclui fontes e alterações locais. Instaladores,
 conversas, bancos, credenciais e materiais pessoais ficam fora do Git.
+
+### Professores especialistas e revisão por agentes
+
+O código atual contém 12 perfis docentes, selecionados pela disciplina, com
+habilidades próprias de História, Matemática, Ciências, Geografia, Português,
+Inglês, Arte, Educação Física, Ensino Religioso, Física, Química e Biologia.
+As habilidades comuns orientam objetivos, sequência didática e uso de evidências.
+
+Em **Criar aula**, a opção **Solicitar revisão por agentes** acrescenta quatro
+pareceres: Didática, Avaliação, Fontes e Inclusão. Cada revisor usa uma conversa
+própria no OpenCode. A aula gerada e cada parecer concluído são guardados antes
+da etapa seguinte; **Retomar** continua sem regenerar a aula nem repetir os
+pareceres salvos. Os apontamentos aparecem no editor e acompanham a aula salva.
+Nenhum parecer equivale à aprovação docente ou a alinhamento automático à BNCC.
+
+Essa implementação integra a entrega **2.4.0-pemara.8 — Teste Limpo**, de
+19/10/2026, com atalho **PEMARA EDU Teste Limpo** e perfil separado. A instalação
+e a reabertura foram verificadas com zero aulas, pesquisas e chats; a instalação
+anterior e seus dados foram preservados. Reinstalar a edição limpa preserva os
+dados que forem criados nela; não apaga automaticamente nenhum perfil.
+A validação inclui geração real com `opencode/beam-free`, quatro revisores em
+conversas independentes, edição versionada, apresentação offline, quiz e
+exportação HTML/JSON/impressão. Foram corrigidos o número da versão no JSON
+persistido e o nome excessivamente longo do arquivo de impressão. Os testes
+com respostas controladas continuam cobrindo falhas e retomadas; nenhum teste
+substitui revisão pedagógica do conteúdo pelo professor.
 
 ### Edição web local preservada
 
@@ -131,3 +166,10 @@ npm run typecheck
 npm run build
 npm test
 ```
+
+Os testes de navegador usam telas fixas, com HMR e observação de arquivos
+desativados pelo executor de testes. Isso evita percorrer perfis, evidências e
+outros projetos durante a validação. O teste E8 do banco de demonstração é
+marcado como ignorado quando esse banco não está configurado; a cobertura
+curricular em PostgreSQL descartável é verificada por
+`test/full-curriculum-publication.test.ts`.

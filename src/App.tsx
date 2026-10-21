@@ -260,8 +260,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (isOpeningWorkspace) return;
     loadUserLessons(currentUser);
-  }, [currentUser]);
+  }, [currentUser, isOpeningWorkspace]);
 
   // Logout seguro: limpa imediatamente todo estado privado e cancela autosaves em voo (B2.5 / P1)
   const handleLogout = async () => {
@@ -316,7 +317,7 @@ export default function App() {
 
   // Persistência segura em LocalStorage para visitantes e modo offline (R1)
   useEffect(() => {
-    if (currentUser) return; // Quando logado, a persistência é prioritariamente no banco de dados
+    if (isOpeningWorkspace || currentUser) return; // Não grave exemplos de visitante enquanto a sessão do professor ainda está abrindo.
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const res = saveLessonsToStorage(window.localStorage, savedLessons, quarantinedItems);
@@ -329,7 +330,7 @@ export default function App() {
     } catch (err: any) {
       setStorageError(err?.message || 'Falha de armazenamento.');
     }
-  }, [savedLessons, quarantinedItems, currentUser]);
+  }, [savedLessons, quarantinedItems, currentUser, isOpeningWorkspace]);
 
   const handleExportQuarantine = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(quarantinedItems, null, 2));

@@ -1,12 +1,12 @@
 import { app, WebContentsView, ipcMain, dialog, shell, session } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { startEducation } from './education-service.mjs';
 import { educationDataDir, educationExportsDir } from './pemara-bootstrap.mjs';
 import { createLessonAdapter } from './opencode-lesson-adapter.mjs';
 import { createEducationNavigation } from './education-navigation.mjs';
+import { saveEducationExport, saveEducationBundle } from './education-export.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = educationDataDir;
@@ -14,6 +14,13 @@ const exportsDir = educationExportsDir;
 let servicePromise;
 let stopping;
 const states = new Map();
+for(const [channel,save] of [['pemara:education:export',saveEducationExport],['pemara:education:export-bundle',saveEducationBundle]])ipcMain.handle(channel, async (event, request) => {
+  const state=[...states.values()].find(s=>s.edu.webContents===event.sender);
+  if(!state || !state.loaded || event.senderFrame!==state.edu.webContents.mainFrame || !/^http:\/\/127\.0\.0\.1:\d+\//.test(event.sender.getURL())) throw Error('Exportação não autorizada.');
+  if(state.exporting)throw Error('Conclua a exportação em andamento.');
+  state.exporting=true;
+  try{return await save(state.win,request,exportsDir);}finally{state.exporting=false;}
+});
 export async function confirmEducationQuit() {
   for (const state of states.values()) {
     if (!state.loaded || state.edu.webContents.isDestroyed()) continue;
@@ -75,7 +82,7 @@ app.on('browser-window-created', (_event, win) => {
     attached = true;
     const nav = new WebContentsView({ webPreferences: { preload: path.join(here, 'education-preload.cjs'), sandbox: true, contextIsolation: true, nodeIntegration: false } });
     const eduSession = session.fromPartition('persist:pemara-education');
-    const edu = new WebContentsView({ webPreferences: { session: eduSession, sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: true } });
+    const edu = new WebContentsView({ webPreferences: { preload: path.join(here,'education-export-preload.cjs'), session: eduSession, sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: true } });
     const state = { nav, edu, win, loaded: false };
     state.navigate = createEducationNavigation({
       ready: service,
@@ -115,11 +122,10 @@ app.on('browser-window-created', (_event, win) => {
       if (contents !== edu.webContents) return;
       fs.mkdirSync(exportsDir, { recursive: true });
       const filename = path.basename(item.getFilename()).replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
-      const dest = path.join(exportsDir, `${Date.now()}-${crypto.randomUUID().slice(0,8)}-${filename}`);
-      item.setSavePath(dest);
+      item.setSaveDialogOptions({title:'Salvar como',defaultPath:path.join(exportsDir,filename)});
       item.once('done', (_event, status) => {
-        if (win.isDestroyed()) return;
-        void dialog.showMessageBox(win, { type: status === 'completed' ? 'info' : 'error', title: 'Exportar aula', message: status === 'completed' ? 'Aula exportada.' : 'A exportação não terminou. Tente novamente.', detail: status === 'completed' ? dest : 'A aula continua salva na biblioteca.', buttons: ['OK'] });
+        if (win.isDestroyed() || status==='cancelled') return;
+        void dialog.showMessageBox(win, { type: status === 'completed' ? 'info' : 'error', title: 'Exportar aula', message: status === 'completed' ? 'Aula exportada.' : 'A exportação não terminou. Tente novamente.', detail: status === 'completed' ? item.getSavePath() : 'A aula continua salva na biblioteca.', buttons: ['OK'] });
       });
     };
     eduSession.on('will-download', download);

@@ -104,7 +104,7 @@ export async function startEducation({ root, dataDir, openCodeBridge }) {
     }
     const { seedInitialUsers } = await import(pathToFileURL(path.join(root, 'server/db/seeds/users.ts')).href);
     const { seedInitialKnowledge } = await import(pathToFileURL(path.join(root, 'server/db/seeds/knowledge.ts')).href);
-    await seedInitialUsers(pool); await seedInitialKnowledge(pool);
+    await seedInitialUsers(pool); await seedInitialKnowledge(pool, {includeDemoResearch:false});
     const { readCompleteCatalog, publishCompleteCatalog } = await import(pathToFileURL(path.join(root, 'server/curriculum/completeCatalog.ts')).href);
     await publishCompleteCatalog(pool, readCompleteCatalog(path.join(root, 'server/curriculum/complete')), { onlyMissing: true, bundledBootstrap: true });
     const { startServer } = await import(pathToFileURL(path.join(root, 'server.ts')).href);

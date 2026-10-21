@@ -79,7 +79,19 @@ export async function publishCompleteCatalog(pool:pg.Pool,packs:CurriculumPack[]
     if(!actor&&!options.bundledBootstrap) throw new Error('Administrador responsável não encontrado.');
     await client.query(`INSERT INTO licenses(id,name,code,commercial_use,derivatives_allowed,attribution_required,redistribution_allowed,verified,notes) VALUES('lic-pemara-original-ef2','Material original — uso educacional interno','Internal',false,true,true,false,true,'Redação original assistida; referências são sugestões de consulta, sem reprodução integral de obras externas.') ON CONFLICT(id) DO NOTHING`);
     await client.query(`INSERT INTO sources(id,provider,title,url,language,source_type,status) VALUES('src-bncc-local-reference','MEC — referência curricular','BNCC — habilidades conferidas com o PDF oficial do MEC','https://cdn.mec.gov.br/basenacionalcomum.mec.gov.br/images/BNCC_EI_EF_110518_versaofinal_site.pdf','pt-BR','official','verified') ON CONFLICT(id) DO NOTHING`);
-    for(const skill of getOfficialBnccSkills()) await client.query(`INSERT INTO curriculum_skills(id,code,thematic_unit,knowledge_object,description,grade_level,subject_code,source_id,status,version) VALUES($1,$2,$3,$4,$5,$6,$7,'src-bncc-local-reference','OFFICIAL_BNCC','2018.3') ON CONFLICT(code) DO NOTHING`,[idFor('skill-bncc',skill.code),skill.code,skill.thematic_unit,skill.knowledge_object,skill.description,skill.grade_level,skill.subject_code]);
+    for(const skill of getOfficialBnccSkills()) await client.query(`
+      INSERT INTO curriculum_skills(id,code,thematic_unit,knowledge_object,description,grade_level,subject_code,source_id,status,version,locator,locator_pdf,verified_at)
+      VALUES($1,$2,$3,$4,$5,$6,$7,'src-bncc-local-reference','OFFICIAL_BNCC','2018.3',$8,$9,$10)
+      ON CONFLICT(code) DO UPDATE SET
+        locator=COALESCE(curriculum_skills.locator,EXCLUDED.locator),
+        locator_pdf=COALESCE(curriculum_skills.locator_pdf,EXCLUDED.locator_pdf),
+        verified_at=COALESCE(curriculum_skills.verified_at,EXCLUDED.verified_at)
+      WHERE curriculum_skills.description=EXCLUDED.description
+        AND curriculum_skills.grade_level=EXCLUDED.grade_level
+        AND curriculum_skills.subject_code=EXCLUDED.subject_code
+        AND curriculum_skills.status='OFFICIAL_BNCC'
+        AND (curriculum_skills.locator IS NULL OR curriculum_skills.locator_pdf IS NULL OR curriculum_skills.verified_at IS NULL)
+    `,[idFor('skill-bncc',skill.code),skill.code,skill.thematic_unit,skill.knowledge_object,skill.description,skill.grade_level,skill.subject_code,skill.locator||null,skill.locator_pdf||null,skill.verified_at||null]);
     for(const pack of packs) {
       if(options.onlySlugs&&!options.onlySlugs.includes(pack.slug))continue;
       const hash=digest(pack);

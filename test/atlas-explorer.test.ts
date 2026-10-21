@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {createServer} from 'vite';
 import {animationCases} from './fixtures/animation-cases';import {generateStandaloneHtml} from '../src/components/ExportModal';import {launchHeadlessChrome} from './helpers/cdpBrowser';
-test('Atlas completo: 88 variantes adicionais com geometria, tempo, comparação e parâmetros nos dois formatos',{timeout:300000},async()=>{
+// 176 playback cases plus cold development compilation; functional checks stay identical.
+test('Atlas completo: 88 variantes adicionais com geometria, tempo, comparação e parâmetros nos dois formatos',{timeout:600000},async()=>{
  const out='docs/evidencias/atlas-interativo-completo-20261018';fs.mkdirSync(out,{recursive:true});
  const selected=animationCases.map((c,i)=>({...c,index:i})).filter(c=>(c.family==='atlas'&&!['atlas-respiration','atlas-statistics'].includes(c.id))||c.id==='base-movement');
  const docs=selected.map(c=>generateStandaloneHtml(c.spec));

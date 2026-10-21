@@ -1,0 +1,68 @@
+PEMARA EDU 2.4.0-pemara.7 — TESTE LIMPO
+Entrega e validação: 19/10/2026, Windows 11 x64.
+
+INSTALADOR
+PEMARA-EDU-2.4.0-pemara.7-Limpo-Windows-x64-Instalar.exe
+Tamanho: 412.968.754 bytes.
+SHA-256: ed99da12f0ba1f132bcf73609d2d1fa6a81599f944670d369fcceceddc13c9ce
+Pasta: G:\PEMARA_EDU\ENTREGAS\PEMARA-EDU-2.4.0-pemara.7-Limpo
+
+CONTEÚDO
+Inclui as correções de debug, 12 professores especialistas, 31 habilidades
+pedagógicas e quatro revisores opcionais: Didática, Avaliação, Fontes e Inclusão.
+Atlas e acervo curricular continuam disponíveis como recursos do programa.
+Não inclui bancos de uso, pesquisas pessoais, conversas ou credenciais do autor.
+Não cria aula de exemplo nem lote de pesquisa fictício. A interface aguarda a
+identificação do professor antes de persistir dados, evitando gravar exemplos
+de visitante durante a primeira abertura.
+
+INSTALAÇÃO E PRIMEIRO USO
+O EXE desta entrega foi instalado por usuário, em modo silencioso, com saída 0.
+Atalhos da Área de Trabalho e menu Iniciar foram conferidos. O programa instalado
+foi aberto com perfil vazio, fechado e reaberto. Em ambos os ciclos:
+  aulas, revisões, rascunhos, materiais importados e pedidos de geração: 0;
+  lotes de pesquisa e registros pendentes de pesquisa: 0;
+  conversas: 0; descrição da aula e campos de entrada vazios;
+  professores e opção dos quatro revisores disponíveis.
+Após encerrar, session_v2, session_message, session_pending e session_inbox do
+banco OpenCode também continham 0 registros. O PostgreSQL encerrou com backup.
+Nenhuma aula foi gerada nem mensagem enviada durante este teste de instalação.
+Capturas finais foram conferidas visualmente após as transições da interface.
+
+ISOLAMENTO E PRESERVAÇÃO
+Atalho/executável: PEMARA EDU Teste Limpo.
+Identificador separado: br.com.pemara.edu.clean.
+Programa: %LOCALAPPDATA%\Programs\PEMARA EDU Teste Limpo
+Dados: %LOCALAPPDATA%\PEMARAEduTesteLimpo
+Documentos: Documentos\PEMARA Aulas - Teste Limpo
+Foi usado o mesmo usuário Windows, com diretórios e identidade separados;
+não houve criação de outra conta Windows nem teste em uma máquina diferente.
+Os 26.484 arquivos inventariados da instalação anterior, perfil anterior e
+Documentos\PEMARA Aulas mantiveram os mesmos hashes SHA-256; 0 alterações.
+Os dois atalhos anteriores também foram preservados. Reinstalar esta edição
+preserva os dados que o professor criar nela; o instalador não é um apagador.
+
+VERIFICAÇÕES TÉCNICAS
+10 testes desktop, teste de carga limpa em PostgreSQL real e teste de professores
+e revisores em navegador real passaram. Typecheck e compilação passaram.
+16.259 arquivos de recursos foram inspecionados por caminhos proibidos.
+Os 142 arquivos de fontes do runtime instalado foram comparados com os fontes
+atuais. Sete arquivos instalados/compilados foram comparados por SHA-256 com o
+pacote. Bootstrap e serviço educacional no app.asar também foram conferidos.
+As regressões gerais anteriores estão em evidencias/debug-20261019; não foi
+alegada uma nova execução integral de toda a suíte nesta etapa de empacotamento.
+As tentativas anteriores do teste de abertura foram preservadas: ajustes no
+harness trataram placeholder, rótulo completo do professor e nomes reais das
+tabelas da versão 2 do OpenCode. O relatório final installed-clean.json passou.
+
+LIMITES
+Instalação silenciosa e interface do aplicativo verificadas no Windows 11.
+O percurso visual do assistente de instalação e Windows 10 não foram testados.
+O EXE não tem assinatura digital. Não houve nova avaliação pedagógica com um
+provedor real; o teste funcional de geração utilizou respostas controladas.
+
+EVIDÊNCIAS
+G:\PEMARA_EDU\build\openchamber\2.4.0-pemara.7\evidencias
+installation.json, installed-clean.json, installed-package.json,
+native-bundle-check.json, owner-preservation.json, capture-final.json.
+Capturas: biblioteca-vazia-final.png, chat-vazio-final.png, professores-final.png.

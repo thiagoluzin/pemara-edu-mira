@@ -145,7 +145,7 @@ export const TEMPLATE_SOLAR_SYSTEM: LessonSpec = {
         'Planetas Rochosos (Telúricos): Mercúrio, Vênus, Terra e Marte — compostos por rochas e metais, mais próximos do Sol.',
         'Planetas Gasosos e Gigantes de Gelo: Júpiter, Saturno, Urano e Netuno — compostos por hidrogênio, hélio, água, amônia e metano.'
       ],
-      callout: 'A Terra leva aproximadamente 365 dias e 6 horas para dar uma volta completa ao redor do Sol (translação). Esse quarto de dia acumulado gera o ano bissexto a cada 4 anos!',
+      callout: 'O ano solar dura aproximadamente 365 dias e 6 horas. No calendário gregoriano, anos divisíveis por 4 são bissextos, exceto os divisíveis por 100 que não são divisíveis por 400. Assim, 2000 foi bissexto e 2100 não será.',
       teacher_notes: 'Destaque que o modelo aceito hoje é o Heliocêntrico, consolidado por Copérnico, Galileu e Kepler.'
     },
     {
@@ -172,12 +172,12 @@ export const TEMPLATE_SOLAR_SYSTEM: LessonSpec = {
       question: 'Qual é o principal fator responsável pelas quatro estações do ano na Terra?',
       answers: [
         'A distância variável da Terra ao Sol ao longo da órbita elíptica',
-        'A inclinação do eixo de rotação da Terra (23.5°) em relação ao plano de translação',
+        'A inclinação do eixo de rotação da Terra (aproximadamente 23,5°) em relação à perpendicular ao plano de sua órbita',
         'A atividade de manchas solares que varia ciclicamente',
         'A passagem da Lua entre a Terra e o Sol bloqueando radiação'
       ],
       correct_index: 1,
-      explanation: 'Excelente! A inclinação de 23.5° do eixo da Terra faz com que diferentes hemisférios recebam incidência solar com ângulos diferentes ao longo do ano, originando as estações.',
+      explanation: 'O eixo da Terra forma aproximadamente 23,5° com a perpendicular ao plano orbital (66,5° com o próprio plano). Ao longo da translação, essa inclinação altera a incidência solar e a duração do dia em cada hemisfério, originando as estações.',
       teacher_notes: 'Desfaça o mito clássico de que o verão ocorre porque a Terra está "mais perto do Sol". No afélio (ponto mais distante), é verão no hemisfério Norte!'
     }
   ]

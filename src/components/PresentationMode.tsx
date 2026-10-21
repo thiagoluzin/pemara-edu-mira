@@ -1,4 +1,5 @@
 import {movePresentation,sceneStepCount} from '../engine/presentationNavigation';
+import {FreeHtmlPresentation} from './FreeHtmlLessonEditor';
 import { label, gradeLabel } from '../ui/labels';
 /**
  * @license
@@ -33,7 +34,8 @@ interface Props {
   onUpdateScene?: (scene: Scene) => void;
 }
 
-export const PresentationMode: React.FC<Props> = ({
+export const PresentationMode:React.FC<Props>=props=>props.lesson.presentation?<FreeHtmlPresentation lesson={props.lesson} onClose={props.onClose}/>:<StructuredPresentationMode {...props}/>;
+const StructuredPresentationMode: React.FC<Props> = ({
   lesson,
   initialSceneIndex = 0,
   onClose,

@@ -30,6 +30,9 @@ for (const port of [config.dbPort, config.appPort]) {
     socket.listen(port, '127.0.0.1', () => socket.close(() => resolve()));
   });
 }
+// Remove only a stale request before startup. Once /ready responds, a newly
+// written stop request must survive until the shutdown watcher consumes it.
+if (fs.existsSync(stopPath)) fs.unlinkSync(stopPath);
 process.env.DATABASE_URL = `postgresql://postgres:${config.password}@127.0.0.1:${config.dbPort}/${database}`;
 process.env.NODE_ENV = 'production';
 process.env.HOST = '127.0.0.1';
@@ -44,10 +47,11 @@ let dbStarted = false;
 let pool: import('pg').Pool | undefined;
 let server: import('node:http').Server | undefined;
 let timer: NodeJS.Timeout | undefined;
-let stopping = false;
-async function shutdown() {
-  if (stopping) return;
-  stopping = true;
+let shutdownPromise: Promise<void> | undefined;
+function shutdown() {
+  return shutdownPromise ??= performShutdown();
+}
+async function performShutdown() {
   if (timer) clearInterval(timer);
   if (server) await new Promise<void>(r => server!.close(() => r()));
   let backupSaved=false,backupPath:string|undefined;
@@ -132,7 +136,6 @@ try {
   }
   const { startServer } = await import('../server');
   server = await startServer();
-  if (fs.existsSync(stopPath)) fs.unlinkSync(stopPath);
   fs.writeFileSync(statePath, JSON.stringify({ pid: process.pid, url: `http://127.0.0.1:${config.appPort}`, database }));
   timer = setInterval(() => { if (fs.existsSync(stopPath)) void shutdown().then(() => process.exit(0)); }, 1000);
   for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => { void shutdown().then(() => process.exit(0)); });

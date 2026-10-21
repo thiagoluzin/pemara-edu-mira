@@ -1,0 +1,28 @@
+PEMARA EDU .10 — SALVAR EM OUTRA PASTA — CONCLUÍDO EM 19/10/2026
+
+O executável instalado abriu os três diálogos nativos, sem substituir a API
+do Windows por respostas simuladas. O proprietário escolheu D:\ e confirmou
+os salvamentos, pois a automação de entrada retornava acesso negado 0x80070005.
+
+Resultados: HTML de 352869 bytes, PDF de 149863 bytes e DOCX de 460481 bytes.
+Arquivos mantidos em D:\ com os nomes sugeridos pelo programa.
+HTML offline: animação, pausa e quiz aprovados.
+PDF: 9 páginas, todas as cenas, sem notas ou gabarito do professor.
+Word: aberto no Microsoft Word, 10 páginas, 110 parágrafos editáveis e 1 tabela.
+As 19 páginas renderizadas correspondem pixel a pixel à validação visual .9.
+O renderizador da skill não tinha LibreOffice; usou-se Microsoft Word + Poppler.
+Aula e versão intactas após os salvamentos.
+
+O primeiro roteiro exigia um destino específico em G:\ e rejeitou o HTML
+válido escolhido pelo proprietário em D:\. O roteiro foi corrigido para aceitar
+qualquer pasta fora da padrão; o HTML existente foi preservado e reaproveitado.
+Não foi encontrada falha no salvamento do aplicativo.
+
+13.042 arquivos de dados e seis junctions preservados, sem alterações.
+Perfis originais restaurados. Resultados de teste permanecem separados.
+Instalador .10 inalterado e limpo, SHA256:
+5c114298983f7f25e9c467f460bd1066c594ed51dba0e53a98931f5d8b702344
+
+Evidências: G:\PEMARA_EDU\evidencias\native-exports-20261019
+installed-exports.json, html-validation.json, export-content.json,
+word-open.json, render-validation.json e preservation-after.json.

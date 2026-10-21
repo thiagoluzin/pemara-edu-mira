@@ -1,5 +1,7 @@
 import {validateTeachingVisual} from '../engine/teachingVisual';
 import {ATLAS,isAtlasKind} from '../animations/atlas';
+import {isPedagogicalTeam} from '../education/teachingAgents';
+import {validateFreePresentation} from '../engine/freeHtml';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -36,6 +38,7 @@ export function validateLessonSpec(spec: any): ValidationResult {
     errors.push('Campo obrigatório ausente ou inválido: "lesson".');
   } else {
     const { id, subject, title, duration_minutes, grade, generation_mode } = spec.lesson;
+    if(spec.lesson.pedagogical_team!==undefined&&!isPedagogicalTeam(spec.lesson.pedagogical_team))errors.push('lesson.pedagogical_team contém pareceres inválidos.');
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
       errors.push('lesson.id é obrigatório e deve ser uma string não-vazia.');
     }
@@ -78,14 +81,22 @@ export function validateLessonSpec(spec: any): ValidationResult {
   }
 
   // 3. Objetivos pedagógicos
-  if (!Array.isArray(spec.objectives)) {
-    warnings.push('"objectives" deveria ser uma lista de objetivos de aprendizagem.');
+  if(spec.presentation!==undefined)errors.push(...validateFreePresentation(spec.presentation,spec.lesson?.subject));
+  if (spec.objectives === undefined) {
+    warnings.push('Aula legada sem objetivos informados. O conteúdo foi preservado; preencha os objetivos antes do uso em turma.');
+  } else if (!Array.isArray(spec.objectives)) {
+    errors.push('"objectives" deve ser uma lista de objetivos de aprendizagem.');
   } else if (spec.objectives.length === 0) {
     warnings.push('Nenhum objetivo pedagógico listado na aula.');
   } else if (spec.objectives.some((o: any) => typeof o !== 'string' || o.trim().length === 0)) {
     errors.push('Todos os itens de "objectives" devem ser strings não-vazias.');
   }
 
+  if(spec.prerequisites!==undefined&&(!Array.isArray(spec.prerequisites)||spec.prerequisites.some((p:any)=>typeof p!=='string'||!p.trim())))errors.push('Pré-requisitos devem ser uma lista de textos.');
+  if(spec.references!==undefined&&(!Array.isArray(spec.references)||spec.references.some((r:any)=>!r||typeof r.title!=='string'||!r.title.trim()||
+    (r.kind!==undefined&&!['curriculum','content','authorship'].includes(r.kind))||
+    (r.locator!==undefined&&typeof r.locator!=='string')||(r.license!==undefined&&typeof r.license!=='string')||
+    (r.url!==undefined&&(typeof r.url!=='string'||!/^https?:\/\//i.test(r.url))))))errors.push('Referências inválidas: informe título e URL HTTP(S), quando houver.');
   // 4. Validação das Cenas
   if (!Array.isArray(spec.scenes)) {
     errors.push('"scenes" deve ser uma lista (array) de cenas.');

@@ -1,3 +1,4 @@
+import {bnccLabel} from '../../catalog/bnccLabels';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -15,7 +16,7 @@ export const CONTENT_PACK_GRECIA_ANTIGA: ContentPack = {
   grade: 6,
   topic: 'grecia_antiga',
   title: 'Grécia Antiga: Pólis, Democracia e Sociedade',
-  bncc_skill: 'EF06HI09: Discutir o conceito de Antiguidade Clássica, seu alcance e limite na tradição ocidental, assim como os impactos sobre a noção de cidadania.',
+  bncc_skill: bnccLabel('EF06HI09'),
   thematic_unit: 'Antiguidade Clássica: Grécia e Roma',
   knowledge_object: 'O conceito de pólis, a democracia ateniense e a oligarquia espartana',
   sources: [

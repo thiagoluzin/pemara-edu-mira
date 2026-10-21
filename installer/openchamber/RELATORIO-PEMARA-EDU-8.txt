@@ -1,0 +1,77 @@
+PEMARA EDU 2.4.0-pemara.8 — INSTALADOR LIMPO E TESTE COM IA REAL
+Validação: 19/10/2026, Windows 11 x64.
+
+ARQUIVO FINAL
+PEMARA-EDU-2.4.0-pemara.8-Limpo-Windows-x64-Instalar.exe
+Tamanho: 412968770 bytes.
+SHA-256: 4788be881ad4b30a4e8d21f7e31ff4190cb11bf18318c9f4a1f3a7c007713453
+Pasta: G:\PEMARA_EDU\ENTREGAS\PEMARA-EDU-2.4.0-pemara.8-Limpo
+O arquivo final foi instalado e conferido. Instalação silenciosa: saída 0.
+Executável instalado: C:\Users\admin_remoto\AppData\Local\Programs\PEMARA EDU Teste Limpo\PEMARA EDU Teste Limpo.exe
+Atalho: PEMARA EDU Teste Limpo. Instalador sem assinatura digital.
+
+RESULTADO DO FLUXO REAL
+Geração com opencode/beam-free, pelo programa instalado, sem simular resposta de IA.
+Aula de Ciências do 6º ano: evaporação e condensação, 9 cenas.
+Um professor autor e quatro revisores em cinco conversas independentes.
+Revisor de Didática: 7 apontamentos (opencode/beam-free).
+Revisor de Avaliação: 5 apontamentos (opencode/beam-free).
+Revisor de Fontes: 7 apontamentos (opencode/beam-free).
+Revisor de Inclusão: 5 apontamentos (opencode/beam-free).
+Edição de título e nota pela interface; publicação final v3.
+Revisão original v1 mantida e comparada integralmente com o histórico.
+Número do JSON persistido coincide com a versão publicada e exportada.
+Fechamento e reabertura preservaram aula, edição e quatro pareceres.
+Apresentação offline: sequência completa, notas, Atlas em movimento/pausa.
+Quiz: resposta incorreta, nova tentativa e resposta correta no programa.
+HTML exportado: reabertura offline, navegação completa, Atlas e quiz verificados.
+JSON exportado: conteúdo comparado integralmente com a versão persistida.
+Impressão: documento gerado pelo botão do aplicativo, com cenas e notas.
+PDF de 9 páginas produzido a partir desse documento pelo Chromium,
+reaberto, extraído e renderizado para conferência visual de todas as páginas.
+O diálogo gráfico da impressora do Windows não foi automatizado.
+Nenhum erro não tratado do renderizador no ensaio final.
+
+CORREÇÕES ENCONTRADAS E VERIFICADAS
+1. A publicação v2 guardava lesson_version 1 dentro do JSON. Agora a transação
+   grava a identidade e a versão definitivas antes de calcular o hash. Criação,
+   publicação, restauração e duplicação mantêm os snapshots antigos intactos.
+2. A impressão usava o pedido inteiro no nome do arquivo, ultrapassando o limite
+   do Windows. Agora usa o título sanitizado e limitado, com prefixo de impressão.
+   O download real foi repetido e concluído no instalador final.
+Passaram nove testes focados: três de integração/regressão com PostgreSQL e
+OpenCode controlado, e seis de exportação/impressão. TypeScript e build passaram.
+Os 142 arquivos de código instalados coincidem com as fontes atuais.
+
+INSTALADOR LIMPO E PRESERVAÇÃO
+Antes de gerar, o pacote final foi aberto, fechado e reaberto com perfil vazio.
+Aulas, revisões, rascunhos, materiais pessoais, tentativas de geração,
+lotes de pesquisa/importação, staging e tabelas de chat: zero nos dois ciclos.
+O pacote não contém banco de uso, perfil pessoal, aula criada ou credencial.
+Atlas, currículo, 12 professores especialistas e habilidades são recursos do app.
+Os perfis originais foram guardados antes do teste e restaurados ao terminar.
+45666 arquivos originais conferidos por SHA-256: zero alterações.
+A instalação normal anterior continua preservada. A edição Teste Limpo recebeu
+a versão 8; seus binários anteriores também foram guardados, sem alteração, em:
+C:\Users\admin_remoto\AppData\Local\Programs\PEMARA EDU Teste Limpo.preservado-e2e-20261019
+Dados e documentos do ensaio ficaram separados em pastas resultado-e2e-20261019.
+As aulas, pesquisas e conversas de teste NÃO foram incluídas no instalador.
+Reinstalar a edição limpa preserva os dados existentes; não é um comando de apagar.
+O programa foi deixado fechado após os testes.
+
+RASTREABILIDADE E LIMITES
+Evidências detalhadas: G:\PEMARA_EDU\evidencias\real-e2e-20261019
+Relatório automatizado final: result.json. Preservação: preservation-after.json.
+A geração real da versão 8 e seus quatro pareceres foram conservados durante a
+correção da impressão. A rodada final reutilizou essa aula e fez nova edição;
+não trocou o conteúdo por uma resposta simulada nem gastou outra geração.
+Resultados anteriores e candidato com falha de impressão foram preservados.
+O ensaio foi ajustado para aguardar a versão recém-publicada, selecionar as notas
+no painel correto e verificar o conteúdo do arquivo de impressão efetivamente salvo.
+Uma aula de Ciências e um provedor real foram exercitados. Não foram validados
+todos os temas, todas as respostas futuras da IA, Windows 10 ou outros computadores.
+A geração depende de internet e disponibilidade do provedor gratuito.
+Os pareceres registram limitações das fontes e melhorias; não são aprovação
+docente. A aula é material de teste e ainda exige revisão pedagógica antes do uso.
+PDF é estático; interações transitórias do Atlas são verificadas no app e no HTML.
+Este resultado comprova o fluxo descrito; não constitui garantia de 100% universal.

@@ -1,0 +1,30 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {stage} from './release.mjs';
+import {checkCleanPackage} from './check-clean-package.mjs';
+const packaged=path.join(stage,'dist/win-unpacked');
+const installed=path.join(process.env.LOCALAPPDATA,'Programs/PEMARA EDU Teste Limpo');
+const resources=path.join(installed,'resources');
+const report=checkCleanPackage(resources);
+const require=createRequire(path.resolve('pilotos/openchamber/source/packages/electron/package.json'));
+const builderRequire=createRequire(require.resolve('electron-builder'));
+const packagerRequire=createRequire(builderRequire.resolve('app-builder-lib'));
+const asar=packagerRequire('@electron/asar');
+report.desktopExportSources=['known-folder-links.mjs','export-bundle-files.mjs','education-export.mjs','education-export-preload.cjs','education-shell.mjs'].map(file=>{
+ const packed=asar.extractFile(path.join(resources,'app.asar'),'dist-bundle/'+file);
+ assert.ok(packed.equals(fs.readFileSync(path.resolve('installer/openchamber',file))),'Stale desktop export code: '+file);
+ return{file,sha256:crypto.createHash('sha256').update(packed).digest('hex')};
+});
+assert.ok(asar.extractFile(path.join(resources,'app.asar'),'dist-bundle/pemara-bootstrap.mjs').equals(fs.readFileSync('installer/openchamber/bootstrap.mjs')),'Stale bootstrap in installed app');
+const required=['PEMARA EDU Teste Limpo.exe','resources/app.asar','resources/pemara/distribution.json','resources/pemara/LEIA-ME-PROFESSORES.txt','resources/education/dist/index.html'];
+for(const file of fs.readdirSync(path.join(packaged,'resources/education/dist/assets')))required.push('resources/education/dist/assets/'+file);
+report.installedHashes=required.map(file=>{
+ const hash=root=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
+ const actual=hash(installed);assert.equal(actual,hash(packaged),'Installed resource differs: '+file);
+ return{file,sha256:actual};
+});
+fs.writeFileSync(path.join(stage,'evidencias/installed-package.json'),JSON.stringify(report,null,2));
+console.log(JSON.stringify({passed:true,sourceFiles:report.sourceHashes.length,installedHashes:report.installedHashes.length,resourceFiles:report.resourceFiles}));

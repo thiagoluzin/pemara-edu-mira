@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $stage = Join-Path $repo 'build/openchamber/2.4.0-pemara.1'
 $backup = Join-Path $stage 'originais-antes-reinstalar-20261018-145758'

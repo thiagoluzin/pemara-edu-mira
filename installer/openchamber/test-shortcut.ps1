@@ -1,4 +1,4 @@
-param([string]$ReportPath)
+﻿param([string]$ReportPath)
 $ErrorActionPreference = 'Stop'
 $program = Join-Path $env:LOCALAPPDATA 'Programs/PEMARA OpenChamber/PEMARA OpenChamber.exe'
 $desktop = Join-Path ([Environment]::GetFolderPath('Desktop')) 'PEMARA OpenChamber.lnk'

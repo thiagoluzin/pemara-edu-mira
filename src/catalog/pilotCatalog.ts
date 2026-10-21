@@ -1,3 +1,4 @@
+import {bnccLabel} from './bnccLabels';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -31,7 +32,7 @@ export const PILOT_DEMOS: Record<string, PilotDemo> = {
     canonicalTopic: 'Grécia Antiga',
     aliases: ['grecia antiga', 'grécia antiga', 'grecia_antiga', 'pólis', 'polis', 'atenas e esparta', 'democracia ateniense'],
     title: 'Grécia Antiga: Pólis, Democracia e Sociedade',
-    bnccSkill: 'EF06HI09: Discutir o conceito de Antiguidade Clássica, seu alcance e limite na tradição ocidental.'
+    bnccSkill: bnccLabel('EF06HI09')
   },
   projectile_1em: {
     id: 'physics-1em-lancamento-obliquo',
@@ -55,7 +56,7 @@ export const PILOT_DEMOS: Record<string, PilotDemo> = {
     canonicalTopic: 'Sistema Solar',
     aliases: ['sistema solar', 'sistema_solar', 'planetas', 'órbitas planetárias', 'orbitas planetarias', 'astronomia fundamental'],
     title: 'O Sistema Solar: Dinâmica Orbital e Escalas Planetárias',
-    bnccSkill: 'EF06CI14: Justificar a importância da camada de ozônio e o papel do Sistema Solar.'
+    bnccSkill: bnccLabel('EF06CI14')
   },
   quadratic_function_9ef: {
     id: 'math-9-funcao-quadratica',
@@ -67,7 +68,7 @@ export const PILOT_DEMOS: Record<string, PilotDemo> = {
     canonicalTopic: 'Função Quadrática',
     aliases: ['função quadrática', 'funcao quadratica', 'funcao_quadratica', 'parábola', 'parabola', 'equação do 2º grau', 'equação do segundo grau', 'equacao do 2 grau', 'y = ax² + bx + c', 'grafico da parabola'],
     title: 'Função Quadrática e a Parábola: y = ax² + bx + c',
-    bnccSkill: 'EF09MA06: Compreender as funções de 2º grau associadas a problemas práticos.'
+    bnccSkill: bnccLabel('EF09MA06')
   }
 };
 

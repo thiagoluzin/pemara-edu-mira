@@ -1,0 +1,118 @@
+PEMARA EDU — correção das oito falhas da auditoria
+Data: 19/10/2026
+Versão preparada: 2.4.0-pemara.12
+
+ESCOPO E PRESERVAÇÃO
+Correção sobre o checkout existente, preservando alterações anteriores.
+Backup dos fontes antes do trabalho: backups/antes-oito-falhas-20261019-174054.
+372 arquivos copiados com manifesto SHA-256. Nenhum reset de Git.
+Nenhuma migração de dados nova; nenhum perfil pessoal aberto pelo teste.
+As aulas e revisões já salvas não foram reescritas para mudar descritores,
+conteúdo, objetivos ou fontes. As correções de modelos valem para novas aulas.
+Os testes de persistência usam PostgreSQL descartável e dados sintéticos.
+
+E1 — OBJETIVOS E WORD
+O validador distingue objetivos ausentes no legado, lista vazia e campo inválido.
+Legado ausente/vazio é preservado com aviso; campo malformado recebe diagnóstico.
+O Word usa leitura validada, sem .map em valor ausente. Novas gerações precisam
+informar objetivos. Teste real de navegador gerou DOCX de 219.788 bytes com
+duas figuras, referências e aviso de objetivos ausentes, sem alterar a entrada.
+
+E2 — EDIÇÃO QUE DECLARAVA SUCESSO SEM FAZER A MUDANÇA
+Pedidos desconhecidos, negativos ou sem alteração mantêm conteúdo e versão.
+Comandos suportados exibem prévia: título e parâmetros de lançamento.
+Questões, exemplos e simplificação encaminham à autoria/revisão docente.
+O texto é realmente editado pelo professor; notas, diagramas e índices dos
+parágrafos são preservados. Cancelar não aplica; trocar a aula remove a prévia.
+
+E3 — VERSÕES AUSENTES NO CONFLITO DE SALVAMENTO
+O cliente mantém currentVersion e expectedVersion da resposta 409.
+A janela distingue conflito de rascunho e mudança da versão publicada.
+Teste do cliente e da renderização confirma os números, sem v?.
+
+E4 — TESTE DE REVISÕES COM EXPECTATIVA INCORRETA
+O teste considera lesson_version persistido e verifica o SHA-256 da revisão.
+Também confirma que o objeto original não mudou e que a revisão anterior
+permanece idêntica após uma nova publicação. A regra do repositório foi mantida.
+
+P1 — QUESTÕES E EXEMPLOS ALHEIOS À AULA
+Removidos os atalhos que inseriam texto e questões fixos por disciplina.
+O formulário exige página de referência, objetivo, enunciado, alternativas
+distintas, gabarito explícito e justificativa. Não escolhe A por padrão.
+Exemplos exigem conteúdo escrito e conferido. Esses atalhos são autoria
+docente, não uma nova geração por IA; o gerador de aulas existente permanece.
+Frações, gramática, ecologia e história foram usados na regressão.
+
+P2 — DESCRITORES BNCC INCORRETOS
+34 descritores EF usados pelos catálogos agora vêm da base oficial local
+verificada pelo compilador do acervo. Piloto, catálogo estático e pacote de
+Grécia usam o mesmo módulo; a descrição do estúdio também foi corrigida.
+EF06CI14 trata de sombras de gnômon e movimentos relativos Terra–Sol,
+não da camada de ozônio. EF06HI09 conserva a redação oficial.
+O script build-bncc-labels.mts --check detecta divergências futuras.
+Essa verificação comprova a transcrição; não certifica alinhamento pedagógico
+integral de cada aula ao código curricular.
+
+P3 — ASTRONOMIA E CALENDÁRIO
+O gabarito informa 23,5 graus em relação à perpendicular ao plano orbital.
+A explicação distingue 66,5 graus em relação ao próprio plano e relaciona
+inclinação e translação à incidência solar e à duração do dia.
+O calendário explicita divisibilidade por 4, exceções de 100 e regra de 400;
+2000 é bissexto e 2100 não é. A alteração ocorre no modelo, não no acervo salvo.
+
+P4 — PERDA DE REFERÊNCIAS E PRÉ-REQUISITOS
+A composição preserva as referências, URLs, localizadores/licenças quando
+fornecidos e pré-requisitos do pacote. A informação aparece no editor,
+HTML, impressão/PDF e Word. Referência curricular é diferenciada de fonte
+de conteúdo e autoria; código BNCC não é apresentado como prova factual.
+Todos os 162 pacotes foram compostos, conferidos e mantidos intactos na entrada.
+Links aceitos nas exportações usam HTTP(S); títulos são escapados.
+
+VALIDAÇÃO ANTES DO EMPACOTAMENTO
+- TypeScript: aprovado.
+- 74 testes de aplicação: aprovados; zero falhas e zero ignorados.
+  Incluem integridade, importação de materiais, catálogo, edição, identidade,
+  publicação, concorrência, backup/restauração e reabertura em PostgreSQL real.
+- 13 testes de desktop/exportação: aprovados.
+- 1 teste de interface em Chrome: aprovado com prévia, cancelamento,
+  autoria, revisão, descarte de prévia antiga e Word legado com figuras.
+- 34 descritores EF conferidos com a base oficial local.
+- Build de produção: aprovado. Há aviso de tamanho do bundle principal;
+  não impediu a compilação e não foi confundido com falha de funcionalidade.
+
+LIMITES DO ENSAIO
+Validação no Windows 11 x64. Nenhuma nova chamada de IA externa foi feita.
+Esta entrega prepara uma nova versão; não substitui a instalação do usuário.
+Os testes verificam as oito correções e regressões relacionadas, sem declarar
+que todo conteúdo do acervo recebeu aprovação pedagógica humana.
+
+VERIFICAÇÃO DOS RECURSOS EMPACOTADOS
+31 arquivos de código conferidos byte a byte contra o checkout; pacote com
+16.688 arquivos de recursos, sem perfis pessoais ou credenciais detectados
+pela verificação de distribuição. Código de teste e banco ficam fora do pacote.
+O Node e o servidor do pacote foram executados com perfil novo nesta pasta
+de evidências. Primeira abertura: zero aulas e zero materiais. Criada uma
+fixture legada sem objetivos; versão 2 publicada; rascunho baseado em v1
+rejeitado com 409 e versões corretas. Revisão 1 conferida por hash no backup.
+Após encerrar e iniciar em outro processo: aula, versão e conteúdo preservados;
+uma aula, duas revisões e zero rascunhos. Encerramento com backup confirmado.
+Esses ensaios usam o runtime empacotado; não são instalação no perfil do usuário.
+
+PRESERVAÇÃO CONFIRMADA
+14.475 arquivos dos perfis atuais e pastas de aulas, mais seis vínculos de
+diretório, conferidos antes/depois do empacotamento: nenhuma alteração.
+Recibos: owner-before.json e owner-after.json. Os vínculos foram registrados
+sem atravessá-los. Não houve limpeza, substituição nem migração do acervo.
+
+EVIDÊNCIAS
+regressao-final.log; browser-final.log; browser-verificacao.json;
+previa-questao.png; legado-com-figuras.docx; typecheck.log; build.log.
+Preservação antes/depois e verificação do pacote constam dos recibos JSON
+na mesma pasta e em build/openchamber/2.4.0-pemara.12/evidencias.
+
+INSTALADOR FINAL
+Arquivo: G:\PEMARA_EDU\ENTREGAS\PEMARA-EDU-2.4.0-pemara.12-Limpo\PEMARA-EDU-2.4.0-pemara.12-Limpo-Windows-x64-Instalar.exe
+Tamanho: 418104733 bytes
+SHA256: 82EAC45118125328A22A30F1D9557B3839613E02886DD53E41C29C90201DA285
+Authenticode: NotSigned
+Instalador preparado; a instalação atual não foi substituída.

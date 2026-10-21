@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Resources, [Parameter(Mandatory=$true)][string]$Report)
+﻿param([Parameter(Mandatory=$true)][string]$Resources, [Parameter(Mandatory=$true)][string]$Report)
 $ErrorActionPreference = 'Stop'
 $savedPath = $env:PATH
 $results = [ordered]@{ timestamp = (Get-Date).ToUniversalTime().ToString('o'); passed = $false; checks = @{} }

@@ -182,7 +182,7 @@ export const SavedLessonsList: React.FC<Props> = ({
                     {label(item.lesson.subject)}
                   </span>
                   <span className="text-slate-400 font-mono text-[11px]">
-                    v{item.lesson_version} • {item.scenes.length} cenas
+                    v{item.lesson_version} • {item.presentation ? 'Apresentação animada' : `${item.scenes.length} cenas`}
                   </span>
                 </div>
 

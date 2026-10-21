@@ -1,6 +1,6 @@
 # PEMARA EDU — instalador para professores
 
-Versão atual: **2.4.0-pemara.6**. Consulte [compilação e reprodução](BUILD-PEMARA-EDU.md), [integração IA](INTEGRACAO-IA.md), [guia do professor](AULAS-PROFESSORES.txt) e [testes da versão 6](RELATORIO-PEMARA-EDU-6.md). O botão Criar aula consulta os modelos gratuitos atuais do OpenCode e troca automaticamente quando um falha. O gerador não exige modelo local nem configuração pelo professor. Aulas salvas, Atlas e HTML continuam disponíveis offline. O relato do erro 403 da versão 5 permanece preservado em seu relatório histórico.
+Entrega atual: **2.4.0-pemara.8 — Teste Limpo**. Instala em paralelo, com atalho e perfil próprios, sem importar aulas, pesquisas ou chats anteriores. Inclui os professores especialistas e revisores. Consulte [compilação e reprodução](BUILD-PEMARA-EDU.md), [integração IA](INTEGRACAO-IA.md), [guia do professor](AULAS-PROFESSORES.txt) e [validação da versão 8 com IA real](RELATORIO-PEMARA-EDU-8.txt). As versões anteriores e os dados do proprietário permanecem preservados. Gerar aulas exige internet e disponibilidade de modelos gratuitos; não exige IA local. Reinstalar a edição limpa preserva seus próprios dados.
 
 As seções abaixo registram a construção das versões anteriores; preserve os nomes e caminhos históricos para compatibilidade e recuperação.
 

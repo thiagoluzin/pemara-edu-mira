@@ -1,0 +1,48 @@
+PEMARA EDU 2.4.0-pemara.11 — EXPORTAR OS TRÊS FORMATOS JUNTOS
+Validação: 2026-10-19T13:58:11.566Z
+
+COMO USAR
+No editor, clique em Exportar e em "Exportar HTML, PDF e Word juntos".
+Escolha uma pasta uma única vez e confirme. O programa salva os três arquivos
+diretamente nela. Se os nomes já existirem, cria cópias com sufixo numérico,
+sem substituir os anteriores. As opções de exportação individual permanecem.
+
+TESTES
+- TypeScript e seis testes de pacote aprovados: seleção única, cancelamento,
+  colisão de nomes, concorrência e falha de gravação com limpeza dos novos arquivos.
+- Instalador final instalado; código nativo e recursos conferidos.
+- Primeira abertura e reabertura vazias, sem aulas, materiais, pesquisas ou chats.
+- Executável instalado: 1 seleção de pasta e
+  0 diálogos individuais de Salvar como.
+- HTML, PDF e Word gerados juntos; arquivos anteriores e aula preservados.
+- HTML offline: animação, pausa e quiz aprovados.
+- PDF dos alunos: 9 páginas, sem notas e gabarito.
+- Word: 110 parágrafos editáveis e 1 tabela.
+
+ARQUIVOS DO TESTE
+E:\pemara-alunos-evaporação-e-condensação-—-aula-revisada-no-teste-real-v1.pdf
+SHA256: 0eed487ce5a140b1d380681fdcb3dfc448add95ed94909551119a8d25e402d65
+E:\pemara-apresentacao-evaporação-e-condensação-—-aula-revisada-no-teste-real-v1.html
+SHA256: 60b91a370dd1e76686d148a41061d0f605e647c571017c231c5977b6d9a9f55e
+E:\pemara-professor-evaporação-e-condensação-—-aula-revisada-no-teste-real-v1.docx
+SHA256: c3131f47af80238929ecfdd0e691b651dc8dc5d8be17486f99fcceb32fb58585
+
+PRESERVAÇÃO
+13042 arquivos de dados e 6 vínculos conferidos, sem alterações.
+Perfil original restaurado; dados de teste separados. Binários .10 preservados
+com sufixo .preservado-bundle-v11-20261019 e hashes do executável/app.asar conferidos.
+O instalador contém apenas o programa e recursos, sem dados ou credenciais de usuário.
+
+LIMITES
+Windows 11 x64. Nenhuma nova chamada de IA; usou-se uma aula real anterior.
+O proprietário confirmou a pasta na janela nativa porque a automação de entrada
+do Windows retornava acesso negado. O observador encaminhou a chamada original
+do Electron e contou os diálogos, sem simular a escolha da pasta.
+Não é uma garantia universal de 100%; PDF e Word são estáticos.
+
+INSTALADOR
+G:\PEMARA_EDU\ENTREGAS\PEMARA-EDU-2.4.0-pemara.11-Limpo\PEMARA-EDU-2.4.0-pemara.11-Limpo-Windows-x64-Instalar.exe
+Tamanho: 418093910 bytes
+SHA256: bdb67499dac37a60913e31e8ddcbfe32f26241975504d813b4f50c19eeea4dff
+Authenticode: não assinado.
+Evidências: G:\PEMARA_EDU\evidencias\bundle-v11-20261019

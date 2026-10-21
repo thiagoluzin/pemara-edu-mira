@@ -47,6 +47,7 @@ export interface LessonMeta {
   content_pack_version?: number;
   content_pack_hash?: string;
   ai_provenance?:{provider:string;model:string;generated_at:string;attempt_id:string;visual_version:string};
+  pedagogical_team?: import('../education/teachingAgents').PedagogicalTeamResult;
 }
 
 export type SceneType = 
@@ -229,12 +230,27 @@ export interface AgentLogEntry {
   details: string;
 }
 
+export interface LessonReference {
+  title: string;
+  url?: string;
+  kind?: 'curriculum' | 'content' | 'authorship';
+  locator?: string;
+  license?: string;
+}
 export interface LessonSpec {
+  presentation?: {
+    format: 'html';
+    content_kind: 'animation';
+    html: string;
+    atlas_models: import('../animations/atlas').AtlasKind[];
+  };
   schema_version: '1.0';
   lesson_version: number;
   renderer_version: '0.3.0';
   lesson: LessonMeta;
   objectives: string[];
+  prerequisites?: string[];
+  references?: LessonReference[];
   scenes: Scene[];
   agent_logs?: AgentLogEntry[];
 }

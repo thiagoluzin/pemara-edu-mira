@@ -1,11 +1,15 @@
 PEMARA EDU — guia do professor
 
-Abra pelo atalho PEMARA EDU. Não é preciso usar terminal nem criar uma conta local.
+Na edição 2.4.0-pemara.12, abra pelo atalho PEMARA EDU Teste Limpo. Não é preciso usar terminal nem criar uma conta local.
+
+PRIMEIRO USO LIMPO
+Esta edição tem instalação e dados separados. Começa sem aulas, pesquisas, materiais importados, conversas ou pedidos anteriores. Sua instalação PEMARA EDU anterior continua disponível pelo atalho anterior. Os professores especialistas, as habilidades e o acervo curricular fazem parte do programa. Reinstalar esta edição preserva os dados que você criar nela.
 
 CRIAR AULA COM IA
 1. Clique em Criar aula, na faixa esquerda.
 2. Descreva o tema, o ano, a duração e o que a turma precisa aprender.
 3. Se quiser, adicione seus materiais, selecione os trechos e confirme a revisão.
+   O professor especialista acompanha a disciplina. Se desejar, marque a revisão por agentes de Didática, Avaliação, Fontes e Inclusão; os pareceres ficam junto da aula no editor.
 4. Clique em Criar aula com IA. O programa escolhe um modelo gratuito disponível na nuvem do OpenCode.
 5. Quando a estrutura estiver validada, a aula é salva na biblioteca e aberta no editor.
 
@@ -19,7 +23,18 @@ As aulas geradas têm uma conversa com título iniciado por Aula. O OpenCode con
 ATLAS E BIBLIOTECA
 Atlas de animações permite experimentar os modelos e criar uma aula inicial para editar. Minhas aulas mantém as aulas e versões depois de fechar o programa. Aulas anteriores continuam disponíveis.
 
+EDITAR E CONFERIR
+Criar questionário e Adicionar exemplos abrem formulários de autoria docente. Escolha a página de referência e o objetivo; escreva o conteúdo e, nas questões, selecione o gabarito e explique as alternativas. Confira a prévia antes de aplicar. Esses atalhos não geram conteúdo por IA.
+Revisar texto permite editar os parágrafos preservando a ligação com os desenhos. Comandos de título, ângulo, velocidade e gravidade também mostram uma prévia. Pedidos não reconhecidos não alteram a aula. Cancelar preserva o documento.
+Preparação e referências da aula mostra os pré-requisitos, as fontes e a autoria quando disponíveis. As exportações mantêm essas informações. Aulas antigas sem objetivos continuam abrindo e exportando com aviso para revisão; não foram reescritas automaticamente.
+
 EXPORTAR
-No editor, clique em EXPORTAR e escolha Apresentação para abrir sem internet. Aguarde a confirmação. O HTML fica em Documentos / PEMARA Aulas / Minhas aulas / Exportadas. Use Abrir exportações para encontrá-lo e copie para um pendrive, se desejar.
+No editor, clique em EXPORTAR e escolha o formato. A janela Salvar como permite escolher outra pasta, nome ou pendrive.
+HTML animado: apresentação autossuficiente com animações e atividades, para abrir sem internet.
+PDF para os alunos: todas as cenas diagramadas, sem notas do professor ou gabarito.
+Word do professor (.docx): textos, atividades, notas e gabaritos editáveis; as figuras ficam estáticas. Use o HTML para apresentar as animações.
+Cópia da aula (JSON): backup para importar novamente no PEMARA EDU. Alterações no Word não atualizam automaticamente a aula ou o HTML; edite a aula no PEMARA para gerar uma nova apresentação.
+Também é possível salvar PDF com notas e gabarito do professor. Cancelar a janela não modifica a aula.
+O destino sugerido é Documentos / PEMARA Aulas - Teste Limpo / Minhas aulas / Exportadas. Abrir exportações abre essa pasta padrão; se escolher outra pasta, o caminho completo aparece na confirmação.
 
 A IA na nuvem usa internet. Não se exige modelo local, placa de vídeo especial ou download de pesos de IA no notebook do professor. Depois de salva, a aula e seu HTML funcionam offline. Os dados ficam fora da pasta do aplicativo e são preservados nas atualizações. O programa aguarda notas e rascunhos pendentes ao fechar.

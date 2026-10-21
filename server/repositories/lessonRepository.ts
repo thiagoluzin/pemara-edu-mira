@@ -66,7 +66,9 @@ export class LessonRepository {
   }, client?: pg.PoolClient): Promise<{ lesson: DbLesson; revision: DbLessonRevision }> {
     const lessonId = params.id || `lesson-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
     const revisionId = `rev-${lessonId}-v1`;
-    const contentHash = this.calculateHash(params.spec);
+    const publishedSpec = { ...params.spec, lesson_version: 1,
+      ...(params.spec?.lesson ? { lesson: { ...params.spec.lesson, id: lessonId } } : {}) };
+    const contentHash = this.calculateHash(publishedSpec);
     const rendererVersion = params.spec?.renderer_version || '1.0.0';
 
     const work = async (c: pg.PoolClient) => {
@@ -83,7 +85,7 @@ export class LessonRepository {
         `INSERT INTO lesson_revisions (id, lesson_id, version, spec_json, content_hash, renderer_version, created_by, change_summary)
          VALUES ($1, $2, 1, $3::jsonb, $4, $5, $6, 'Criação inicial da aula')
          RETURNING *;`,
-        [revisionId, lessonId, JSON.stringify(params.spec), contentHash, rendererVersion, params.ownerId]
+        [revisionId, lessonId, JSON.stringify(publishedSpec), contentHash, rendererVersion, params.ownerId]
       );
 
       // 3. Registrar no histórico de atividades
@@ -192,7 +194,11 @@ export class LessonRepository {
 
       const newVersion = currentLesson.current_version + 1;
       const revisionId = `rev-${params.lessonId}-v${newVersion}`;
-      const contentHash = this.calculateHash(params.spec);
+      // The transaction owns the published version. Preserve old snapshots and
+      // caller input; stamp the new snapshot before hashing and storing it.
+      const publishedSpec = { ...params.spec, lesson_version: newVersion,
+        ...(params.spec?.lesson ? { lesson: { ...params.spec.lesson, id: params.lessonId } } : {}) };
+      const contentHash = this.calculateHash(publishedSpec);
       const rendererVersion = params.spec?.renderer_version || '1.0.0';
 
       const title = params.title || params.spec?.title || params.spec?.lesson?.title || currentLesson.title;
@@ -205,7 +211,7 @@ export class LessonRepository {
         `INSERT INTO lesson_revisions (id, lesson_id, version, spec_json, content_hash, renderer_version, created_by, change_summary)
          VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8)
          RETURNING *;`,
-        [revisionId, params.lessonId, newVersion, JSON.stringify(params.spec), contentHash, rendererVersion, params.actorId, params.changeSummary]
+        [revisionId, params.lessonId, newVersion, JSON.stringify(publishedSpec), contentHash, rendererVersion, params.actorId, params.changeSummary]
       );
 
       // 3. Atualizar registro mestre da aula

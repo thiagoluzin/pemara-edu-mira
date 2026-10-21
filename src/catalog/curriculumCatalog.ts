@@ -1,3 +1,4 @@
+import {bnccLabel} from './bnccLabels';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -40,7 +41,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '6EF',
     gradeNum: 6,
     title: 'Grécia Antiga: Pólis, Democracia e Sociedade',
-    bnccSkill: 'EF06HI09: Discutir o conceito de Antiguidade Clássica, seu alcance e limite na tradição ocidental.',
+    bnccSkill: bnccLabel('EF06HI09'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo (v2.0)'
   },
@@ -52,7 +53,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '7EF',
     gradeNum: 7,
     title: 'O Renascimento Cultural e o Humanismo',
-    bnccSkill: 'EF07HI04: Identificar as principais características dos Humanismos e dos Renascimentos.',
+    bnccSkill: bnccLabel('EF07HI04'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -64,7 +65,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '8EF',
     gradeNum: 8,
     title: 'A Revolução Industrial: Trabalho, Máquinas e Cidades',
-    bnccSkill: 'EF08HI03: Analisar os impactos da Revolução Industrial na produção e circulação de povos e culturas.',
+    bnccSkill: bnccLabel('EF08HI03'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -76,7 +77,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '9EF',
     gradeNum: 9,
     title: 'A Proclamação da República e a Política dos Governadores',
-    bnccSkill: 'EF09HI01: Descrever e contextualizar a emergência da República no Brasil.',
+    bnccSkill: bnccLabel('EF09HI01'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -92,7 +93,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '6EF',
     gradeNum: 6,
     title: 'Climas do Brasil, Zonas Térmicas e Biomas',
-    bnccSkill: 'EF06GE03: Descrever os movimentos da Terra e sua relação com zonas térmicas e tipos de clima.',
+    bnccSkill: bnccLabel('EF06GE03'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -104,7 +105,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '7EF',
     gradeNum: 7,
     title: 'Urbanização Brasileira e a Rede de Cidades',
-    bnccSkill: 'EF07GE04: Analisar a distribuição territorial da população brasileira e migrações internas.',
+    bnccSkill: bnccLabel('EF07GE04'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -116,7 +117,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '8EF',
     gradeNum: 8,
     title: 'Globalização e a Divisão Internacional do Trabalho',
-    bnccSkill: 'EF08GE05: Caracterizar e analisar a Divisão Internacional do Trabalho (DIT).',
+    bnccSkill: bnccLabel('EF08GE05'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -128,7 +129,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '9EF',
     gradeNum: 9,
     title: 'Geopolítica Contemporânea: União Europeia e Potências Asiáticas',
-    bnccSkill: 'EF09GE08: Analisar a formação histórica e os desafios da União Europeia.',
+    bnccSkill: bnccLabel('EF09GE08'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -144,7 +145,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '6EF',
     gradeNum: 6,
     title: 'O Sistema Solar e os Movimentos da Terra',
-    bnccSkill: 'EF06CI14: Descrever a composição e estrutura do Sistema Solar e dinâmicas orbitais.',
+    bnccSkill: bnccLabel('EF06CI14'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -156,7 +157,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '7EF',
     gradeNum: 7,
     title: 'Máquinas Térmicas, Calor e Transformações Energéticas',
-    bnccSkill: 'EF07CI01: Discutir a aplicação ao longo da história das máquinas simples e térmicas.',
+    bnccSkill: bnccLabel('EF07CI01'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -168,7 +169,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '8EF',
     gradeNum: 8,
     title: 'Reprodução Biológica, Sexualidade e Hormônios',
-    bnccSkill: 'EF08CI07: Comparar diferentes processos reprodutivos em seres vivos.',
+    bnccSkill: bnccLabel('EF08CI07'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -180,7 +181,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '9EF',
     gradeNum: 9,
     title: 'Estrutura Atômica, Tabela Periódica e Reações Químicas',
-    bnccSkill: 'EF09CI02: Comparar quantidades de reagentes e produtos e a Lei de Lavoisier.',
+    bnccSkill: bnccLabel('EF09CI02'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -196,7 +197,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '6EF',
     gradeNum: 6,
     title: 'Frações, Decimais e Números Racionais',
-    bnccSkill: 'EF06MA07: Compreender, comparar e ordenar frações e significados de divisão.',
+    bnccSkill: bnccLabel('EF06MA07'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -208,7 +209,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '7EF',
     gradeNum: 7,
     title: 'Números Inteiros, Reta Numérica e Operações',
-    bnccSkill: 'EF07MA03: Comparar e ordenar números inteiros na reta numérica.',
+    bnccSkill: bnccLabel('EF07MA03'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -220,7 +221,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '8EF',
     gradeNum: 8,
     title: 'Equações Lineares e Sistemas de 1º Grau',
-    bnccSkill: 'EF08MA07: Associar equação linear de 1º grau à reta no plano cartesiano.',
+    bnccSkill: bnccLabel('EF08MA07'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -232,7 +233,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '9EF',
     gradeNum: 9,
     title: 'Função Quadrática e a Parábola: y = ax² + bx + c',
-    bnccSkill: 'EF09MA06: Compreender as funções como relações de dependência e gráfico parabólico.',
+    bnccSkill: bnccLabel('EF09MA06'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -248,7 +249,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '67EF',
     gradeNum: 67,
     title: 'Gênero Notícia, Fact-Checking e Desinformação',
-    bnccSkill: 'EF67LP01: Analisar o fenômeno da pós-verdade e identificar a presença de fake news.',
+    bnccSkill: bnccLabel('EF67LP01'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -260,7 +261,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '89EF',
     gradeNum: 89,
     title: 'Artigo de Opinião: Tese, Argumentação e Contra-argumento',
-    bnccSkill: 'EF89LP03: Produzir artigos de opinião e cartas do leitor com teses fundamentadas.',
+    bnccSkill: bnccLabel('EF89LP03'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -276,7 +277,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '6EF',
     gradeNum: 6,
     title: 'Daily Routines and the Simple Present',
-    bnccSkill: 'EF06LI19: Utilizar o presente simples para descrever rotinas diárias familiares e escolares.',
+    bnccSkill: bnccLabel('EF06LI19'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -288,7 +289,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '7EF',
     gradeNum: 7,
     title: 'Talking About Past Events: Simple Past and Biographies',
-    bnccSkill: 'EF07LI15: Construir repertório lexical relativo a verbos regulares e irregulares no Simple Past.',
+    bnccSkill: bnccLabel('EF07LI15'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -304,7 +305,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '69EF',
     gradeNum: 69,
     title: 'Elementos da Linguagem Visual e a Arte Brasileira',
-    bnccSkill: 'EF69AR04: Analisar os elementos constitutivos das artes visuais (ponto, linha, cor, forma e textura).',
+    bnccSkill: bnccLabel('EF69AR04'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -320,7 +321,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '67EF',
     gradeNum: 67,
     title: 'Esportes de Invasão, Táticas Coletivas e Fair Play',
-    bnccSkill: 'EF67EF04: Praticar esportes de invasão identificando elementos técnico-táticos e fair play.',
+    bnccSkill: bnccLabel('EF67EF04'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -336,7 +337,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '6EF',
     gradeNum: 6,
     title: 'Tradição Oral, Textos Sagrados e Diversidade Cultural',
-    bnccSkill: 'EF06ER01: Reconhecer o papel da tradição oral na preservação de saberes sob perspectiva laica.',
+    bnccSkill: bnccLabel('EF06ER01'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -348,7 +349,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '8EF',
     gradeNum: 8,
     title: 'Future Plans, Intentions and Predictions: Will vs. Going to',
-    bnccSkill: 'EF08LI12: Construir repertório lexical relativo a planos, previsões e expectativas para o futuro.',
+    bnccSkill: bnccLabel('EF08LI12'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -360,7 +361,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '9EF',
     gradeNum: 9,
     title: 'Global Challenges and Conditionals: If Clauses in Debate',
-    bnccSkill: 'EF09LI14: Utilizar conectores indicadores de condição (if, unless) em discursos argumentativos.',
+    bnccSkill: bnccLabel('EF09LI14'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -372,7 +373,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '89EF',
     gradeNum: 8,
     title: 'Lutas do Mundo e Práticas Corporais de Aventura na Natureza',
-    bnccSkill: 'EF89EF14: Discutir estereótipos e preconceitos relativos às lutas do mundo e práticas de aventura.',
+    bnccSkill: bnccLabel('EF89EF14'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -384,7 +385,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '6EF',
     gradeNum: 6,
     title: 'Narrativa Ficcional: Estrutura do Enredo, Personagens e Tempo',
-    bnccSkill: 'EF06LP06: Empregar nas narrativas ficcionais recursos de caracterização de personagens, tempo, espaço e enredo.',
+    bnccSkill: bnccLabel('EF06LP06'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -396,7 +397,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '7EF',
     gradeNum: 7,
     title: 'O Texto Dramático: Rubricas, Diálogos e Encenação Teatral',
-    bnccSkill: 'EF07LP12: Reconhecer recursos expressivos do texto dramático (rubricas, diálogos, divisão em atos e cenas).',
+    bnccSkill: bnccLabel('EF07LP12'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -408,7 +409,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '8EF',
     gradeNum: 8,
     title: 'Reportagem Investigativa: Apuração, Vozes Sociais e Ética Jornalística',
-    bnccSkill: 'EF08LP01: Identificar e comparar as várias editorias e perspectivas em reportagens sobre fatos de relevância social.',
+    bnccSkill: bnccLabel('EF08LP01'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -420,7 +421,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '9EF',
     gradeNum: 9,
     title: 'A Crônica Literária e o Editorial: Argumentação, Ironia e Cotidiano',
-    bnccSkill: 'EF09LP03: Produzir artigos de opinião e crônicas com recursos expressivos de ironia, humor e figuras de estilo.',
+    bnccSkill: bnccLabel('EF09LP03'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -432,7 +433,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '69EF',
     gradeNum: 6,
     title: 'Cultura Digital, Multissemiose e Curadoria Crítica de Conteúdo',
-    bnccSkill: 'EF69LP06: Produzir e publicar textos multissemióticos em ambientes digitais com curadoria crítica.',
+    bnccSkill: bnccLabel('EF69LP06'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -444,7 +445,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '7EF',
     gradeNum: 7,
     title: 'Lideranças Religiosas, Ética e Transformação Social no Mundo',
-    bnccSkill: 'EF07ER01: Reconhecer o papel das lideranças religiosas na formação de princípios éticos e ações de paz.',
+    bnccSkill: bnccLabel('EF07ER01'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -456,7 +457,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '8EF',
     gradeNum: 8,
     title: 'Crenças, Filosofias de Vida e Ritos de Passagem nas Culturas',
-    bnccSkill: 'EF08ER02: Identificar e analisar ritos de passagem em diferentes tradições e matrizes culturais.',
+    bnccSkill: bnccLabel('EF08ER02'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },
@@ -468,7 +469,7 @@ export const CURRICULUM_CATALOG: CurriculumTopicEntry[] = [
     gradeLevel: '9EF',
     gradeNum: 9,
     title: 'Direitos Humanos, Princípios Éticos e Laicidade do Estado',
-    bnccSkill: 'EF09ER01: Analisar princípios éticos em diversas tradições e a laicidade do Estado segundo a Constituição.',
+    bnccSkill: bnccLabel('EF09ER01'),
     isPublished: true,
     statusLabel: 'Disponível no Acervo'
   },

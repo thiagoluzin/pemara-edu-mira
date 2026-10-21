@@ -9,8 +9,9 @@
 
 import pg from 'pg';
 import crypto from 'crypto';
+import { CONTENT_PACK_GRECIA_ANTIGA } from '../../../src/knowledge/packs/history6Greece';
 
-export async function seedInitialKnowledge(pool: pg.Pool): Promise<{
+export async function seedInitialKnowledge(pool: pg.Pool, options: {includeDemoResearch?: boolean} = {}): Promise<{
   licensesCount: number;
   sourcesCount: number;
   curriculumCount: number;
@@ -134,7 +135,7 @@ export async function seedInitialKnowledge(pool: pg.Pool): Promise<{
         code: 'EF06HI09',
         thematic_unit: 'Antiguidade Clássica: Grécia e Roma',
         knowledge_object: 'O conceito de pólis, a democracia ateniense e a oligarquia espartana',
-        description: 'Discutir o conceito de Antiguidade Clássica, seu alcance e limite na tradição ocidental, assim como os impactos sobre a noção de cidadania.',
+        description: 'Discutir o conceito de Antiguidade Clássica, seu alcance e limite na tradição ocidental, assim como os impactos sobre outras sociedades e culturas.',
         grade_level: 6,
         subject_code: 'history',
         source_id: 'src-bncc-mec-2018',
@@ -163,6 +164,12 @@ export async function seedInitialKnowledge(pool: pg.Pool): Promise<{
         [curr.id, curr.code, curr.thematic_unit, curr.knowledge_object, curr.description, curr.grade_level, curr.subject_code, curr.source_id, curr.status, curr.version]
       );
     }
+    await client.query(`
+      UPDATE curriculum_skills SET description=$1
+      WHERE id='curr-ef06hi09' AND code='EF06HI09' AND source_id='src-bncc-mec-2018'
+        AND version='2018.3' AND status='OFFICIAL_BNCC' AND verified_at IS NULL
+        AND description=$2
+    `,[curriculum[0].description,'Discutir o conceito de Antiguidade Clássica, seu alcance e limite na tradição ocidental, assim como os impactos sobre a noção de cidadania.']);
 
     // 4. Nós de Conhecimento (11 nós canônicos)
     const nodes = [
@@ -483,9 +490,42 @@ export async function seedInitialKnowledge(pool: pg.Pool): Promise<{
       ['cpv-history-6-grecia-1.0.0', packId, packVersionHash]
     );
 
+    // Repair only the exact empty bundled placeholder. Published teacher work,
+    // archived packs and previous revision bytes remain untouched.
+    const placeholder = (await client.query(`
+      SELECT v.id FROM content_pack_versions v JOIN content_packs p ON p.id=v.pack_id
+      WHERE v.id='cpv-history-6-grecia-1.0.0' AND v.content_hash=$1
+        AND v.payload_json='{}'::jsonb AND v.manifest_json='{"title":"Grécia Antiga"}'::jsonb
+        AND v.status='PUBLISHED' AND p.status='ACTIVE'
+        AND NOT EXISTS (SELECT 1 FROM content_pack_versions other WHERE other.pack_id=$3 AND other.id<>'cpv-history-6-grecia-1.0.0')
+        AND NOT EXISTS (SELECT 1 FROM knowledge_nodes WHERE id=ANY($2::text[]) AND version<>1)
+    `, [packVersionHash, nodes.map(node=>node.id), packId])).rows[0];
+    if (placeholder) {
+      const canonical=CONTENT_PACK_GRECIA_ANTIGA;
+      const payload={
+        packId,slug:packId,version:'1.0.1',title:canonical.title,subjectCode:'history',gradeLevel:6,
+        bnccSkill:canonical.bncc_skill,editorialStatus:'pending_teacher_review',
+        nodes:nodes.map(node=>({...node,short_definition:node.short_description,...node.data_json,version:1})),
+        relations,resources:resources.map(resource=>({...resource,storagePath:resource.storage_path})),
+        quizzes:canonical.quizzes.map(quiz=>({...quiz,options:quiz.answers})),sources,licenses,
+      };
+      const payloadString=JSON.stringify(payload);
+      const contentHash=crypto.createHash('sha256').update(payloadString).digest('hex');
+      await client.query("UPDATE content_pack_versions SET status='ARCHIVED' WHERE id=$1",[placeholder.id]);
+      await client.query(`
+        INSERT INTO content_pack_versions(id,pack_id,version,schema_version,content_hash,manifest_json,payload_json,status,published_at)
+        VALUES('cpv-history-6-grecia-1.0.1',$1,'1.0.1','1.0',$2,$3::jsonb,$4::jsonb,'PUBLISHED',CURRENT_TIMESTAMP)
+      `,[packId,contentHash,JSON.stringify({title:canonical.title,origin:'bundled_seed_repair',previousVersionId:placeholder.id,editorialStatus:'pending_teacher_review'}),payloadString]);
+      for(const node of nodes) await client.query(`
+        INSERT INTO content_pack_entity_links(id,pack_version_id,entity_type,entity_id,entity_version)
+        VALUES($1,'cpv-history-6-grecia-1.0.1','knowledge_node',$2,1)
+      `,[crypto.randomUUID(),node.id]);
+    }
+
     // 8. Lote de Ingestão e Staging Inicial
+    const includeDemoResearch = options.includeDemoResearch !== false;
     const batchId = 'batch-wd-001';
-    await client.query(
+    if (includeDemoResearch) await client.query(
       `INSERT INTO import_batches (id, provider, started_at, finished_at, records_found, records_imported, records_rejected, records_duplicates, status)
        VALUES ($1, 'Wikidata (SPARQL endpoint)', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 50, 3, 2, 1, 'COMPLETED')
        ON CONFLICT (id) DO NOTHING;`,
@@ -537,7 +577,7 @@ export async function seedInitialKnowledge(pool: pg.Pool): Promise<{
       }
     ];
 
-    for (const stg of stagingNodes) {
+    for (const stg of includeDemoResearch ? stagingNodes : []) {
       await client.query(
         `INSERT INTO staging_nodes (id, import_batch_id, source_provider, external_id, title, slug, type, short_description, data_json, validation_status, duplicate_candidate_id, review_notes)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -556,7 +596,7 @@ export async function seedInitialKnowledge(pool: pg.Pool): Promise<{
       relationsCount: relations.length,
       resourcesCount: resources.length,
       packsCount: 1,
-      stagingCount: stagingNodes.length
+      stagingCount: includeDemoResearch ? stagingNodes.length : 0
     };
   } catch (err) {
     await client.query('ROLLBACK');

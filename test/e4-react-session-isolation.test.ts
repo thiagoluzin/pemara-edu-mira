@@ -26,7 +26,7 @@ import { launchHeadlessChrome, CdpSession } from './helpers/cdpBrowser';
 import { runMigrations } from '../server/db/migrator';
 import { seedInitialUsers } from '../server/db/seeds/users';
 import { seedInitialKnowledge } from '../server/db/seeds/knowledge';
-import { createAuthMiddleware } from '../server/auth/middleware';
+import { createAuthMiddleware, requireAuth } from '../server/auth/middleware';
 import { createAuthRouter } from '../server/routes/auth';
 import { createKnowledgeRouter } from '../server/routes/knowledge';
 import { createLessonsRouter } from '../server/routes/lessons';
@@ -96,6 +96,9 @@ test('E4: Isolamento docente no navegador real com React, respostas atrasadas e 
     app.use('/api/knowledge', createKnowledgeRouter(pool));
     app.use('/api/lessons', createLessonsRouter(pool));
     app.use('/api/admin', createAdminRouter(pool));
+    // This isolated fixture has no AI bridge; return the same provider contract
+    // as the offline server instead of the SPA HTML fallback.
+    app.get('/api/ai/providers', requireAuth, (_req,res) => res.json({providers:[],defaultProvider:'',offline:true}));
 
     const distPath = path.resolve('dist-test');
     if (!fs.existsSync(distPath)) {

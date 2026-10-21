@@ -1,4 +1,5 @@
 import {prepareMap} from '../engine/mapModel';
+import {contextFromPack} from '../education/lessonContext';
 import { gradeLabel } from '../ui/labels';
 import { biologyScenesForSkills } from '../engine/biologyModel';
 /**
@@ -137,7 +138,7 @@ export class LessonComposer {
         layout_id: '07_map',
         title: preparedMap.title,
         resource_id: resource.id || 'res-map-001',
-        source_citation: packBnccSkill,
+        source_citation: `Material autoral: ${pack.title}`,
         params: preparedMap.params,
         teacher_notes: 'Estimular os estudantes a interpretarem a espacialização dos dados e legendas do mapa.'
       });
@@ -147,7 +148,7 @@ export class LessonComposer {
         type: 'comparison',
         layout_id: '05_comparison',
         title: resource.title || 'Quadro Comparativo Estruturado',
-        source_citation: packBnccSkill,
+        source_citation: `Material autoral: ${pack.title}`,
         params: resource.metadata_json || {
           columns: ['Critério', primaryNode.title, secondaryNode?.title || 'Aplicação'],
           rows: [{ criteria: 'Definição', [primaryNode.title]: primaryNode.deep_description || primaryNode.short_definition, [secondaryNode?.title || 'Aplicação']: secondaryNode?.deep_description || primaryNode.example || 'Consulte os exemplos da aula.' }]
@@ -278,6 +279,7 @@ export class LessonComposer {
         content_pack_hash: packHash
       },
       objectives: Array.isArray(pack.objectives) && pack.objectives.length ? pack.objectives : [`Compreender os conceitos de ${pack.title}`],
+      ...contextFromPack(pack),
       scenes: validatedScenes
     };
   }
@@ -331,7 +333,7 @@ export class LessonComposer {
         layout_id: '07_map',
         title: 'Mapa do Mar Egeu e Principais Pólis',
         resource_id: 'map-greece-001',
-        source_citation: 'BNCC/MEC (EF06HI09)',
+        source_citation: 'Material autoral PEMARA — referências no roteiro docente',
         params: {
           region_name: 'Península Balcânica e Mar Egeu',
           focus_points: [
@@ -399,7 +401,7 @@ export class LessonComposer {
         type: 'comparison',
         layout_id: '05_comparison',
         title: 'Quadro Comparativo: Atenas vs Esparta',
-        source_citation: 'BNCC EF06HI09 / J-P Vernant',
+        source_citation: 'Material autoral PEMARA — referências no roteiro docente',
         params: {
           columns: ['Critério', 'Atenas', 'Esparta'],
           rows: [
@@ -483,6 +485,7 @@ export class LessonComposer {
         'Comparar as estruturas sociais, políticas e educacionais de Atenas e Esparta',
         'Analisar criticamente o alcance e as exclusões da democracia direta ateniense'
       ],
+      ...contextFromPack(dynamicPack||pack),
       scenes: validatedScenes
     };
   }

@@ -1,0 +1,26 @@
+PEMARA EDU 2.4.0-pemara.16 — apresentações HTML livres
+
+Novas aulas pedidas pelo OpenCode usam o HTML completo criado pela IA.
+CSS, JavaScript, SVG, ilustrações e animações permanecem no documento original,
+sem conversão para os layouts limitados do Atlas.
+
+Atlas é um complemento explicitamente selecionado pelo professor, em aba própria.
+Aulas estruturadas existentes e pedidos antigos continuam no caminho original.
+
+Cada nova apresentação passa obrigatoriamente por revisão de conteúdo e faixa
+etária, sobre o HTML inteiro. Os quatro revisores adicionais continuam opcionais.
+Falha de revisão preserva a resposta original e os pareceres já concluídos.
+O resultado fica pendente de conferência humana; parecer de IA não é aprovação.
+
+O editor mantém apresentação, exportação, histórico, versões e conflitos.
+O HTML executa em frames isolados com scripts locais e sem acesso ao aplicativo
+ou à rede. PDF e Word partem do conteúdo real dos slides; o Word é um roteiro
+editável com figuras estáticas. O HTML preserva a interatividade.
+
+A edição/importação avançada de HTML oferece prévia antes de aplicar e informa
+que os pareceres da versão gerada não cobrem alterações posteriores.
+
+Validação online desta rodada: o provedor gratuito recusou as novas tentativas
+DeepSeek e Big Pickle. Não há alegação de uma nova aula real gerada nesta versão.
+As respostas da comparação anterior foram preservadas. Evidências locais e
+relatórios de testes ficam em evidencias/html-livre-20261020.

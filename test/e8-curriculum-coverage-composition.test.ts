@@ -21,6 +21,10 @@ import pg from 'pg';
 import { LessonComposer } from '../src/composer/lessonComposer';
 import { CURRICULUM_CATALOG, getTopicsForSubjectAndGrade, resolvePackSlugForInput } from '../src/catalog/curriculumCatalog';
 import { Subject } from '../src/types/lesson';
+import {createDisposablePostgres} from './helpers/realPostgresHarness';
+import {runMigrations} from '../server/db/migrator';
+import {seedInitialKnowledge} from '../server/db/seeds/knowledge';
+import {readCompleteCatalog,publishCompleteCatalog} from '../server/curriculum/completeCatalog';
 
 function getConnectionString(): string | null {
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
@@ -33,15 +37,22 @@ function getConnectionString(): string | null {
 }
 
 test('E8: Cobertura Curricular Completa BNCC e Composição Multidisciplinar', async (t) => {
-  const connStr = getConnectionString();
-  if (!connStr) {
-    console.log('[E8 Skip] Banco PostgreSQL não disponível para conferência da carga completa.');
-    return;
-  }
-
-  const pool = new pg.Pool({ connectionString: connStr });
+  let connStr = getConnectionString();
+  let disposable:Awaited<ReturnType<typeof createDisposablePostgres>>|undefined;
+  let pool!:pg.Pool;
 
   try {
+    if(!connStr){
+      disposable=await createDisposablePostgres('pemara-e8-curriculum-');
+      const admin=disposable.createPool();
+      try{await admin.query("CREATE DATABASE e8_curriculum WITH TEMPLATE template0 ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C'");}
+      finally{await admin.end();}
+      connStr=disposable.connectionString.replace(/\/postgres$/,'/e8_curriculum');
+      pool=new pg.Pool({connectionString:connStr});
+      await runMigrations(pool);
+      await seedInitialKnowledge(pool,{includeDemoResearch:false});
+      await publishCompleteCatalog(pool,readCompleteCatalog(),{onlyMissing:true,bundledBootstrap:true});
+    }else pool=new pg.Pool({connectionString:connStr});
     // 1. Validar contagem e presença dos 9 componentes na tabela curriculum_skills
     await t.test('1. Cobertura BNCC: 9 componentes e faixas multiano', async () => {
       const skillsRes = await pool.query(`
@@ -151,10 +162,11 @@ test('E8: Cobertura Curricular Completa BNCC e Composição Multidisciplinar', a
         assert.ok(quiz.explanation && quiz.explanation.length > 10, `Pack ${pack.slug} deve ter justificativa pedagógica explícita`);
       }
 
-      // Validar que Grécia Antiga está na v2.0.0 com payload rico
+      // Legacy imports can be v2.0.0; clean bootstrap repairs its empty v1
+      // with a new immutable revision. Validate content, not a dated importer.
       const greciaPack = publishedPacks.find((p) => p.slug === 'history-6-grecia-antiga');
       assert.ok(greciaPack, 'history-6-grecia-antiga deve existir e estar publicado');
-      assert.equal(greciaPack.version, '2.0.0', 'history-6-grecia-antiga deve estar na versão 2.0.0');
+      assert.notEqual(greciaPack.version, '1.0.0', 'O marcador vazio inicial deve estar arquivado');
     });
 
     // 4. Testar Composição Dinâmica para todos os 9 componentes do EF II
@@ -247,6 +259,7 @@ test('E8: Cobertura Curricular Completa BNCC e Composição Multidisciplinar', a
     });
 
   } finally {
-    await pool.end();
+    if(pool)await pool.end();
+    if(disposable)await disposable.cleanup();
   }
 });

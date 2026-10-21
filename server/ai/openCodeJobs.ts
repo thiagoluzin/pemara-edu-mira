@@ -10,6 +10,10 @@ import type { LessonSpec, Subject } from '../../src/types/lesson';
 import type { ExtractedMaterial } from '../../src/types/material';
 import { validateLessonSpec } from '../../src/schemas/lessonValidator';
 import { buildVisualLessonPrompt, normalizeGeneratedVisuals, parseVisualLessonResponse, visualLessonIssues } from './visualLesson';
+import {teacherForSubject, TEACHING_TEAM_VERSION, isPedagogicalTeam} from '../../src/education/teachingAgents';
+import {reviewLessonWithAgents, type ReviewProgress} from './teacherReview';
+import {freeHtmlLessonPrompt,parseFreeHtmlLesson} from './freeHtmlLesson';
+import {isAtlasKind,type AtlasKind} from '../../src/animations/atlas';
 
 export interface OpenCodeBridge {
   models(): Promise<{id:string;name:string}[]>;
@@ -17,9 +21,9 @@ export interface OpenCodeBridge {
   create(input: { id: string; jobId:string;title: string; model: string }, signal: AbortSignal): Promise<string>;
   generate(input: { sessionID: string; promptID: string; prompt: string }, signal: AbortSignal): Promise<{ text: string; model: string }>;
 }
-interface Brief { subject: Subject; grade: string; topic: string; duration_minutes: number; didactic_style: 'visual' | 'summary' | 'review' | 'exercises' | 'complete'; material_text: string; sources: { filename: string; text: string }[] }
+interface Brief { subject: Subject; grade: string; topic: string; duration_minutes: number; didactic_style: 'visual' | 'summary' | 'review' | 'exercises' | 'complete'; material_text: string; sources: { filename: string; text: string }[]; review_with_agents?: true; presentation_format?:'html'|'structured';atlas_models?:AtlasKind[] }
 interface Attempt { model:string; status:'running'|'failed'|'completed'|'interrupted'; message:string; startedAt:string; finishedAt?:string }
-interface Job { id: string; owner: string; input: Brief; status: 'running' | 'interrupted' | 'failed' | 'completed'; model: string; sessionID: string; run: number; message: string; lessonId?: string; attempts?:Attempt[]; createdAt: string; updatedAt: string }
+interface Job { id: string; owner: string; input: Brief; status: 'running' | 'interrupted' | 'failed' | 'completed'; model: string; sessionID: string; run: number; message: string; lessonId?: string; attempts?:Attempt[]; createdAt: string; updatedAt: string; reviewProgress?: ReviewProgress; teachingTeamVersion?: string }
 let runtime: { bridge: OpenCodeBridge; directory: string } | undefined;
 const active = new Map<string, { controller: AbortController; done: Promise<void> }>();
 export function configureOpenCodeLessons(bridge: OpenCodeBridge, directory: string) { fs.mkdirSync(directory, { recursive: true }); runtime = { bridge, directory }; }
@@ -27,11 +31,29 @@ export function hasOpenCodeLessons() { return !!runtime; }
 export async function openCodeModel() { return runtime?.bridge.model(); }
 export async function stopOpenCodeLessons() { for (const item of active.values()) item.controller.abort(); await Promise.allSettled([...active.values()].map(item => item.done)); }
 function save(job: Job) { job.updatedAt = new Date().toISOString(); const file = path.join(runtime!.directory, job.id + '.json'); const tmp = file + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(job)); fs.renameSync(tmp, file); }
-function read(id: string): Job | undefined { if (!/^[a-f0-9-]{36}$/.test(id)) return; const file = path.join(runtime!.directory, id + '.json'); return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : undefined; }
-function publicJob(job: Job) { return { id: job.id, status: job.status === 'running' && !active.has(job.id) ? 'interrupted' : job.status, message: job.message, topic: job.input.topic, model: job.model, sessionID: job.sessionID, lessonId: job.lessonId, attempts:job.attempts||[],createdAt: job.createdAt }; }
+class UnreadableJobError extends Error {}
+function read(id: string): Job | undefined {
+  if (!/^[a-f0-9-]{36}$/.test(id)) return;
+  const file = path.join(runtime!.directory, id + '.json');
+  if (!fs.existsSync(file)) return;
+  try {
+    const job = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (!record(job) || job.id !== id || typeof job.owner !== 'string' || !record(job.input) ||
+        typeof job.input.topic !== 'string' || typeof job.createdAt !== 'string' ||
+        !['running','interrupted','failed','completed'].includes(job.status as string)) throw new Error();
+    if(typeof job.model!=='string'||typeof job.sessionID!=='string'||typeof job.message!=='string'||!Number.isInteger(job.run)||Number(job.run)<1)throw new Error();
+    if(job.attempts!==undefined&&(!Array.isArray(job.attempts)||!job.attempts.every(a=>record(a)&&typeof a.model==='string'&&typeof a.message==='string'&&['running','failed','completed','interrupted'].includes(a.status as string))))throw new Error();
+    if(job.reviewProgress!==undefined&&(!record(job.reviewProgress)||typeof job.reviewProgress.fingerprint!=='string'||!record(job.reviewProgress.sessions)||!isPedagogicalTeam({version:'1',teacher_id:'saved',teacher_name:'saved',human_review_required:true,reviews:job.reviewProgress.reports})))throw new Error();
+    return job as unknown as Job;
+  } catch { throw new UnreadableJobError('Não foi possível ler um pedido salvo. O arquivo foi preservado para recuperação.'); }
+}
+function publicJob(job: Job) { return { id: job.id, status: job.status === 'running' && !active.has(job.id) ? 'interrupted' : job.status, message: job.message, topic: job.input.topic, model: job.model, sessionID: job.sessionID, lessonId: job.lessonId, attempts:job.attempts||[],reviews:job.reviewProgress?.reports||[],createdAt: job.createdAt }; }
 function record(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null && !Array.isArray(value); }
 async function parseBrief(value: unknown, owner: string, pool: pg.Pool): Promise<Brief> {
   if (!record(value)) throw new Error('Informe os dados da aula.');
+  if (value.review_with_agents !== undefined && typeof value.review_with_agents !== 'boolean') throw new Error('Seleção da revisão por agentes inválida.');
+  if(value.presentation_format!==undefined&&!['html','structured'].includes(value.presentation_format as string))throw Error('Formato da apresentação inválido.');
+  if(value.atlas_models!==undefined&&(!Array.isArray(value.atlas_models)||value.atlas_models.length>26||new Set(value.atlas_models).size!==value.atlas_models.length||value.atlas_models.some(id=>typeof id!=='string'||!isAtlasKind(id)||!(ATLAS.find(m=>m.id===id)!.subjects as readonly unknown[]).includes(value.subject))))throw Error('Escolha complementos Atlas da disciplina selecionada.');
   const subjects = ['portuguese','english','arts','physical_education','math','science','history','geography','religious_education','physics','biology','chemistry'];
   if (typeof value.subject !== 'string' || !subjects.includes(value.subject) || typeof value.grade !== 'string' || !value.grade.trim() || value.grade.length > 50 || typeof value.topic !== 'string' || !value.topic.trim() || value.topic.length > 2000 || typeof value.duration_minutes !== 'number' || value.duration_minutes < 10 || value.duration_minutes > 240) throw new Error('Confira disciplina, ano, tema e duração.');
   const sources: Brief['sources'] = [];
@@ -46,7 +68,7 @@ async function parseBrief(value: unknown, owner: string, pool: pg.Pool): Promise
   }
   const material_text = typeof value.material_text === 'string' ? value.material_text : '';
   if (material_text.length + sources.reduce((n, s) => n + s.text.length, 0) > 120000) throw new Error('Selecione até 120 mil caracteres de material.');
-  return { subject: value.subject as Subject, grade: value.grade, topic: value.topic.trim(), duration_minutes: value.duration_minutes, didactic_style: 'visual', material_text, sources };
+  return { subject: value.subject as Subject, grade: value.grade, topic: value.topic.trim(), duration_minutes: value.duration_minutes, didactic_style: 'visual', material_text, sources, presentation_format:value.presentation_format==='structured'?'structured':'html',atlas_models:(value.atlas_models||[]) as AtlasKind[], ...(value.review_with_agents ? {review_with_agents:true} : {}) };
 }
 export function openCodeLessonPrompt(input: Brief) {
   const models = ATLAS.filter(m => (m.subjects as readonly string[]).includes(input.subject)).map(m => ({ id: m.id, name: m.name, variants:m.variants, limits: m.caption,...(m.id==='separation'?{evaporation_controls:['Aquecimento relativo','Evaporação','Comparar ebulição','Avançar um passo','Momento da animação','Restaurar exemplo'],notes:'Escolha Evaporação em Manipular o modelo. Não há controle de ventilação neste simulador; ventilação pode ser comparada apenas na experiência real.'}:{}) }));
@@ -56,7 +78,24 @@ async function run(job: Job, pool: pg.Pool, signal: AbortSignal) {
   const repo = new LessonRepository(pool);
   const pendingFile=path.join(runtime!.directory,job.id+'.pending.json');
   async function persistGenerated(parsed:LessonSpec,model:string) {
-    await repo.createLesson({id:parsed.lesson.id,ownerId:job.owner,title:parsed.lesson.title,subjectCode:job.input.subject,gradeLevel:job.input.grade,topic:job.input.topic,spec:parsed});
+    // Team identity and execution receipts are assigned by the application,
+    // never accepted from the lesson author's generated JSON.
+    delete parsed.lesson.pedagogical_team;
+    const teacher=teacherForSubject(job.input.subject);
+    let team={version:TEACHING_TEAM_VERSION,teacher_id:teacher.id,teacher_name:teacher.name,reviews:[],human_review_required:true} as NonNullable<LessonSpec['lesson']['pedagogical_team']>;
+    if(job.input.review_with_agents||parsed.presentation){
+      try {
+        team=await reviewLessonWithAgents({contentAndAge:!!parsed.presentation,additionalReviews:!!job.input.review_with_agents,jobId:job.id,run:job.run,lesson:parsed,model,sources:{text:job.input.material_text,excerpts:job.input.sources},progress:job.reviewProgress,bridge:runtime!.bridge,signal:AbortSignal.any([signal,AbortSignal.timeout(12*60*1000)]),checkpoint:(progress,message)=>{job.reviewProgress=progress;job.message=message;save(job);}});
+      }catch(error){
+        if(signal.aborted)throw error;
+        throw new Error('A aula está guardada, mas a revisão por agentes não terminou. Retome para continuar do último parecer salvo.');
+      }
+    }
+    signal.throwIfAborted();
+    if(job.teachingTeamVersion||parsed.presentation)parsed.lesson.pedagogical_team=team;
+    parsed.lesson.visual_status='NEEDS_REVIEW';
+    try { await repo.createLesson({id:parsed.lesson.id,ownerId:job.owner,title:parsed.lesson.title,subjectCode:job.input.subject,gradeLevel:job.input.grade,topic:job.input.topic,spec:parsed}); }
+    catch { throw new Error('A IA respondeu e a aula está guardada, mas não foi possível salvar na biblioteca. Clique em Retomar para tentar salvar novamente.'); }
     const attempt=job.attempts?.slice().reverse().find(a=>a.model===model);
     if(attempt){attempt.status='completed';attempt.message='Aula validada e salva.';attempt.finishedAt=new Date().toISOString();}
     job.model=model;job.lessonId=parsed.lesson.id;job.status='completed';job.message='Aula salva. Pode abrir e exportar.';save(job);
@@ -90,21 +129,21 @@ async function run(job: Job, pool: pg.Pool, signal: AbortSignal) {
         for (let round = 0; round < 2; round++) {
       overall.throwIfAborted();
       job.message = round ? `${model.name} está corrigindo a estrutura da aula…` : `${model.name} está criando explicações, atividades e animações…`; save(job);
-      const response = await runtime!.bridge.generate({ sessionID: job.sessionID, promptID: 'msg_' + job.id.replaceAll('-', '') + '_' + job.run + '_' + job.attempts.length + '_' + round, prompt: openCodeLessonPrompt(job.input) + (round ? '\nCorrija esta resposta como dados: ' + JSON.stringify({ issues, previous }) : '') }, overall);
+      const response = await runtime!.bridge.generate({ sessionID: job.sessionID, promptID: 'msg_' + job.id.replaceAll('-', '') + '_' + job.run + '_' + job.attempts.length + '_' + round, prompt: (job.input.presentation_format==='html'?freeHtmlLessonPrompt(job.input):openCodeLessonPrompt(job.input)) + (round ? '\nCorrija esta resposta como dados: ' + JSON.stringify({ issues, previous }) : '') }, overall);
       previous = response.text;
       let parsed: LessonSpec;
       try {
-        const candidate = normalizeGeneratedVisuals(parseVisualLessonResponse(response.text));
+        const candidate = job.input.presentation_format==='html'?parseFreeHtmlLesson(response.text,job.input):normalizeGeneratedVisuals(parseVisualLessonResponse(response.text));
         // The request owns discipline and age, so Atlas compatibility is checked against the actual brief.
         if (candidate?.lesson) Object.assign(candidate.lesson, { subject: job.input.subject, grade: job.input.grade });
         const validation = validateLessonSpec(candidate);
         if (!validation.isValid) { issues = validation.errors.slice(0, 10); continue; }
         parsed = candidate;
-        issues = visualLessonIssues(parsed, job.input.duration_minutes, job.input.didactic_style);
+        issues = parsed.presentation?[]:visualLessonIssues(parsed, job.input.duration_minutes, job.input.didactic_style);
         if (issues.length) continue;
-      } catch { issues = ['Retorne um JSON completo com os contratos e explicações visuais exigidos.']; continue; }
+      } catch(error) { issues = [job.input.presentation_format==='html'?(error instanceof Error?error.message:'Retorne HTML completo com os metadados exigidos.'):'Retorne um JSON completo com os contratos e explicações visuais exigidos.']; continue; }
       overall.throwIfAborted();
-      parsed.lesson = { ...parsed.lesson, id: 'opencode-' + job.id, subject: job.input.subject, grade: job.input.grade, topic: job.input.topic, duration_minutes: job.input.duration_minutes, generation_mode: 'MODE_C_API', visual_status: 'NEEDS_REVIEW', ai_provenance: { provider: 'opencode', model: response.model, generated_at: new Date().toISOString(), attempt_id: job.id, visual_version: 'opencode-atlas-1' } };
+      parsed.lesson = { ...parsed.lesson, id: 'opencode-' + job.id, subject: job.input.subject, grade: job.input.grade, topic: job.input.topic, duration_minutes: job.input.duration_minutes, generation_mode: 'MODE_C_API', visual_status: 'NEEDS_REVIEW', ai_provenance: { provider: 'opencode', model: response.model, generated_at: new Date().toISOString(), attempt_id: job.id, visual_version: parsed.presentation?'opencode-free-html-1':'opencode-atlas-1' } };
       // Save the validated answer before the database operation. A storage failure
       // must resume this answer, without asking another model to regenerate it.
       fs.writeFileSync(pendingFile+'.tmp',JSON.stringify(parsed));fs.renameSync(pendingFile+'.tmp',pendingFile);
@@ -113,7 +152,10 @@ async function run(job: Job, pool: pg.Pool, signal: AbortSignal) {
     throw new Error('A resposta precisa de correção: ' + issues.slice(0, 3).join(' '));
       }catch(error){
         attempt.status=overall.aborted?'interrupted':'failed';attempt.message=error instanceof Error?error.message:'O modelo não respondeu.';attempt.finishedAt=new Date().toISOString();
-        if(fs.existsSync(pendingFile))throw new Error('A IA respondeu e a aula está guardada, mas não foi possível salvar na biblioteca. Clique em Retomar para tentar salvar novamente.');
+        if(fs.existsSync(pendingFile)){
+          if(error instanceof Error && error.message.includes('revisão por agentes'))throw error;
+          throw new Error('A IA respondeu e a aula está guardada, mas não foi possível salvar na biblioteca. Clique em Retomar para tentar salvar novamente.');
+        }
         job.message=`${model.name} não concluiu. Procurando o próximo gratuito…`;save(job);
         if(overall.aborted)throw signal.aborted?error:new Error('O limite de espera terminou. As tentativas e o pedido estão guardados; retome quando o serviço estiver disponível.');
       }
@@ -128,13 +170,23 @@ async function run(job: Job, pool: pg.Pool, signal: AbortSignal) {
 function start(job: Job, pool: pg.Pool) {
   if (active.has(job.id)) return;
   const controller = new AbortController();
-  const done = Promise.resolve().then(() => run(job, pool, controller.signal)).finally(() => active.delete(job.id));
+  const done = Promise.resolve().then(() => run(job, pool, controller.signal))
+    // Even recording the failure can fail (e.g. full disk). Do not crash other jobs.
+    .catch(() => { console.error('[OpenCode] Falha ao persistir o estado do pedido. Os arquivos existentes foram preservados.'); })
+    .finally(() => active.delete(job.id));
   active.set(job.id, { controller, done });
 }
 export function createOpenCodeLessonsRouter(pool: pg.Pool) {
   const router = Router(); router.use(requireAuth);
   router.use((_req, res, next) => { if (!runtime) return res.status(501).json({ error: 'A criação pelo OpenCode está disponível no desktop PEMARA.' }); next(); });
-  router.get('/', (req, res) => { const jobs = fs.readdirSync(runtime!.directory).filter(f => f.endsWith('.json')).map(f => read(f.slice(0, -5))).filter((j): j is Job => !!j && j.owner === req.user!.id).sort((a,b) => b.createdAt.localeCompare(a.createdAt)); res.json({ jobs: jobs.slice(0, 20).map(publicJob) }); });
+  router.get('/', (req, res) => {
+    let unreadable = false;
+    const jobs = fs.readdirSync(runtime!.directory).filter(f => f.endsWith('.json')).flatMap(f => {
+      try { const job = read(f.slice(0, -5)); return job?.owner === req.user!.id ? [job] : []; }
+      catch (error) { if (!(error instanceof UnreadableJobError)) throw error; unreadable = true; return []; }
+    }).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+    res.json({ jobs: jobs.slice(0, 20).map(publicJob), ...(unreadable ? {warning:'Há pedidos que não puderam ser lidos. Os arquivos foram preservados para recuperação.'} : {}) });
+  });
   router.get('/:id', (req, res) => { const job = read(req.params.id); if (!job || job.owner !== req.user!.id) return res.status(404).json({error: 'Pedido não encontrado.'}); res.json(publicJob(job)); });
   router.post('/', async (req, res) => {
     try {
@@ -143,10 +195,13 @@ export function createOpenCodeLessonsRouter(pool: pg.Pool) {
       if (!/^[a-f0-9-]{36}$/.test(id)) return res.status(400).json({error:'Identificador inválido.'});
       const old = read(id); if (old) { if (old.owner !== req.user!.id || JSON.stringify(old.input) !== JSON.stringify(input)) return res.status(409).json({error:'Este pedido já existe com outros dados.'}); return res.json(publicJob(old)); }
       const model = ''; // Persist first; catalogue lookup belongs to the resumable worker.
-      const job: Job = { id, owner: req.user!.id, input, model, sessionID: '', run: 1, status: 'running', message: 'Pedido salvo. Preparando OpenCode…', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }; save(job); start(job, pool); res.status(202).json(publicJob(job));
+      const job: Job = { id, owner: req.user!.id, input, model, sessionID: '', run: 1, status: 'running', message: 'Pedido salvo. Preparando OpenCode…', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), teachingTeamVersion:TEACHING_TEAM_VERSION }; save(job); start(job, pool); res.status(202).json(publicJob(job));
     } catch (error) { res.status(400).json({error:error instanceof Error ? error.message : 'Não foi possível iniciar.'}); }
   });
-  router.post('/:id/resume', async (req, res) => { const job = read(req.params.id); if (!job || job.owner !== req.user!.id) return res.status(404).json({error:'Pedido não encontrado.'}); try { if (!active.has(job.id) && job.status !== 'completed') { job.run++; job.status='running'; job.message='Retomando a conversa no OpenCode…'; save(job); start(job,pool); } res.json(publicJob(job)); } catch {res.status(503).json({error:'Não foi possível retomar agora. Seu pedido foi preservado; tente novamente.'});} });
+  router.post('/:id/resume', (req, res) => { const job = read(req.params.id); if (!job || job.owner !== req.user!.id) return res.status(404).json({error:'Pedido não encontrado.'}); try { if (!active.has(job.id) && job.status !== 'completed') { job.run++; job.status='running'; job.message='Retomando a conversa no OpenCode…'; save(job); start(job,pool); } res.json(publicJob(job)); } catch {res.status(503).json({error:'Não foi possível retomar agora. Seu pedido foi preservado; tente novamente.'});} });
   router.post('/:id/stop', (req,res) => {const job=read(req.params.id);if(!job||job.owner!==req.user!.id)return res.status(404).json({error:'Pedido não encontrado.'});active.get(job.id)?.controller.abort();res.json({ok:true});});
+  router.use((error: unknown, _req: import('express').Request, res: import('express').Response, _next: import('express').NextFunction) => {
+    res.status(503).json({error:error instanceof UnreadableJobError ? error.message : 'Não foi possível acessar os pedidos. Tente novamente; os arquivos existentes foram preservados.'});
+  });
   return router;
 }

@@ -16,7 +16,9 @@ export async function waitForLessonReply(sdk, sessionID, promptID, signal, pause
     const exported = await sdk.session.export({sessionID},{signal});
     const index = exported.messages.findIndex(message => message.id === promptID || message.type==='user' && message.metadata?.pemaraPromptKey===promptID);
     const reply = index < 0 ? undefined : exported.messages.slice(index+1).findLast(message => message.type === 'assistant');
-    if (reply?.error || reply?.time.completed) return reply;
+    // A completed tool-call message ends only that model step. OpenCode may
+    // still be executing tools or composing the actual answer for this prompt.
+    if (reply?.error || (reply?.time.completed && reply.finish !== 'tool-calls')) return reply;
     // prompt() acknowledges queued work; wait() may see idle before it starts.
     await pause(400,undefined,{signal});
   }

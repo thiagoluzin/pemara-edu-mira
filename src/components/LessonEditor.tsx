@@ -1,4 +1,10 @@
+import {LessonAuthoringDialog} from './LessonAuthoringDialog';
+import {FreeHtmlLessonEditor} from './FreeHtmlLessonEditor';
+import type {AuthoringKind} from '../education/teacherAuthoring';
+import type {LessonEditResult} from '../education/deterministicLessonEdit';
+import {referenceUrl,referenceKindLabel} from '../education/lessonContext';
 import { label, gradeLabel } from '../ui/labels';
+import {PedagogicalReviewPanel} from './PedagogicalReviewPanel';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -10,7 +16,7 @@ import { label, gradeLabel } from '../ui/labels';
  * - Botão de Pré-visualização determinística com miniaturas
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LessonSpec, Scene } from '../types/lesson';
 import { biologyScenesForSkills } from '../engine/biologyModel';
 import { PemaraRenderer } from '../renderer/PemaraRenderer';
@@ -42,7 +48,7 @@ import { PublishVersionModal } from './PublishVersionModal';
 import { ConflictModal } from './ConflictModal';
 import { AuthUser } from '../services/authApi';
 
-interface Props {
+export interface LessonEditorProps {
   lesson: LessonSpec;
   onUpdateLesson: (updatedLesson: LessonSpec) => void;
   onStartPresentation: (startSceneIndex: number) => void;
@@ -59,7 +65,8 @@ interface Props {
   onExportLocalBackup?: () => void;
 }
 
-export const LessonEditor: React.FC<Props> = ({
+export const LessonEditor:React.FC<LessonEditorProps>=props=>props.lesson.presentation?<FreeHtmlLessonEditor {...props}/>:<StructuredLessonEditor {...props}/>;
+const StructuredLessonEditor: React.FC<LessonEditorProps> = ({
   lesson,
   onUpdateLesson,
   onStartPresentation,
@@ -84,9 +91,11 @@ export const LessonEditor: React.FC<Props> = ({
       scenes:[...lesson.scenes.slice(0,2),...models,...lesson.scenes.slice(2)]});
     setActiveSceneIndex(Math.min(2,lesson.scenes.length));
   };
+  const [authoringKind,setAuthoringKind]=useState<AuthoringKind|null>(null);
+  const [editPreview,setEditPreview]=useState<LessonEditResult|null>(null);
+  useEffect(()=>{setEditPreview(null);setAuthoringKind(null);},[lesson]);
   const [naturalLanguageInput, setNaturalLanguageInput] = useState<string>('');
   const [editFeedback, setEditFeedback] = useState<string | null>(null);
-  const [isProcessingEdit, setIsProcessingEdit] = useState<boolean>(false);
   const [showValidationDrawer, setShowValidationDrawer] = useState<boolean>(false);
   const [isRevisionsModalOpen, setIsRevisionsModalOpen] = useState<boolean>(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState<boolean>(false);
@@ -161,143 +170,23 @@ export const LessonEditor: React.FC<Props> = ({
     }
   };
 
-  // Ação Rápida: [ CRIAR QUESTIONÁRIO ] contextualizado por disciplina
-  const handleAddQuiz = () => {
-    const isHistory = lesson.lesson.subject === 'history';
-    const isMath = lesson.lesson.subject === 'math';
-    const isPhysics = lesson.lesson.subject === 'physics';
-
-    const questionText = isHistory
-      ? `Com base no conteúdo de ${lesson.lesson.title}, qual é o significado histórico principal?`
-      : isMath
-      ? `Na análise de ${lesson.lesson.title}, qual propriedade algébrica e gráfica se verifica?`
-      : isPhysics
-      ? `De acordo com as leis do movimento em ${lesson.lesson.title}, qual é a relação física correta?`
-      : `Com base nos conceitos de ${lesson.lesson.title}, qual é o comportamento esperado?`;
-
-    const answersList = isHistory
-      ? [
-          'A cidadania e as estruturas sociais refletem o contexto histórico e as fontes de sua época',
-          'As transformações sociais ocorreram de forma instantânea e sem conflitos',
-          'Apenas aspectos geográficos definem a evolução histórica',
-          'Nenhuma das anteriores'
-        ]
-      : isMath
-      ? [
-          'Os coeficientes definem a concavidade e as raízes da função no plano cartesiano',
-          'O valor de delta não influencia o número de raízes reais',
-          'A parábola é sempre uma curva assimétrica',
-          'Nenhuma das anteriores'
-        ]
-      : isPhysics
-      ? [
-          'A decomposição vetorial de velocidades segue o princípio de independência dos movimentos',
-          'A gravidade acelera o corpo apenas no sentido horizontal',
-          'O alcance independe do ângulo de lançamento',
-          'Nenhuma das anteriores'
-        ]
-      : [
-          'A relação entre as variáveis obedece aos parâmetros demonstrados',
-          'O comportamento independe de qualquer parâmetro inicial',
-          'Não é possível estabelecer previsão teórica',
-          'Nenhuma das anteriores'
-        ];
-
-    const explanationText = isHistory
-      ? 'Correto! A História compreende as sociedades através da análise e contextualização de suas fontes e estruturas.'
-      : isMath
-      ? 'Exato! Os coeficientes e o discriminante governam a geometria e interseções da parábola.'
-      : isPhysics
-      ? 'Muito bem! Galileu demonstrou a independência entre os eixos horizontal (MRU) e vertical (MRUV).'
-      : 'Correto! Os parâmetros fundamentam o modelo compreendido.';
-
-    const newQuiz: Scene = {
-      id: `sc-quiz-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      type: 'quiz',
-      layout_id: '10_quiz',
-      title: 'Verificação Diagnóstica',
-      question: questionText,
-      answers: answersList,
-      correct_index: 0,
-      explanation: explanationText
-    };
-    const updated = {
-      ...lesson,
-      scenes: [...lesson.scenes, newQuiz],
-      lesson_version: lesson.lesson_version + 1,
-      lesson: {
-        ...lesson.lesson,
-        updatedAt: new Date().toISOString()
-      }
-    };
-    onUpdateLesson(updated);
-    setActiveSceneIndex(updated.scenes.length - 1);
-    setEditFeedback('Novo questionário coerente com a disciplina adicionado ao final da aula com sucesso!');
-  };
-
-  // Ação Rápida: [ DEIXAR MAIS SIMPLES ]
+  const handleAddQuiz = () => setAuthoringKind('quiz');
+  const handleAddExamples = () => setAuthoringKind('example');
   const handleMakeSimpler = () => {
-    const { updatedLesson } = PemaraMaestro.editLessonByInstruction(
-      lesson,
-      'Deixe os textos mais simples e didáticos'
-    );
-    onUpdateLesson(updatedLesson);
-    setEditFeedback('Conteúdo simplificado com sucesso para facilitar a compreensão dos alunos.');
+    if(!lesson.scenes.some(s=>s.type==='text')){setEditFeedback('Esta aula não possui página de texto para revisar.');return;}
+    setAuthoringKind('revise');
   };
-
-  // Ação Rápida: [ ADICIONAR EXEMPLOS ]
-  const handleAddExamples = () => {
-    const newTextScene: Scene = {
-      id: `sc-example-${Date.now()}`,
-      type: 'text',
-      layout_id: '02_title_body',
-      title: 'Aplicações no Mundo Real e Exemplos Cotidianos',
-      content: [
-        'Como esse conceito se manifesta no nosso dia a dia?',
-        'Exemplo 1: No esporte e na vida cívica, as regras e estruturas são construídas para garantir clareza e previsibilidade.',
-        'Exemplo 2: Na engenharia e nas instituições modernas, a experiência histórica fundamenta novas soluções.'
-      ],
-      callout: 'Dica para a aula: Peça para os alunos identificarem outros dois exemplos de suas rotinas!'
-    };
-
-    const updated = {
-      ...lesson,
-      scenes: [...lesson.scenes, newTextScene],
-      lesson_version: lesson.lesson_version + 1
-    };
-    onUpdateLesson(updated);
-    setActiveSceneIndex(updated.scenes.length - 1);
-    setEditFeedback('Cena de exemplos práticos adicionada à aula!');
-  };
-
-  // Execução de Edição por Linguagem Natural
   const handleNaturalLanguageSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!naturalLanguageInput.trim()) return;
-
-    setIsProcessingEdit(true);
-    setEditFeedback(null);
-
-    try {
-      const { updatedLesson, affectedScenes } = PemaraMaestro.editLessonByInstruction(
-        lesson,
-        naturalLanguageInput
-      );
-      onUpdateLesson(updatedLesson);
-      setEditFeedback(
-        `Instrução aplicada! Versão ${updatedLesson.lesson_version} gerada. Cenas ajustadas: ${affectedScenes.length > 0 ? affectedScenes.join(', ') : 'Geral'}`
-      );
-      setNaturalLanguageInput('');
-    } catch {
-      setEditFeedback('Não foi possível interpretar a alteração solicitada.');
-    } finally {
-      setIsProcessingEdit(false);
-    }
+    e.preventDefault();setEditPreview(null);
+    const result=PemaraMaestro.editLessonByInstruction(lesson,naturalLanguageInput);
+    setEditFeedback(result.message);
+    if(result.status==='needs_authoring'&&result.authoring)setAuthoringKind(result.authoring);
+    else if(result.status==='applied')setEditPreview(result);
   };
 
   const handleUpdateCurrentScene = (updatedScene: Scene) => {
     const newScenes = [...lesson.scenes];
-    newScenes[activeSceneIndex] = updatedScene;
+    newScenes[safeSceneIndex] = updatedScene;
     onUpdateLesson({
       ...lesson,
       scenes: newScenes,
@@ -307,7 +196,7 @@ export const LessonEditor: React.FC<Props> = ({
 
   const handleDeleteCurrentScene = () => {
     if (lesson.scenes.length <= 1) return;
-    const newScenes = lesson.scenes.filter((_, idx) => idx !== activeSceneIndex);
+    const newScenes = lesson.scenes.filter((_, idx) => idx !== safeSceneIndex);
     const newIndex = Math.max(0, activeSceneIndex - 1);
     onUpdateLesson({
       ...lesson,
@@ -319,6 +208,13 @@ export const LessonEditor: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col gap-6">
+      {authoringKind&&<LessonAuthoringDialog key={lesson.lesson.id+authoringKind} lesson={lesson} kind={authoringKind} sceneId={currentScene?.id||''} onClose={()=>setAuthoringKind(null)} onApply={updated=>{onUpdateLesson(updated);setAuthoringKind(null);setEditFeedback('Alteração docente aplicada após conferência.');}}/>}
+      {(lesson.objectives===undefined||lesson.prerequisites?.length||lesson.references?.length)?<details className="border border-slate-700 rounded p-3"><summary>Preparação e referências da aula</summary>
+        {lesson.objectives===undefined&&<p>Objetivos não informados nesta aula. Revise antes do uso em turma.</p>}
+        {!!lesson.prerequisites?.length&&<><h3>Pré-requisitos</h3><ul>{lesson.prerequisites.map((p,i)=><li key={i}>{p}</li>)}</ul></>}
+        {!!lesson.references?.length&&<><h3>Referências e autoria</h3><ul>{lesson.references.map((r,i)=><li key={i}>{referenceKindLabel(r.kind)}: {r.title}{referenceUrl(r.url)&&<> — <a href={r.url} target="_blank" rel="noreferrer">{r.url}</a></>}{r.locator&&' — '+r.locator}{r.license&&' — '+r.license}</li>)}</ul><p>A referência curricular não implica homologação ou alinhamento automático desta aula.</p></>}
+      </details>:null}
+      <PedagogicalReviewPanel team={lesson.lesson.pedagogical_team} scenes={lesson.scenes}/>
       <label className="text-sm text-slate-300">Título da aula<input aria-label="Título da aula" key={`${lesson.lesson.id}-${lesson.lesson.title}`} defaultValue={lesson.lesson.title} maxLength={160} onBlur={e=>{const title=e.target.value.trim();if(title&&title!==lesson.lesson.title)onUpdateLesson({...lesson,lesson:{...lesson.lesson,title},scenes:lesson.scenes.map(s=>s.type==='title'?{...s,title}:s)});}} className="block mt-1 w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"/></label>
       {/* BARRA SUPERIOR DE AÇÕES RÁPIDAS COM STATUS DO VISUAL VALIDATOR */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
@@ -453,13 +349,13 @@ export const LessonEditor: React.FC<Props> = ({
             <span>CRIAR QUESTIONÁRIO</span>
           </button>
 
-          {/* [ DEIXAR MAIS SIMPLES ] */}
+          {/* [ REVISAR TEXTO ] */}
           <button
             onClick={handleMakeSimpler}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
           >
             <Minimize2 className="w-4 h-4 text-cyan-400" />
-            <span>DEIXAR MAIS SIMPLES</span>
+            <span>REVISAR TEXTO</span>
           </button>
 
           {/* [ ADICIONAR EXEMPLOS ] */}
@@ -667,6 +563,7 @@ export const LessonEditor: React.FC<Props> = ({
             />
           </div>
 
+          {editPreview&&<section aria-label="Prévia do comando" className="p-4 border border-cyan-700 rounded"><h3>Confira a alteração</h3><p>{editPreview.message}</p><p>Título: {editPreview.updatedLesson.lesson.title}</p>{editPreview.updatedLesson.scenes.filter(s=>editPreview.affectedScenes.includes(s.id)&&s.type==='physics_projectile').map(s=><p key={s.id}>{s.title}: {s.type==='physics_projectile'?`ângulo ${s.params.angle}°, velocidade ${s.params.velocity} m/s, gravidade ${s.params.gravity} m/s²`:''}</p>)}<button className="bg-emerald-700 p-2 rounded" onClick={()=>{onUpdateLesson(editPreview.updatedLesson);setEditPreview(null);setNaturalLanguageInput('');setEditFeedback('Alteração aplicada após conferência.');}}>Aplicar comando revisado</button><button className="p-2" onClick={()=>setEditPreview(null)}>Cancelar prévia</button></section>}
           {/* EDIÇÃO POR LINGUAGEM NATURAL */}
           <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">
@@ -674,20 +571,20 @@ export const LessonEditor: React.FC<Props> = ({
               Descreva a alteração na aula
             </div>
             <p className="text-xs text-slate-400 mb-3">
-              Descreva a alteração que deseja fazer na aula. Ex: "Adicione um questionário", "Deixe mais simples", "Altere os parâmetros da simulação".
+              Comandos disponíveis: "Troque o título para ...", "Ângulo 45 graus", "Velocidade 20 m/s" e "Gravidade da Lua". Questões, exemplos e revisão de texto abrem um formulário para sua autoria.
             </p>
 
             <form onSubmit={handleNaturalLanguageSubmit} className="flex gap-2">
               <input
                 type="text"
                 value={naturalLanguageInput}
-                onChange={(e) => setNaturalLanguageInput(e.target.value)}
-                placeholder="Ex: O texto da página 4 está muito longo. Divida ou resuma..."
+                onChange={(e) => {setNaturalLanguageInput(e.target.value);setEditPreview(null);}}
+                placeholder="Ex.: Troque o título para Explorando as frações"
                 className="flex-1 px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
               <button
                 type="submit"
-                disabled={isProcessingEdit || !naturalLanguageInput.trim()}
+                disabled={!naturalLanguageInput.trim()}
                 className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm flex items-center gap-2 transition-all disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />

@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@import "tailwindcss" source("./");
+@source "../index.html";
+@source "../test/fixtures";
 
 /* Desktop layouts: readable controls and local scrolling on smaller monitors. */
 html { width: 100%; }

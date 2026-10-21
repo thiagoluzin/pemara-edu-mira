@@ -210,6 +210,8 @@ test('Quiz Scene Print: Renders all alternatives in original order and defines S
 
     // 1. Versão do Aluno (default / includeTeacherNotes = false)
     const studentPrintHtml = generatePrintDocumentHtml(lesson, { includeTeacherNotes: false });
+    assert.ok(!studentPrintHtml.includes('Gabarito e Justificativa Pedagógica:'));
+    for(const scene of lesson.scenes)if(scene.teacher_notes)assert.ok(!studentPrintHtml.includes(escapeHtml(scene.teacher_notes)), 'Student source must omit private teacher notes');
 
     // Pergunta e título devem estar presentes
     assert.ok(studentPrintHtml.includes(escapeHtml(quizScene.question)), `${name} student print must contain question`);

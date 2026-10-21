@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $stage = Join-Path $repo 'build/openchamber/2.4.0-pemara.1'
 New-Item -ItemType Directory -Path $stage -Force | Out-Null

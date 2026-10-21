@@ -1,0 +1,60 @@
+PEMARA EDU 2.4.0-pemara.10 — CORREÇÃO DO SELETOR DE ARQUIVOS
+Validação: 19/10/2026, Windows 11 x64.
+
+CAUSA E CORREÇÃO
+O runtime privado muda USERPROFILE. O seletor nativo expandia essa variável
+para perfil\Desktop, que não existia, gerando "O local não está disponível".
+O bootstrap agora resolve as pastas reais do Windows antes dessa alteração e
+cria junctions para Desktop, Documents, Downloads, Pictures, Music e Videos.
+O perfil de IA e AppData continuam separados. Não altera o Registro, não copia
+os arquivos pessoais e não substitui pastas ou links preexistentes.
+Backups futuros não devem seguir essas junctions recursivamente.
+
+TESTES E RESULTADOS
+- 4 testes automatizados aprovados: caminhos reais com acentos/redirecionamento,
+  inicialização repetida, isolamento, preservação e destino indisponível.
+- Instalador final executado com saída 0; atalhos anteriores preservados.
+- Pacote instalado conferido: 12 fontes, 8 hashes de recursos e código nativo
+  correspondente ao bootstrap e ao novo módulo de pastas.
+- Duas aberturas do executável instalado com zero aulas, materiais, pesquisas,
+  tarefas de geração e chats; banco vazio e encerramento correto.
+- Janela Abrir real: o caminho perfil\Desktop exibiu os arquivos reais.
+  TXT sintético selecionado pelo diálogo e lido pelo programa, duas vezes.
+  O arquivo temporário da Área de Trabalho foi removido após o teste.
+- Janela Salvar como real: apresentação HTML salva na pasta padrão e validada
+  como HTML. Cópia de evidência: native-save-default.html.
+- Nenhuma nova chamada de IA nesta correção. HTML/PDF/DOCX do frontend são os
+  mesmos da versão .9, cuja validação está no relatório correspondente.
+
+LIMITES DO TESTE NATIVO
+Sky falhou na captura de tela (StartCapture 0x80070002) e não disponibilizou
+os controles do diálogo Salvar como em seu cache de automação. O teste usou
+acessibilidade e teclado. Não foi possível concluir o clique no atalho lateral
+nem a mudança de pasta no diálogo Salvar como nesta execução.
+A navegação pelo caminho Desktop e a importação real foram confirmadas.
+O salvamento padrão funcionou; o roteiro que exigia outro destino retornou
+falha de asserção de caminho. Esse resultado original foi mantido em
+native-dialogs.json, junto ao desfecho em native-save-outcome.json.
+Uma tentativa anterior precisou recarregar a biblioteca após criar a aula
+diretamente pela API de teste; o roteiro foi corrigido e repetido.
+Não representa garantia universal de funcionamento ou teste em Windows 10.
+
+PRESERVAÇÃO
+46.133 arquivos originais conferidos por SHA-256, sem alterações.
+Perfis e documentos originais restaurados antes de reabrir o programa.
+Resultados de teste separados com sufixo .resultado-folders-v10-20261019.
+Um diretório residual de cache do Windows foi guardado com sufixo
+.residual-folders-v10-20261019, sem substituir dados originais.
+Binários .9 preservados em:
+C:\Users\admin_remoto\AppData\Local\Programs\PEMARA EDU Teste Limpo.preservado-folders-v10-20261019
+O instalador permanece sem aulas, pesquisas, chats ou credenciais de usuário.
+Atualizar uma instalação existente preserva seu acervo; não apaga dados.
+
+INSTALADOR
+G:\PEMARA_EDU\ENTREGAS\PEMARA-EDU-2.4.0-pemara.10-Limpo\PEMARA-EDU-2.4.0-pemara.10-Limpo-Windows-x64-Instalar.exe
+Tamanho: 418091773 bytes
+SHA-256: 5c114298983f7f25e9c467f460bd1066c594ed51dba0e53a98931f5d8b702344
+Authenticode: não assinado.
+
+Evidências: G:\PEMARA_EDU\evidencias\folders-v10-20261019
+Instalação e pacote: G:\PEMARA_EDU\build\openchamber\2.4.0-pemara.10\evidencias

@@ -6,6 +6,11 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    // The workspace also contains independent upstream apps and exported lessons.
+    // Only PEMARA entry points belong to this dependency graph.
+    optimizeDeps: {
+      entries: ['index.html', 'test/fixtures/*.html'],
+    },
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname ?? '.', '.'),

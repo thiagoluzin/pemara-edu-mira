@@ -1,3 +1,4 @@
+import {editByInstruction, type LessonEditResult} from '../education/deterministicLessonEdit';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -328,122 +329,7 @@ export class PemaraMaestro {
   /**
    * EDIÇÃO POR LINGUAGEM NATURAL
    */
-  public static editLessonByInstruction(currentLesson: LessonSpec, instruction: string): { updatedLesson: LessonSpec; affectedScenes: string[] } {
-    const lesson = JSON.parse(JSON.stringify(currentLesson)) as LessonSpec;
-    const lower = instruction.toLowerCase();
-    const affectedScenes: string[] = [];
-
-    if (lower.includes('quiz') || lower.includes('pergunta') || lower.includes('questão')) {
-      const isHistory = lesson.lesson.subject === 'history';
-      const isMath = lesson.lesson.subject === 'math';
-      const isPhysics = lesson.lesson.subject === 'physics';
-
-      const questionText = isHistory
-        ? `Considerando o tema "${lesson.lesson.title}", qual afirmação sobre o contexto histórico está correta?`
-        : isMath
-        ? `No estudo de "${lesson.lesson.title}", qual relação conceitual é válida?`
-        : isPhysics
-        ? `Em relação aos parâmetros físicos de "${lesson.lesson.title}", qual princípio se verifica?`
-        : `Considerando o que foi abordado sobre "${lesson.lesson.title}", qual conclusão é correta?`;
-
-      const answersList = isHistory
-        ? [
-            'A análise histórica fundamenta-se na contextualização crítica das fontes materiais e escritas',
-            'Os fatos históricos repetem-se de maneira linear e idêntica através dos séculos',
-            'A organização social do passado era idêntica às democracias ocidentais modernas',
-            'Nenhuma das anteriores'
-          ]
-        : isMath
-        ? [
-            'Os coeficientes e propriedades algébricas determinam o comportamento gráfico e suas raízes',
-            'O gráfico independe dos coeficientes definidos na equação',
-            'Toda função quadrática intercepta o eixo vertical exatamente na origem',
-            'Nenhuma das anteriores'
-          ]
-        : isPhysics
-        ? [
-            'As grandezas cinemáticas decompõem-se em movimentos independentes conforme Galileu',
-            'A velocidade horizontal varia continuamente sob ação exclusiva da gravidade',
-            'O alcance do projétil independe do ângulo de lançamento inicial',
-            'Nenhuma das anteriores'
-          ]
-        : [
-            'A observação sistemática e as evidências fundamentam a compreensão do conteúdo',
-            'O fenômeno independe de qualquer parâmetro ou condição inicial',
-            'Modelos didáticos não guardam relação com fenômenos reais',
-            'Nenhuma das anteriores'
-          ];
-
-      const explanationText = isHistory
-        ? 'Correto! O trabalho do historiador baseia-se na interpretação e contextualização crítica de fontes de época.'
-        : isMath
-        ? 'Exato! O sinal e os valores dos coeficientes governam a geometria da curva e os pontos de interseção.'
-        : isPhysics
-        ? 'Muito bem! Pelo princípio de Galileu, componentes ortogonais de movimento comportam-se independentemente.'
-        : 'Correto! A análise estruturada conecta teoria e evidência.';
-
-      const newQuiz: Scene = {
-        id: `sc-quiz-extra-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        type: 'quiz',
-        layout_id: '10_quiz',
-        title: 'Verificação Formativa Contextualizada',
-        question: questionText,
-        answers: answersList,
-        correct_index: 0,
-        explanation: explanationText
-      };
-      lesson.scenes.push(newQuiz);
-      affectedScenes.push(newQuiz.id);
-    }
-
-    lesson.scenes.forEach((scene) => {
-      if (scene.type === 'physics_projectile') {
-        let changed = false;
-        if (lower.includes('lua')) {
-          scene.params.gravity = 1.62;
-          scene.teacher_notes = 'Gravidade alterada para a da Lua (1.62 m/s²).';
-          changed = true;
-        } else if (lower.includes('marte')) {
-          scene.params.gravity = 3.71;
-          changed = true;
-        } else if (lower.includes('júpiter')) {
-          scene.params.gravity = 24.79;
-          changed = true;
-        }
-
-        const angleMatch = lower.match(/(\d+)\s*(graus|°)/);
-        if (angleMatch && angleMatch[1]) {
-          const val = parseInt(angleMatch[1], 10);
-          if (val >= 0 && val <= 90) {
-            scene.params.angle = val;
-            changed = true;
-          }
-        }
-
-        const speedMatch = lower.match(/(velocidade|v0)\s*(\d+)/);
-        if (speedMatch && speedMatch[2]) {
-          const val = parseInt(speedMatch[2], 10);
-          if (val > 0 && val <= 200) {
-            scene.params.velocity = val;
-            changed = true;
-          }
-        }
-
-        if (changed) affectedScenes.push(scene.id);
-      }
-
-      if (lower.includes('simples') || lower.includes('fácil') || lower.includes('resumo')) {
-        if (scene.type === 'text') {
-          // Simplificar sem corromper o texto ou prefixar caracteres de lista no conteúdo de parágrafo
-          scene.callout = 'Conceito em destaque: Observe a relação direta entre as variáveis principais do tema.';
-          affectedScenes.push(scene.id);
-        }
-      }
-    });
-
-    lesson.lesson_version += 1;
-    lesson.lesson.updatedAt = new Date().toISOString();
-
-    return { updatedLesson: lesson, affectedScenes };
+  public static editLessonByInstruction(currentLesson: LessonSpec, instruction: string): LessonEditResult {
+    return editByInstruction(currentLesson,instruction);
   }
 }

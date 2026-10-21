@@ -1,4 +1,4 @@
-param([switch]$Download)
+﻿param([switch]$Download)
 $ErrorActionPreference='Stop'
 $sourceRoot=$PSScriptRoot
 $repoRoot=Split-Path (Split-Path $sourceRoot)
